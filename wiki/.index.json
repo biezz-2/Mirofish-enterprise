@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "generated": "2026-09-30T12:45:00Z",
+  "pages": {
+    "index": {
+      "path": "wiki/index.md",
+      "title": "MiroFish - Swarm Intelligence & Predictive Social Simulation Engine",
+      "type": "overview",
+      "aliases": ["overview", "portal-utama", "home"],
+      "sources": ["./", "backend/", "frontend/", "locales/"],
+      "links_to": [
+        "arsitektur",
+        "ekspansi-multi-platform",
+        "riset-web-searxng",
+        "kesiapan-operasional",
+        "codemap",
+        "panduan-operasional"
+      ],
+      "linked_from": [
+        "arsitektur",
+        "ekspansi-multi-platform",
+        "riset-web-searxng",
+        "kesiapan-operasional",
+        "codemap",
+        "panduan-operasional"
+      ]
+    },
+    "arsitektur": {
+      "path": "wiki/arsitektur.md",
+      "title": "Arsitektur Sistem Menyeluruh MiroFish",
+      "type": "concept",
+      "aliases": ["architecture", "system-design"],
+      "sources": [
+        "backend/app/",
+        "backend/app/services/",
+        "backend/app/models/",
+        "frontend/src/"
+      ],
+      "links_to": [
+        "index",
+        "ekspansi-multi-platform",
+        "riset-web-searxng",
+        "kesiapan-operasional",
+        "codemap"
+      ],
+      "linked_from": [
+        "index",
+        "ekspansi-multi-platform",
+        "riset-web-searxng",
+        "kesiapan-operasional",
+        "codemap",
+        "panduan-operasional"
+      ]
+    },
+    "ekspansi-multi-platform": {
+      "path": "wiki/ekspansi-multi-platform.md",
+      "title": "Spesifikasi 7 Platform Media Sosial MiroFish",
+      "type": "concept",
+      "aliases": ["multi-platform", "7-platforms"],
+      "sources": [
+        "backend/app/services/oasis_profile_generator.py",
+        "backend/app/services/simulation_config_generator.py",
+        "backend/scripts/run_parallel_simulation.py"
+      ],
+      "links_to": [
+        "index",
+        "arsitektur",
+        "kesiapan-operasional",
+        "codemap"
+      ],
+      "linked_from": [
+        "index",
+        "arsitektur"
+      ]
+    },
+    "riset-web-searxng": {
+      "path": "wiki/riset-web-searxng.md",
+      "title": "Riset Web Terintegrasi Langkah 0 Berbasis SearXNG",
+      "type": "concept",
+      "aliases": ["searxng", "step0-research"],
+      "sources": [
+        "backend/app/models/entities.py",
+        "backend/app/services/graph_builder.py",
+        "backend/app/utils/file_parser.py"
+      ],
+      "links_to": [
+        "index",
+        "arsitektur",
+        "kesiapan-operasional",
+        "codemap"
+      ],
+      "linked_from": [
+        "index",
+        "arsitektur"
+      ]
+    },
+    "kesiapan-operasional": {
+      "path": "wiki/kesiapan-operasional.md",
+      "title": "Kesiapan Operasional, Persistensi, dan Ketahanan Sistem",
+      "type": "concept",
+      "aliases": ["operational-readiness", "resilience"],
+      "sources": [
+        "backend/app/models/entities.py",
+        "backend/app/models/task.py",
+        "backend/app/models/project.py",
+        "backend/app/config.py"
+      ],
+      "links_to": [
+        "index",
+        "arsitektur",
+        "panduan-operasional",
+        "codemap"
+      ],
+      "linked_from": [
+        "index",
+        "arsitektur",
+        "ekspansi-multi-platform",
+        "riset-web-searxng",
+        "codemap",
+        "panduan-operasional"
+      ]
+    },
+    "codemap": {
+      "path": "wiki/codemap.md",
+      "title": "Codemap Komprehensif dan Peta Arsitektur Berkas MiroFish",
+      "type": "reference",
+      "aliases": ["code-structure", "dependency-matrix"],
+      "sources": [
+        "backend/",
+        "frontend/",
+        "locales/",
+        "scripts/",
+        "tests/"
+      ],
+      "links_to": [
+        "index",
+        "arsitektur",
+        "kesiapan-operasional",
+        "panduan-operasional"
+      ],
+      "linked_from": [
+        "index",
+        "arsitektur",
+        "ekspansi-multi-platform",
+        "riset-web-searxng",
+        "kesiapan-operasional",
+        "panduan-operasional"
+      ]
+    },
+    "panduan-operasional": {
+      "path": "wiki/panduan-operasional.md",
+      "title": "Panduan Deployment, Eksekusi, dan Pengujian Lapangan",
+      "type": "guide",
+      "aliases": ["deployment-guide", "runbook"],
+      "sources": [
+        "docker-compose.yml",
+        "backend/run.py",
+        "backend/app/config.py",
+        "frontend/vite.config.js"
+      ],
+      "links_to": [
+        "index",
+        "arsitektur",
+        "kesiapan-operasional",
+        "codemap"
+      ],
+      "linked_from": [
+        "index",
+        "kesiapan-operasional",
+        "codemap"
+      ]
+    }
+  },
+  "source_map": {
+    "backend/app/api/": ["arsitektur", "codemap", "panduan-operasional"],
+    "backend/app/models/": ["arsitektur", "kesiapan-operasional", "codemap"],
+    "backend/app/services/": ["arsitektur", "ekspansi-multi-platform", "riset-web-searxng", "codemap"],
+    "backend/app/utils/": ["arsitektur", "riset-web-searxng", "kesiapan-operasional", "codemap"],
+    "backend/scripts/": ["ekspansi-multi-platform", "codemap", "panduan-operasional"],
+    "frontend/": ["arsitektur", "codemap", "panduan-operasional"],
+    "locales/": ["index", "arsitektur", "ekspansi-multi-platform", "codemap"]
+  }
+}

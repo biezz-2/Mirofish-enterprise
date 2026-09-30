@@ -26,5 +26,9 @@
   "de": {
     "label": "Deutsch",
     "llmInstruction": "Bitte antworten Sie auf Deutsch."
+  },
+  "id": {
+    "label": "Bahasa Indonesia",
+    "llmInstruction": "Mohon jawab dalam Bahasa Indonesia yang baik dan benar sesuai kaidah PUEBI."
   }
 }

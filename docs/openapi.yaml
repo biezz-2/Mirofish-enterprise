@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: MiroFish API Spesifikasi v3.1
+  description: API RESTful untuk Mesin Simulasi Prediksi Sosial MiroFish dengan Lokalisasi Bahasa Indonesia, Multi-Platform, dan Riset Web SearXNG.
+  version: 3.1.0
+paths:
+  /health:
+    get:
+      summary: Pemeriksaan kesehatan layanan
+      responses:
+        '200':
+          description: Layanan aktif normal
+  /api/platforms:
+    get:
+      summary: Daftar 7 platform media sosial dan parameter perilakunya
+      responses:
+        '200':
+          description: Data karakteristik Twitter, X, Reddit, TikTok, Instagram, Facebook, Threads
+  /api/research/searchxng:
+    post:
+      summary: Eksekusi riset internet Langkah 0 via SearXNG privat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                research_type:
+                  type: string
+                  enum: [general, news, images]
+                max_results:
+                  type: integer
+      responses:
+        '200':
+          description: Laporan riset dan skor kredibilitas
+  /api/jobs:
+    get:
+      summary: Daftar pekerjaan simulasi aktif
+      responses:
+        '200':
+          description: Daftar job state-machine
+  /api/jobs/{job_id}/recover:
+    post:
+      summary: Pulihkan pekerjaan simulasi dari checkpoint terakhir
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pekerjaan berhasil dipulihkan

@@ -64,10 +64,14 @@ class Config:
     def validate(cls) -> list[str]:
         """验证必要配置"""
         errors: list[str] = []
+        graph_backend = os.environ.get("GRAPH_BACKEND", "zep").lower()
         if not cls.LLM_API_KEY:
-            errors.append("LLM_API_KEY 未配置")
-        if not cls.ZEP_API_KEY:
-            errors.append("ZEP_API_KEY 未配置")
+            # Berikan peringatan untuk pengujian lokal jika belum dikonfigurasi
+            if not os.environ.get("DEVELOPMENT_MODE", "false").lower() == "true":
+                errors.append("LLM_API_KEY belum dikonfigurasi")
+        if not cls.ZEP_API_KEY and graph_backend == "zep":
+            if not os.environ.get("DEVELOPMENT_MODE", "false").lower() == "true":
+                errors.append("ZEP_API_KEY belum dikonfigurasi (atau gunakan GRAPH_BACKEND=graphiti)")
         if os.environ.get("ZEP_API_URL"):
             errors.append("ZEP_API_URL 不受支持；MiroFish 仅连接 Zep Cloud")
         if cls.DEBUG:

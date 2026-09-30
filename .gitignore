@@ -58,3 +58,12 @@ backend/uploads/
 
 # Docker 数据
 data/
+
+# SQLite & Checkpoint Data
+*.db
+*.sqlite
+*.sqlite3
+backend/mirofish.db
+backend/checkpoints/
+*.pkl
+*.sha256
