@@ -44,6 +44,8 @@ htmlcov/
 # Cursor
 .cursor/
 .claude/
+!.claude/agents/
+!.claude/agents/*.md
 
 # 文档与测试程序
 mydoc/

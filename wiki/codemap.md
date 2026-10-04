@@ -252,7 +252,7 @@ Untuk memfasilitasi pengembangan terdistribusi berskala besar oleh tim multi-age
 +---+----------------------+---------------------------------+----------------------------+
 | 1 | Subagent A: Core API | Routing REST, App Factory, CORS | backend/app/api/, run.py   |
 | 2 | Subagent B: Database | Skema ORM, SQLite WAL, Postgres | backend/app/models/        |
-| 3 | Subagent C: GraphRAG | Zep Cloud SDK, Ontologi, Paging | services/graph_builder.py  |
+| 3 | Subagent C: GraphRAG | Graphiti Platform, FalkorDB, Ontologi | services/graph_builder.py, graph_memory/ |
 | 4 | Subagent D: SimEngine| OASIS 7-Platform, Action Engine | scripts/run_*.py, runner.py|
 | 5 | Subagent E: Step0Web | SearXNG, Anti-Injeksi, Skorer   | services/step0_*, parser.py|
 | 6 | Subagent F: Analyst  | ReACT ReportAgent, ZepTools     | services/report_agent.py   |
@@ -271,7 +271,7 @@ Untuk memfasilitasi pengembangan terdistribusi berskala besar oleh tim multi-age
 2. **Subagent B (Persistence & Database Architect)**:
    - *Tanggung Jawab*: Mengembangkan dan memelihara model relasional SQLAlchemy (`backend/app/models/entities.py`), mode SQLite WAL, skrip migrasi Alembic, dan integritas transaksi ACID.
 3. **Subagent C (GraphRAG & Knowledge Engineer)**:
-   - *Tanggung Jawab*: Optimalisasi `graph_builder.py`, `ontology_generator.py`, `zep_entity_reader.py`, serta penanganan konkurensi siklus hidup graf di `utils/zep_lifecycle.py`.
+   - *Tanggung Jawab*: Optimalisasi `graph_builder.py`, `ontology_generator.py`, `zep_entity_reader.py`, integrasi Graphiti Platform (`graphiti_adapter.py`), FalkorDB, serta `LocalGraphService`.
 4. **Subagent D (Multi-Platform Simulation Architect)**:
    - *Tanggung Jawab*: Memperluas mesin eksekusi simulasi 7-platform (`backend/scripts/run_parallel_simulation.py`), penanganan sinkronisasi barrier antar-pekerja, serta kalkulasi bobot algoritma umpan.
 5. **Subagent E (Step 0 Web Research & Content Shield Specialist)**:

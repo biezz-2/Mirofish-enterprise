@@ -32,6 +32,14 @@ class Config:
     # Zep配置
     ZEP_API_KEY = os.environ.get('ZEP_API_KEY')
     
+    # Graph Memory Backend (Graphiti Platform + FalkorDB)
+    GRAPH_BACKEND = os.environ.get('GRAPH_BACKEND', 'graphiti').lower()
+    GRAPHITI_CONTROL_PLANE_URL = os.environ.get('GRAPHITI_CONTROL_PLANE_URL', 'http://127.0.0.1:8080')
+    FALKORDB_HOST = os.environ.get('FALKORDB_HOST', '127.0.0.1')
+    FALKORDB_PORT = int(os.environ.get('FALKORDB_PORT', '6379'))
+    FALKORDB_URI = os.environ.get('FALKORDB_URI', 'redis://127.0.0.1:6379')
+    GRAPHITI_GROUP_ID = os.environ.get('GRAPHITI_GROUP_ID', 'main')
+    
     # 文件上传配置
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../uploads')

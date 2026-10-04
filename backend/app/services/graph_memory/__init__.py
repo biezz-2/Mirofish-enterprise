@@ -15,12 +15,16 @@ def get_graph_adapter() -> GraphMemoryAdapter:
     if _adapter_instance is not None:
         return _adapter_instance
 
-    backend_type = getattr(Config, "GRAPH_BACKEND", "zep").lower()
-    if backend_type == "graphiti_neo4j":
-        neo4j_uri = getattr(Config, "NEO4J_URI", "bolt://127.0.0.1:7687")
-        user = getattr(Config, "NEO4J_USER", "neo4j")
-        password = getattr(Config, "NEO4J_PASSWORD", "mirofish_secret")
-        _adapter_instance = GraphitiAdapter(neo4j_uri=neo4j_uri, auth=(user, password))
+    backend_type = getattr(Config, "GRAPH_BACKEND", "graphiti").lower()
+    if backend_type in ("graphiti", "graphiti_platform", "graphiti_falkordb"):
+        control_plane_url = getattr(Config, "GRAPHITI_CONTROL_PLANE_URL", "http://127.0.0.1:8080")
+        falkordb_host = getattr(Config, "FALKORDB_HOST", "127.0.0.1")
+        falkordb_port = int(getattr(Config, "FALKORDB_PORT", 6379))
+        _adapter_instance = GraphitiAdapter(
+            control_plane_url=control_plane_url,
+            falkordb_host=falkordb_host,
+            falkordb_port=falkordb_port
+        )
     else:
         api_key = getattr(Config, "ZEP_API_KEY", "") or "default_zep_key"
         _adapter_instance = ZepAdapter(api_key=api_key)

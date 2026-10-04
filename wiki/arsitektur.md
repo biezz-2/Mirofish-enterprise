@@ -43,7 +43,7 @@ Sistem MiroFish dirancang menggunakan arsitektur modular berlapis. Tabel di bawa
 +───────────────────────+   +───────────────────────────+   +───────────────────────+
 |   LAPISAN RISET WEB   |   |   LAPISAN INTELIGENSI     |   |   LAPISAN SIMULASI    |
 |       (LANGKAH 0)     |   |     KNOWLEDGE GRAPH       |   |    MULTI-PLATFORM     |
-| - SearXNG Self-Hosted |   | - Zep Cloud Standalone    |   | - 7 Platform OASIS    |
+| - SearXNG Self-Hosted |   | - Graphiti + FalkorDB / Local |   | - 7 Platform OASIS    |
 | - Anti-Prompt Inj.    |   | - Dynamic Graph Memory    |   | - Cross-Platform Sync |
 | - Credibility Scorer  |   | - Fallback Local Neo4j    |   | - Action Worker Pool  |
 +───────────────────────+   +───────────────────────────+   +───────────────────────+
@@ -70,7 +70,7 @@ Sistem MiroFish dirancang menggunakan arsitektur modular berlapis. Tabel di bawa
 | **Lapisan Presentasi** | Vue 3 SPA, antarmuka bilingual (ZH/EN), grafik berbasis Vis.js/ECharts dasar. Komunikasi via polling HTTP reguler. | Vue 3 + Vite, integrasi penuh `vue-i18n` dengan Bahasa Indonesia baku (PUEBI), visualisasi graf interaktif lanjutan, dukungan streaming Server-Sent Events (SSE). | Menghilangkan beban overhead polling berulang; menjamin pengalaman pengguna instan dan ramah untuk pasar Indonesia. |
 | **Lapisan API & Manajemen Tugas** | Threading in-memory dengan `TaskManager` dan `ProjectManager` berbasis berkas JSON di `uploads/projects/`. | Hybrid Architecture: Endpoint REST terstruktur didukung oleh `SQLAlchemy` (SQLite WAL / PostgreSQL) dengan penguncian siklus hidup graf (`graph_lifecycle_lock`). | Mencegah inkonsistensi status pada restart server; menjamin sifat transaksi ACID untuk pekerjaan durasi panjang. |
 | **Lapisan Riset Awal (Langkah 0)** | Tidak ada; sistem bergantung murni pada dokumen teks/PDF yang diunggah pengguna secara manual. | **Langkah 0: Modul Riset Web SearXNG**. Metasearch multi-mesin privat, ekstraksi fakta otomatis, skoring kredibilitas, dan sanitasi injeksi prompt. | Mengeliminasi bias halusinasi LLM; memperkaya graf dengan fakta empiris mutakhir sebelum simulasi berjalan. |
-| **Lapisan Graf Pengetahuan (GraphRAG)** | Terikat langsung pada Zep Cloud Graph API (`graph_id`). Episode batch diserahkan langsung tanpa validasi entitas lokal. | Ekosistem GraphRAG ganda: Zep Cloud Batch API dengan paging aman + antarmuka abstraksi adaptor yang siap dialihkan ke Neo4j self-hosted. | Menjamin kedaulatan data sensitif perusahaan; melindungi dari pembatasan kuota eksternal (*vendor lock-in*). |
+| **Lapisan Graf Pengetahuan (GraphRAG)** | Terikat langsung pada Zep Cloud Graph API (`graph_id`). Episode batch diserahkan langsung tanpa validasi entitas lokal. | Ekosistem GraphRAG Graphiti Platform: FastMCP/FastAPI Control Plane (port 8080) + FalkorDB/Redis (port 6379) + Local Graph Service fallback terintegrasi antarmuka GraphMemoryAdapter. | Menjamin kedaulatan data sensitif perusahaan, nol latensi eksternal, dan eliminasi total vendor lock-in Zep Cloud. |
 | **Lapisan Mesin Simulasi** | Skrip OASIS ganda (`run_parallel_simulation.py`) yang hanya mendukung Twitter dan Reddit. Aksi disimpan di berkas `.jsonl`. | **Engine Simulasi 7-Platform Terpadu**: Twitter, X, Reddit, TikTok, Instagram, Facebook, dan Threads dengan formulasi bobot algoritma spesifik per platform. | Mampu mereplikasi dinamika silang platform (*cross-platform cascade*) yang mencerminkan realitas lanskap media sosial modern. |
 | **Lapisan Persistensi & Pemulihan** | Log eksekusi dan checkpoint parsial dalam berkas `run_state.json`. Jika proses mati (*killed*), seluruh proses harus diulang. | **Crash Recovery Scanner & Checkpoint Berkelanjutan**: Snapshot memori agen dan antrean aksi per-ronde dengan verifikasi hash SHA-256. | Kemampuan *Zero-Loss Resume*; tugas simulasi yang terhenti akibat crash server dapat dilanjutkan persis dari ronde terakhir. |
 | **Lapisan Gateway Model AI** | Client OpenAI sederhana yang membaca `LLM_API_KEY` dan `LLM_BASE_URL` statis dari variabel lingkungan `.env`. | **9Router Gateway**: Intelligent router dengan circuit breaker, automatic exponential retry, dynamic quota load balancing, dan enkripsi rahasia AES-GCM. | Menjamin ketersediaan simulasi 99.9% tanpa terganggu oleh fluktuasi rate limit atau pemadaman salah satu vendor AI. |
@@ -97,7 +97,7 @@ flowchart TD
         F --> G[Pemotong Teks Adaptif / Chunking]
         G --> H[LLM Ontology Generator: Ekstraksi Entitas & Relasi]
         H --> I[Validasi Skema PascalCase & SCREAMING_SNAKE]
-        I --> J[Zep Cloud Batch Submission / Local Neo4j]
+        I --> J[Graphiti Control Plane / FalkorDB / Local Graph]
         J --> K[Pemantauan Batch Ingestion & Verifikasi Graf Selesai]
     end
 

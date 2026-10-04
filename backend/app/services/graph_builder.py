@@ -147,6 +147,63 @@ class GraphBuilderService:
             self.validate_batch_chunks(chunks, batch_size=batch_size)
             total_chunks = len(chunks)
 
+            # Cek apakah menggunakan backend Graphiti / Local Graph
+            backend_type = getattr(Config, "GRAPH_BACKEND", "zep").lower()
+            if backend_type in ("graphiti", "graphiti_platform", "graphiti_falkordb") or not self.client:
+                def progress_cb(msg: str, prog: float):
+                    self.task_manager.update_task(
+                        task_id,
+                        status=TaskStatus.PROCESSING,
+                        progress=int(10 + prog * 75),
+                        message=msg
+                    )
+
+                graph_id = f"graphiti_{uuid.uuid4().hex[:16]}"
+                graph_data = LocalGraphService.extract_graph_with_llm(
+                    text=text,
+                    ontology=ontology,
+                    graph_name=graph_name,
+                    graph_id=graph_id,
+                    progress_callback=progress_cb
+                )
+
+                try:
+                    from .graph_memory import get_graph_adapter
+                    adapter = get_graph_adapter()
+                    adapter.create_graph(graph_id, graph_name)
+                    facts_payload = []
+                    for e in graph_data.get("edges", []):
+                        facts_payload.append({
+                            "fact": e.get("fact") or f"{e.get('source_node_name')} {e.get('name')} {e.get('target_node_name')}",
+                            "source": e.get("source_node_name"),
+                            "target": e.get("target_node_name"),
+                            "relation": e.get("name")
+                        })
+                    if facts_payload:
+                        adapter.add_facts(graph_id, facts_payload)
+                except Exception as ge:
+                    logger.warning(f"Sinkronisasi fakta ke Graphiti Control Plane: {ge}")
+
+                self.task_manager.update_task(
+                    task_id,
+                    progress=95,
+                    message=t("progress.fetchingGraphInfo")
+                )
+
+                graph_info = GraphInfo(
+                    graph_id=graph_id,
+                    node_count=graph_data.get("node_count", 0),
+                    edge_count=graph_data.get("edge_count", 0),
+                    entity_types=graph_data.get("entity_types", [])
+                )
+
+                self.task_manager.complete_task(task_id, {
+                    "graph_id": graph_id,
+                    "graph_info": graph_info.to_dict(),
+                    "chunks_processed": total_chunks,
+                })
+                return
+
             # 1. 创建图谱
             graph_id = self.create_graph(graph_name)
             self.task_manager.update_task(
@@ -778,6 +835,26 @@ class GraphBuilderService:
     
     def _get_graph_info(self, graph_id: str) -> GraphInfo:
         """获取图谱信息"""
+        from .local_graph_service import LocalGraphService
+        if LocalGraphService.has_local_graph(graph_id):
+            gdata = LocalGraphService.get_local_graph(graph_id)
+            nodes = gdata.get("nodes", [])
+            edges = gdata.get("edges", [])
+            entity_types = set()
+            for node in nodes:
+                for label in node.get("labels", []):
+                    if label not in ["Entity", "Node"]:
+                        entity_types.add(label)
+            return GraphInfo(
+                graph_id=graph_id,
+                node_count=len(nodes),
+                edge_count=len(edges),
+                entity_types=list(entity_types)
+            )
+
+        if not self.client:
+            return GraphInfo(graph_id=graph_id, node_count=0, edge_count=0, entity_types=[])
+
         # 获取节点（分页）
         nodes = fetch_all_nodes(self.client, graph_id)
 
