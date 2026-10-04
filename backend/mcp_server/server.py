@@ -75,7 +75,7 @@ class MCPServer:
     def run_stdio(self):
         logger.info("Server MCP MiroFish berjalan pada mode stdio...")
         for line in sys.stdin:
-            line = line.strip()
+            line = line.strip().lstrip("﻿")
             if not line:
                 continue
             try:
