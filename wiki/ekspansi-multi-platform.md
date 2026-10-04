@@ -13,6 +13,8 @@ sources:
   - backend/scripts/run_parallel_simulation.py
 ---
 
+> 🌐 **Bahasa / Language**: [Bahasa Indonesia](./ekspansi-multi-platform.md) | [English](./en/multi-platform-expansion.md)
+
 # Spesifikasi 7 Platform Media Sosial: MiroFish v3.1 Enterprise
 
 Dokumen ini menyajikan rancangan teknis mendalam dan spesifikasi kuantitatif untuk ekspansi ekosistem simulasi MiroFish dari dual-platform (Twitter dan Reddit) menjadi **7 Platform Media Sosial Terpadu**: **Twitter**, **X**, **Reddit**, **TikTok**, **Instagram**, **Facebook**, dan **Threads**. 

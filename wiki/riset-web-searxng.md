@@ -13,6 +13,8 @@ sources:
   - backend/app/utils/file_parser.py
 ---
 
+> 🌐 **Bahasa / Language**: [Bahasa Indonesia](./riset-web-searxng.md) | [English](./en/searxng-web-research.md)
+
 # Riset Web Terintegrasi Langkah 0 Berbasis SearXNG: MiroFish v3.1 Enterprise
 
 Dokumen ini menjelaskan spesifikasi arsitektur dan implementasi teknis untuk **Langkah 0: Riset Web Terintegrasi (*Step 0: Autonomous Web Research*)**. Fitur ini dirancang untuk mengatasi kelemahan mendasar model kecerdasan buatan—yakni halusinasi dan ketidaktahuan terhadap peristiwa mutakhir (*knowledge cutoff*)—dengan mengumpulkan, memverifikasi, menyaring, dan menyuntikkan fakta dunia nyata teranyar ke dalam graf pengetahuan MiroFish sebelum simulasi dimulai.

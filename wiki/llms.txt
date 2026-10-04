@@ -1,0 +1,21 @@
+# MiroFish Enterprise v3.1 Documentation Index for LLMs
+
+> MiroFish is a next-generation predictive social simulation sandbox and multi-agent swarm intelligence platform. It converts seed real-world materials into high-fidelity simulated digital societies across 7 social platforms (Twitter, X, Reddit, TikTok, Instagram, Facebook, and Threads) with integrated GraphRAG knowledge graphs and autonomous ReACT prediction analysts.
+
+## Indonesian Documentation / Dokumentasi Bahasa Indonesia
+- [Portal Utama Wikipedia](./index.md): Ikhtisar sistem, filosofi desain, linimasa evolusi, dan komponen inti.
+- [Arsitektur Sistem Menyeluruh](./arsitektur.md): Topologi multi-lapisan, matriks perbandingan v2 vs v3.1, diagram alir end-to-end, dan pemartisian data.
+- [Spesifikasi 7 Platform Media Sosial](./ekspansi-multi-platform.md): Karakteristik algoritma, ruang aksi, parameter kuantitatif, dan profil psikologis OCEAN.
+- [Riset Web Terintegrasi Langkah 0 (SearXNG)](./riset-web-searxng.md): Metasearch privat, sanitasi anti-prompt injection, formula skoring kredibilitas, dan pengayaan graf.
+- [Kesiapan Operasional, Persistensi, dan Ketahanan](./kesiapan-operasional.md): Skema relasional SQLite WAL/PostgreSQL, SHA-256 checkpoint hashing, crash scanner, brankas AES-256-GCM, dan 9Router.
+- [Codemap Komprehensif & Dependensi](./codemap.md): Pohon direktori kanonikal, matriks dependensi, alur data mikro, dan pembagian kepemilikan 10 subagent.
+- [Panduan Deployment, Eksekusi, & Pengujian](./panduan-operasional.md): Prasyarat, setup .env, Docker Compose, konfigurasi PM2 lintas-OS, katalog REST API, dan pengujian gerbang ketahanan E1/E2.
+
+## English Documentation
+- [Main Wikipedia Portal](./en/index.md): System executive summary, design philosophy, architectural evolution, and component catalog.
+- [Comprehensive System Architecture](./en/architecture.md): Multi-tier service topology, v2 vs v3.1 matrix, Mermaid dataflow diagrams, and data partitioning.
+- [7 Social Media Platforms Specification](./en/multi-platform-expansion.md): Platform algorithms, action spaces, quantitative parameters, and OCEAN psychological profiles.
+- [Step 0 Web Research Powered by SearXNG](./en/searxng-web-research.md): Private metasearch, 3-layer anti-prompt injection shield, credibility scoring formula, and graph enrichment.
+- [Operational Readiness, Persistence, & Resilience](./en/operational-readiness.md): SQLite WAL/Postgres schema, cryptographic SHA-256 checkpoints, crash recovery scanner, AES-256-GCM vault, and 9Router gateway.
+- [Comprehensive Codemap & Dependencies](./en/codemap.md): Canonical directory tree, call matrices, micro dataflows, and 10-subagent ownership map.
+- [Deployment, Execution, & Field Testing Runbook](./en/operational-guide.md): Prerequisites, .env setup, Docker Compose, PM2 multi-OS runbook, REST API reference, and resilience proof gates E1/E2.

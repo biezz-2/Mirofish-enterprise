@@ -15,6 +15,8 @@ sources:
   - tests/
 ---
 
+> 🌐 **Bahasa / Language**: [Bahasa Indonesia](./codemap.md) | [English](./en/codemap.md)
+
 # Codemap Komprehensif: Struktur Kode, Dependensi, dan Kepemilikan Subagent (v3.1)
 
 Dokumen ini adalah rujukan teknis definitif (*canonical code map*) dari repositori **MiroFish**. Bab ini menguraikan seluruh hierarki berkas, matriks dependensi antar-modul, alur data mikro *end-to-end*, dan pembagian kepemilikan kode untuk 10 subagent pengembang.

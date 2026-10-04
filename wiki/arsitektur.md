@@ -15,6 +15,8 @@ sources:
   - frontend/src/
 ---
 
+> 🌐 **Bahasa / Language**: [Bahasa Indonesia](./arsitektur.md) | [English](./en/architecture.md)
+
 # Arsitektur Sistem Menyeluruh: MiroFish v3.1 Enterprise
 
 Dokumen ini menguraikan arsitektur sistem menyeluruh MiroFish, menyandingkan arsitektur eksisting berbasis purwarupa (v2.x) dengan target arsitektur enterprise v3.1, merinci topologi multi-lapisan (*multi-tiered topology*), diagram alur end-to-end, dan mekanisme pemartisian data (*data partitioning*).

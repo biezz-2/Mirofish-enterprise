@@ -14,6 +14,8 @@ sources:
   - frontend/vite.config.js
 ---
 
+> 🌐 **Bahasa / Language**: [Bahasa Indonesia](./panduan-operasional.md) | [English](./en/operational-guide.md)
+
 # Panduan Deployment, Eksekusi, dan Pengujian Lapangan: MiroFish v3.1 Enterprise
 
 Dokumen ini merupakan panduan operasional praktis (*runbook*) untuk menginstal, mengonfigurasi, menjalankan, dan menguji platform **MiroFish v3.1** di lingkungan pengembangan lokal maupun peladen produksi lintas sistem operasi (Linux, Windows, macOS).

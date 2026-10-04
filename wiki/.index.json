@@ -1,11 +1,12 @@
 {
-  "version": 1,
-  "generated": "2026-09-30T12:45:00Z",
+  "version": 2,
+  "generated": "2026-10-04T08:00:00Z",
   "pages": {
     "index": {
       "path": "wiki/index.md",
       "title": "MiroFish - Swarm Intelligence & Predictive Social Simulation Engine",
       "type": "overview",
+      "lang": "id",
       "aliases": ["overview", "portal-utama", "home"],
       "sources": ["./", "backend/", "frontend/", "locales/"],
       "links_to": [
@@ -14,7 +15,8 @@
         "riset-web-searxng",
         "kesiapan-operasional",
         "codemap",
-        "panduan-operasional"
+        "panduan-operasional",
+        "en-index"
       ],
       "linked_from": [
         "arsitektur",
@@ -29,6 +31,7 @@
       "path": "wiki/arsitektur.md",
       "title": "Arsitektur Sistem Menyeluruh MiroFish",
       "type": "concept",
+      "lang": "id",
       "aliases": ["architecture", "system-design"],
       "sources": [
         "backend/app/",
@@ -56,6 +59,7 @@
       "path": "wiki/ekspansi-multi-platform.md",
       "title": "Spesifikasi 7 Platform Media Sosial MiroFish",
       "type": "concept",
+      "lang": "id",
       "aliases": ["multi-platform", "7-platforms"],
       "sources": [
         "backend/app/services/oasis_profile_generator.py",
@@ -77,6 +81,7 @@
       "path": "wiki/riset-web-searxng.md",
       "title": "Riset Web Terintegrasi Langkah 0 Berbasis SearXNG",
       "type": "concept",
+      "lang": "id",
       "aliases": ["searxng", "step0-research"],
       "sources": [
         "backend/app/models/entities.py",
@@ -98,6 +103,7 @@
       "path": "wiki/kesiapan-operasional.md",
       "title": "Kesiapan Operasional, Persistensi, dan Ketahanan Sistem",
       "type": "concept",
+      "lang": "id",
       "aliases": ["operational-readiness", "resilience"],
       "sources": [
         "backend/app/models/entities.py",
@@ -124,6 +130,7 @@
       "path": "wiki/codemap.md",
       "title": "Codemap Komprehensif dan Peta Arsitektur Berkas MiroFish",
       "type": "reference",
+      "lang": "id",
       "aliases": ["code-structure", "dependency-matrix"],
       "sources": [
         "backend/",
@@ -151,6 +158,7 @@
       "path": "wiki/panduan-operasional.md",
       "title": "Panduan Deployment, Eksekusi, dan Pengujian Lapangan",
       "type": "guide",
+      "lang": "id",
       "aliases": ["deployment-guide", "runbook"],
       "sources": [
         "docker-compose.yml",
@@ -169,15 +177,201 @@
         "kesiapan-operasional",
         "codemap"
       ]
+    },
+    "en-index": {
+      "path": "wiki/en/index.md",
+      "title": "MiroFish - Swarm Intelligence & Predictive Social Simulation Engine",
+      "type": "overview",
+      "lang": "en",
+      "aliases": ["en-overview", "en-portal", "en-home"],
+      "sources": ["./", "backend/", "frontend/", "locales/"],
+      "links_to": [
+        "en-architecture",
+        "en-multi-platform-expansion",
+        "en-searxng-web-research",
+        "en-operational-readiness",
+        "en-codemap",
+        "en-operational-guide"
+      ],
+      "linked_from": [
+        "index",
+        "en-architecture",
+        "en-multi-platform-expansion",
+        "en-searxng-web-research",
+        "en-operational-readiness",
+        "en-codemap",
+        "en-operational-guide"
+      ]
+    },
+    "en-overview": {
+      "path": "wiki/en/overview.md",
+      "title": "MiroFish Overview (Wiki Portal Mirror)",
+      "type": "overview",
+      "lang": "en",
+      "aliases": ["en-overview-mirror"],
+      "sources": ["./"],
+      "links_to": ["en-index"],
+      "linked_from": ["en-index"]
+    },
+    "en-architecture": {
+      "path": "wiki/en/architecture.md",
+      "title": "Comprehensive System Architecture: MiroFish v3.1 Enterprise",
+      "type": "concept",
+      "lang": "en",
+      "aliases": ["en-system-architecture", "en-system-design"],
+      "sources": [
+        "backend/app/",
+        "backend/app/services/",
+        "backend/app/models/",
+        "frontend/src/"
+      ],
+      "links_to": [
+        "en-index",
+        "en-multi-platform-expansion",
+        "en-searxng-web-research",
+        "en-operational-readiness",
+        "en-codemap"
+      ],
+      "linked_from": [
+        "en-index",
+        "en-multi-platform-expansion",
+        "en-searxng-web-research",
+        "en-operational-readiness",
+        "en-codemap",
+        "en-operational-guide"
+      ]
+    },
+    "en-multi-platform-expansion": {
+      "path": "wiki/en/multi-platform-expansion.md",
+      "title": "7 Social Media Platforms Specification: MiroFish v3.1 Enterprise",
+      "type": "concept",
+      "lang": "en",
+      "aliases": ["en-7-platforms"],
+      "sources": [
+        "backend/app/services/oasis_profile_generator.py",
+        "backend/app/services/simulation_config_generator.py",
+        "backend/scripts/run_parallel_simulation.py"
+      ],
+      "links_to": [
+        "en-index",
+        "en-architecture",
+        "en-operational-readiness",
+        "en-codemap"
+      ],
+      "linked_from": [
+        "en-index",
+        "en-architecture"
+      ]
+    },
+    "en-searxng-web-research": {
+      "path": "wiki/en/searxng-web-research.md",
+      "title": "Step 0 Integrated Web Research Powered by SearXNG: MiroFish v3.1 Enterprise",
+      "type": "concept",
+      "lang": "en",
+      "aliases": ["en-searxng", "en-step0"],
+      "sources": [
+        "backend/app/models/entities.py",
+        "backend/app/services/graph_builder.py",
+        "backend/app/utils/file_parser.py"
+      ],
+      "links_to": [
+        "en-index",
+        "en-architecture",
+        "en-operational-readiness",
+        "en-codemap"
+      ],
+      "linked_from": [
+        "en-index",
+        "en-architecture"
+      ]
+    },
+    "en-operational-readiness": {
+      "path": "wiki/en/operational-readiness.md",
+      "title": "Operational Readiness, Persistence, and System Resilience: MiroFish v3.1 Enterprise",
+      "type": "concept",
+      "lang": "en",
+      "aliases": ["en-resilience", "en-wal-persistence"],
+      "sources": [
+        "backend/app/models/entities.py",
+        "backend/app/models/task.py",
+        "backend/app/models/project.py",
+        "backend/app/config.py"
+      ],
+      "links_to": [
+        "en-index",
+        "en-architecture",
+        "en-operational-guide",
+        "en-codemap"
+      ],
+      "linked_from": [
+        "en-index",
+        "en-architecture",
+        "en-multi-platform-expansion",
+        "en-searxng-web-research",
+        "en-codemap",
+        "en-operational-guide"
+      ]
+    },
+    "en-codemap": {
+      "path": "wiki/en/codemap.md",
+      "title": "Comprehensive Codemap: Architecture, Dependencies, and Subagent Ownership (v3.1)",
+      "type": "reference",
+      "lang": "en",
+      "aliases": ["en-code-structure", "en-subagents"],
+      "sources": [
+        "backend/",
+        "frontend/",
+        "locales/",
+        "scripts/",
+        "tests/"
+      ],
+      "links_to": [
+        "en-index",
+        "en-architecture",
+        "en-operational-readiness",
+        "en-operational-guide"
+      ],
+      "linked_from": [
+        "en-index",
+        "en-architecture",
+        "en-multi-platform-expansion",
+        "en-searxng-web-research",
+        "en-operational-readiness",
+        "en-operational-guide"
+      ]
+    },
+    "en-operational-guide": {
+      "path": "wiki/en/operational-guide.md",
+      "title": "Deployment, Execution, and Field Testing Runbook: MiroFish v3.1 Enterprise",
+      "type": "guide",
+      "lang": "en",
+      "aliases": ["en-deployment-guide", "en-runbook"],
+      "sources": [
+        "docker-compose.yml",
+        "backend/run.py",
+        "backend/app/config.py",
+        "frontend/vite.config.js"
+      ],
+      "links_to": [
+        "en-index",
+        "en-architecture",
+        "en-operational-readiness",
+        "en-codemap"
+      ],
+      "linked_from": [
+        "en-index",
+        "en-operational-readiness",
+        "en-codemap"
+      ]
     }
   },
   "source_map": {
-    "backend/app/api/": ["arsitektur", "codemap", "panduan-operasional"],
-    "backend/app/models/": ["arsitektur", "kesiapan-operasional", "codemap"],
-    "backend/app/services/": ["arsitektur", "ekspansi-multi-platform", "riset-web-searxng", "codemap"],
-    "backend/app/utils/": ["arsitektur", "riset-web-searxng", "kesiapan-operasional", "codemap"],
-    "backend/scripts/": ["ekspansi-multi-platform", "codemap", "panduan-operasional"],
-    "frontend/": ["arsitektur", "codemap", "panduan-operasional"],
-    "locales/": ["index", "arsitektur", "ekspansi-multi-platform", "codemap"]
+    "backend/app/api/": ["arsitektur", "codemap", "panduan-operasional", "en-architecture", "en-codemap", "en-operational-guide"],
+    "backend/app/models/": ["arsitektur", "kesiapan-operasional", "codemap", "en-architecture", "en-operational-readiness", "en-codemap"],
+    "backend/app/services/": ["arsitektur", "ekspansi-multi-platform", "riset-web-searxng", "codemap", "en-architecture", "en-multi-platform-expansion", "en-searxng-web-research", "en-codemap"],
+    "backend/app/utils/": ["arsitektur", "riset-web-searxng", "kesiapan-operasional", "codemap", "en-architecture", "en-searxng-web-research", "en-operational-readiness", "en-codemap"],
+    "backend/scripts/": ["ekspansi-multi-platform", "codemap", "panduan-operasional", "en-multi-platform-expansion", "en-codemap", "en-operational-guide"],
+    "frontend/": ["arsitektur", "codemap", "panduan-operasional", "en-architecture", "en-codemap", "en-operational-guide"],
+    "locales/": ["index", "arsitektur", "ekspansi-multi-platform", "codemap", "en-index", "en-architecture", "en-multi-platform-expansion", "en-codemap"]
   }
 }

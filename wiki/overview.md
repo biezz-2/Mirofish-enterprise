@@ -14,6 +14,8 @@ sources:
   - ./
 ---
 
+> 🌐 **Bahasa / Language**: [Bahasa Indonesia](./overview.md) | [English](./en/overview.md)
+
 # MiroFish Overview (Portal Wikipedia)
 
 Halaman ini merupakan cerminan (*entry point mirror*) dari portal utama: **[[index]]**.

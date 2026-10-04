@@ -14,6 +14,8 @@ sources:
   - backend/app/config.py
 ---
 
+> 🌐 **Bahasa / Language**: [Bahasa Indonesia](./kesiapan-operasional.md) | [English](./en/operational-readiness.md)
+
 # Kesiapan Operasional, Persistensi, dan Ketahanan Sistem: MiroFish v3.1 Enterprise
 
 Dokumen ini mendokumentasikan spesifikasi ketahanan operasional (*operational readiness and enterprise resilience*) MiroFish v3.1. Lingkungan simulasi sosial berskala besar membutuhkan jaminan integritas data yang kokoh, arsitektur pemulihan kegagalan nir-kehilangan (*zero-loss recovery*), perlindungan rahasia terenkripsi, serta gerbang integrasi protokol terbuka.

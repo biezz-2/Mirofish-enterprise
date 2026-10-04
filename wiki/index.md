@@ -9,6 +9,8 @@ sources:
   - locales/
 ---
 
+> 🌐 **Bahasa / Language**: [Bahasa Indonesia](./index.md) | [English](./en/index.md)
+
 # MiroFish: Portal Utama Wikipedia MiroFish (v3.1 Enterprise)
 
 Selamat datang di Dokumentasi Resmi dan Portal Wikipedia Arsitektur **MiroFish**. Dokumen ini merangkum seluruh fondasi teoritis, arsitektur teknis, implementasi kode sumber, spesifikasi multi-platform, riset terintegrasi, ketahanan operasional, serta panduan pengoperasian sistem simulasi kecerdasan kelompok (*swarm intelligence*) terdepan.

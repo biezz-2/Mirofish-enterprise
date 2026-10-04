@@ -1,0 +1,12 @@
+# MiroFish Enterprise v3.1 English Documentation Index for LLMs
+
+> MiroFish is a predictive social simulation sandbox and multi-agent swarm intelligence platform. It converts seed real-world materials into high-fidelity simulated digital societies across 7 social platforms (Twitter, X, Reddit, TikTok, Instagram, Facebook, and Threads) with integrated GraphRAG knowledge graphs and autonomous ReACT prediction analysts.
+
+## Technical Documentation Chapters
+- [Main Wikipedia Portal](./index.md): System executive summary, design philosophy, architectural evolution, and component catalog.
+- [Comprehensive System Architecture](./architecture.md): Multi-tier service topology, v2 vs v3.1 matrix, Mermaid dataflow diagrams, and physical/logical data partitioning.
+- [7 Social Media Platforms Specification](./multi-platform-expansion.md): Platform algorithms, legal action spaces, quantitative parameters, and OCEAN psychological profiles.
+- [Step 0 Web Research Powered by SearXNG](./searxng-web-research.md): Private metasearch, 3-layer anti-prompt injection shield, credibility scoring formula, and graph enrichment pipeline.
+- [Operational Readiness, Persistence, & Resilience](./operational-readiness.md): SQLite WAL/Postgres schema, cryptographic SHA-256 checkpoints, boot-time crash recovery scanner, AES-256-GCM vault, and 9Router gateway.
+- [Comprehensive Codemap & Dependencies](./codemap.md): Canonical directory tree, cross-module call matrices, micro dataflows, and 10-subagent ownership map.
+- [Deployment, Execution, & Field Testing Runbook](./operational-guide.md): Prerequisites, .env setup, Docker Compose, PM2 multi-OS runbook, REST API reference, and resilience proof gates E1/E2.
