@@ -66,10 +66,12 @@ class GraphBuilderService:
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or Config.ZEP_API_KEY
-        if not self.api_key:
-            raise ValueError("ZEP_API_KEY 未配置")
-        
-        self.client = get_zep_client(self.api_key)
+        self.client = None
+        if self.api_key and not str(self.api_key).startswith("dummy"):
+            try:
+                self.client = get_zep_client(self.api_key)
+            except Exception:
+                self.client = None
         self.task_manager = TaskManager()
     
     def build_graph_async(
@@ -807,6 +809,13 @@ class GraphBuilderService:
         Returns:
             包含nodes和edges的字典，包括时间信息、属性等详细数据
         """
+        from .local_graph_service import LocalGraphService
+        if LocalGraphService.has_local_graph(graph_id):
+            return LocalGraphService.get_local_graph(graph_id)
+
+        if not self.client:
+            raise ValueError(f"Graf {graph_id} tidak ditemukan secara lokal dan Zep Cloud tidak terkonfigurasi")
+
         nodes = fetch_all_nodes(self.client, graph_id)
         edges = fetch_all_edges(self.client, graph_id)
 
@@ -876,4 +885,10 @@ class GraphBuilderService:
     
     def delete_graph(self, graph_id: str):
         """删除图谱"""
-        self.client.graph.delete(graph_id=graph_id)
+        from .local_graph_service import LocalGraphService
+        LocalGraphService.delete_local_graph(graph_id)
+        if self.client:
+            try:
+                self.client.graph.delete(graph_id=graph_id)
+            except Exception:
+                pass

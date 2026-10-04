@@ -429,10 +429,12 @@ class ZepToolsService:
     
     def __init__(self, api_key: Optional[str] = None, llm_client: Optional[LLMClient] = None):
         self.api_key = api_key or Config.ZEP_API_KEY
-        if not self.api_key:
-            raise ValueError("ZEP_API_KEY 未配置")
-        
-        self.client = get_zep_client(self.api_key)
+        self.client = None
+        if self.api_key and not str(self.api_key).startswith("dummy"):
+            try:
+                self.client = get_zep_client(self.api_key)
+            except Exception:
+                self.client = None
         # LLM客户端用于InsightForge生成子问题
         self._llm_client = llm_client
         logger.info(t("console.zepToolsInitialized"))
@@ -478,6 +480,10 @@ class ZepToolsService:
         """
         logger.info(t("console.graphSearch", graphId=graph_id, query=query[:50]))
         
+        from .local_graph_service import LocalGraphService
+        if LocalGraphService.has_local_graph(graph_id) or not self.client:
+            return self._local_search(graph_id, query, limit, scope)
+
         zep_query = normalize_zep_search_query(query)
         zep_limit = normalize_zep_search_limit(limit)
 
@@ -653,6 +659,21 @@ class ZepToolsService:
         Returns:
             节点列表
         """
+        from .local_graph_service import LocalGraphService
+        if LocalGraphService.has_local_graph(graph_id):
+            data = LocalGraphService.get_local_graph(graph_id)
+            nodes = data.get("nodes", [])
+            result = []
+            for n in nodes:
+                result.append(NodeInfo(
+                    uuid=str(n.get("uuid", "")),
+                    name=n.get("name", ""),
+                    labels=n.get("labels", []),
+                    summary=n.get("summary", ""),
+                    attributes=n.get("attributes", {})
+                ))
+            return result
+
         logger.info(t("console.fetchingAllNodes", graphId=graph_id))
 
         nodes = fetch_all_nodes(self.client, graph_id)
@@ -682,6 +703,27 @@ class ZepToolsService:
         Returns:
             边列表（包含created_at, valid_at, invalid_at, expired_at）
         """
+        from .local_graph_service import LocalGraphService
+        if LocalGraphService.has_local_graph(graph_id):
+            data = LocalGraphService.get_local_graph(graph_id)
+            edges = data.get("edges", [])
+            result = []
+            for e in edges:
+                edge_info = EdgeInfo(
+                    uuid=str(e.get("uuid", "")),
+                    name=e.get("name", ""),
+                    fact=e.get("fact", ""),
+                    source_node_uuid=e.get("source_node_uuid", ""),
+                    target_node_uuid=e.get("target_node_uuid", "")
+                )
+                if include_temporal:
+                    edge_info.created_at = e.get("created_at")
+                    edge_info.valid_at = e.get("valid_at")
+                    edge_info.invalid_at = e.get("invalid_at")
+                    edge_info.expired_at = e.get("expired_at")
+                result.append(edge_info)
+            return result
+
         logger.info(t("console.fetchingAllEdges", graphId=graph_id))
 
         edges = fetch_all_edges(self.client, graph_id)

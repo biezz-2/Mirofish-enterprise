@@ -482,16 +482,9 @@ def _build_graph_impl():
     try:
         logger.info("=== 开始构建图谱 ===")
         
-        # 检查配置
-        errors = []
-        if not Config.ZEP_API_KEY:
-            errors.append(t('api.zepApiKeyMissing'))
-        if errors:
-            logger.error(f"配置错误: {errors}")
-            return jsonify({
-                "success": False,
-                "error": t('api.configError', details="; ".join(errors))
-            }), 500
+        # 检查配置: jika ZEP_API_KEY kosong/dummy, gunakan Local LLM GraphRAG
+        if not Config.ZEP_API_KEY or str(Config.ZEP_API_KEY).startswith('dummy'):
+            logger.info('ZEP_API_KEY dummy/belum dikonfigurasi; sistem otomatis menggunakan Mesin Ekstraksi Graf Mandiri (Local LLM GraphRAG)')
         
         # 解析请求
         data = request.get_json() or {}
@@ -676,104 +669,101 @@ def _build_graph_impl():
                 builder.validate_batch_chunks(chunks, batch_size=350)
                 total_chunks = len(chunks)
                 
-                if resume_existing_batch:
-                    graph_id = project.graph_id
-                    operation_id = builder.build_operation_id(graph_id, chunks)
-                    if operation_id != project.zep_batch_operation_id:
-                        raise RuntimeError(
-                            "Persisted Zep batch does not match the current graph input"
+                use_local_engine = not Config.ZEP_API_KEY or str(Config.ZEP_API_KEY).startswith("dummy")
+                submission = None
+
+                if not use_local_engine and not resume_existing_batch:
+                    try:
+                        task_manager.update_task(
+                            task_id,
+                            message=t('progress.creatingZepGraph'),
+                            progress=10
                         )
-                    submission = BatchSubmission(
-                        batch_id=project.zep_batch_id,
-                        operation_id=operation_id,
-                        episode_uuids=[],
-                        item_count=total_chunks,
+
+                        def remember_graph(gid):
+                            project.graph_id = gid
+                            ProjectManager.save_project(project)
+
+                        graph_id = builder.create_graph(
+                            name=graph_name,
+                            graph_id_callback=remember_graph,
+                        )
+                        builder.set_ontology(graph_id, ontology)
+
+                        def add_progress_callback(msg, progress_ratio):
+                            progress = 15 + int(progress_ratio * 40)
+                            task_manager.update_task(task_id, message=msg, progress=progress)
+
+                        def remember_batch(batch_id, operation_id):
+                            project.zep_batch_id = batch_id
+                            project.zep_batch_operation_id = operation_id
+                            ProjectManager.save_project(project)
+
+                        submission = builder.add_text_batches(
+                            graph_id,
+                            chunks,
+                            batch_size=350,
+                            progress_callback=add_progress_callback,
+                            batch_created_callback=remember_batch,
+                        )
+                    except Exception as zep_err:
+                        build_logger.warning(f"Zep Cloud error ({zep_err}); beralih ke Mesin Graf Mandiri...")
+                        use_local_engine = True
+
+                if use_local_engine:
+                    build_logger.info(f"[{task_id}] Menjalankan Mesin Ekstraksi Graf Mandiri (Local LLM GraphRAG)...")
+                    graph_id = project.graph_id or f"mirofish_{uuid.uuid4().hex[:16]}"
+                    project.graph_id = graph_id
+                    ProjectManager.save_project(project)
+
+                    def local_cb(msg, ratio):
+                        prog = int(10 + ratio * 85)
+                        task_manager.update_task(task_id, message=msg, progress=prog)
+
+                    from ..services.local_graph_service import LocalGraphService
+                    graph_data = LocalGraphService.extract_graph_with_llm(
+                        text=text,
+                        ontology=ontology,
+                        graph_name=graph_name,
+                        graph_id=graph_id,
+                        project_id=project_id,
+                        progress_callback=local_cb,
                     )
+                    node_count = graph_data.get("node_count", 0)
+                    edge_count = graph_data.get("edge_count", 0)
+                else:
+                    if resume_existing_batch:
+                        graph_id = project.graph_id
+                        operation_id = builder.build_operation_id(graph_id, chunks)
+                        if operation_id != project.zep_batch_operation_id:
+                            raise RuntimeError(
+                                "Persisted Zep batch does not match the current graph input"
+                            )
+                        submission = BatchSubmission(
+                            batch_id=project.zep_batch_id,
+                            operation_id=operation_id,
+                            episode_uuids=[],
+                            item_count=total_chunks,
+                        )
+
                     task_manager.update_task(
                         task_id,
                         message=t('progress.waitingZepProcess'),
-                        progress=55,
+                        progress=55
                     )
-                else:
-                    # 创建图谱
-                    task_manager.update_task(
-                        task_id,
-                        message=t('progress.creatingZepGraph'),
-                        progress=10
-                    )
-
-                    def remember_graph(graph_id):
-                        project.graph_id = graph_id
-                        ProjectManager.save_project(project)
-
-                    graph_id = builder.create_graph(
-                        name=graph_name,
-                        graph_id_callback=remember_graph,
-                    )
-
-                    # 设置本体
-                    task_manager.update_task(
-                        task_id,
-                        message=t('progress.settingOntology'),
-                        progress=15
-                    )
-                    builder.set_ontology(graph_id, ontology)
-
-                    # 添加文本（progress_callback 签名是 (msg, progress_ratio)）
-                    def add_progress_callback(msg, progress_ratio):
-                        progress = 15 + int(progress_ratio * 40)  # 15% - 55%
-                        task_manager.update_task(
-                            task_id,
-                            message=msg,
-                            progress=progress
-                        )
+                    def wait_progress_callback(msg, progress_ratio):
+                        progress = 55 + int(progress_ratio * 35)
+                        task_manager.update_task(task_id, message=msg, progress=progress)
+                    builder._wait_for_batch(submission, wait_progress_callback)
 
                     task_manager.update_task(
                         task_id,
-                        message=t('progress.addingChunks', count=total_chunks),
-                        progress=15
+                        message=t('progress.fetchingGraphData'),
+                        progress=95
                     )
-
-                    def remember_batch(batch_id, operation_id):
-                        project.zep_batch_id = batch_id
-                        project.zep_batch_operation_id = operation_id
-                        ProjectManager.save_project(project)
-
-                    submission = builder.add_text_batches(
-                        graph_id,
-                        chunks,
-                        batch_size=350,
-                        progress_callback=add_progress_callback,
-                        batch_created_callback=remember_batch,
-                    )
-                
-                # 等待Zep处理完成（查询每个episode的processed状态）
-                task_manager.update_task(
-                    task_id,
-                    message=t('progress.waitingZepProcess'),
-                    progress=55
-                )
-                
-                def wait_progress_callback(msg, progress_ratio):
-                    progress = 55 + int(progress_ratio * 35)  # 55% - 90%
-                    task_manager.update_task(
-                        task_id,
-                        message=msg,
-                        progress=progress
-                    )
-                
-                builder._wait_for_batch(submission, wait_progress_callback)
-                
-                # 获取图谱数据
-                task_manager.update_task(
-                    task_id,
-                    message=t('progress.fetchingGraphData'),
-                    progress=95
-                )
-                graph_data = builder.get_graph_data(graph_id)
-                
-                node_count = graph_data.get("node_count", 0)
-                edge_count = graph_data.get("edge_count", 0)
+                    graph_data = builder.get_graph_data(graph_id)
+                    node_count = graph_data.get("node_count", 0)
+                    edge_count = graph_data.get("edge_count", 0)
                 build_logger.info(f"[{task_id}] 图谱构建完成: graph_id={graph_id}, 节点={node_count}, 边={edge_count}")
 
                 # Publish local project/task terminal state under the same
@@ -794,7 +784,7 @@ def _build_graph_impl():
                             "node_count": node_count,
                             "edge_count": edge_count,
                             "chunk_count": total_chunks,
-                            "zep_batch_id": submission.batch_id,
+                            "zep_batch_id": getattr(submission, "batch_id", None),
                         }
                     )
                 
@@ -882,6 +872,14 @@ def get_graph_data(graph_id: str):
     获取图谱数据（节点和边）
     """
     try:
+        from ..services.local_graph_service import LocalGraphService
+        if LocalGraphService.has_local_graph(graph_id):
+            local_data = LocalGraphService.get_local_graph(graph_id)
+            if local_data:
+                return jsonify({
+                    'success': True,
+                    'data': local_data
+                })
         if not Config.ZEP_API_KEY:
             return jsonify({
                 "success": False,
@@ -910,11 +908,7 @@ def delete_graph(graph_id: str):
     删除Zep图谱
     """
     try:
-        if not Config.ZEP_API_KEY:
-            return jsonify({
-                "success": False,
-                "error": t('api.zepApiKeyMissing')
-            }), 500
+        from ..services.local_graph_service import LocalGraphService
         
         projects = ProjectManager.find_projects_by_graph_id(graph_id)
         if not projects:

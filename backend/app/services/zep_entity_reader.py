@@ -79,10 +79,12 @@ class ZepEntityReader:
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or Config.ZEP_API_KEY
-        if not self.api_key:
-            raise ValueError("ZEP_API_KEY 未配置")
-        
-        self.client = get_zep_client(self.api_key)
+        self.client = None
+        if self.api_key and not str(self.api_key).startswith("dummy"):
+            try:
+                self.client = get_zep_client(self.api_key)
+            except Exception:
+                self.client = None
     
     def _call_with_retry(
         self, 
@@ -120,6 +122,15 @@ class ZepEntityReader:
         Returns:
             节点列表
         """
+        from .local_graph_service import LocalGraphService
+        if LocalGraphService.has_local_graph(graph_id):
+            data = LocalGraphService.get_local_graph(graph_id)
+            return data.get("nodes", [])
+
+        if not self.client:
+            logger.warning(f"Graf {graph_id} tidak ada secara lokal dan Zep Cloud tidak aktif")
+            return []
+
         logger.info(f"获取图谱 {graph_id} 的所有节点...")
 
         nodes = fetch_all_nodes(self.client, graph_id)
@@ -147,6 +158,15 @@ class ZepEntityReader:
         Returns:
             边列表
         """
+        from .local_graph_service import LocalGraphService
+        if LocalGraphService.has_local_graph(graph_id):
+            data = LocalGraphService.get_local_graph(graph_id)
+            return data.get("edges", [])
+
+        if not self.client:
+            logger.warning(f"Graf {graph_id} tidak ada secara lokal dan Zep Cloud tidak aktif")
+            return []
+
         logger.info(f"获取图谱 {graph_id} 的所有边...")
 
         edges = fetch_all_edges(self.client, graph_id)
@@ -351,6 +371,57 @@ class ZepEntityReader:
         Returns:
             EntityNode或None
         """
+        from .local_graph_service import LocalGraphService
+        if LocalGraphService.has_local_graph(graph_id):
+            all_nodes = self.get_all_nodes(graph_id)
+            matching = [n for n in all_nodes if n.get("uuid") == entity_uuid]
+            if not matching:
+                return None
+            node = matching[0]
+            edges = self.get_node_edges(entity_uuid, graph_id=graph_id)
+            node_map = {n["uuid"]: n for n in all_nodes}
+
+            related_edges = []
+            related_node_uuids = set()
+
+            for edge in edges:
+                if edge.get("source_node_uuid") == entity_uuid:
+                    related_edges.append({
+                        "direction": "outgoing",
+                        "edge_name": edge.get("name", ""),
+                        "fact": edge.get("fact", ""),
+                        "target_node_uuid": edge.get("target_node_uuid", ""),
+                    })
+                    related_node_uuids.add(edge.get("target_node_uuid", ""))
+                else:
+                    related_edges.append({
+                        "direction": "incoming",
+                        "edge_name": edge.get("name", ""),
+                        "fact": edge.get("fact", ""),
+                        "source_node_uuid": edge.get("source_node_uuid", ""),
+                    })
+                    related_node_uuids.add(edge.get("source_node_uuid", ""))
+
+            related_nodes = []
+            for r_uuid in related_node_uuids:
+                if r_uuid in node_map:
+                    rn = node_map[r_uuid]
+                    related_nodes.append({
+                        "uuid": rn["uuid"],
+                        "name": rn.get("name", ""),
+                        "labels": rn.get("labels", []),
+                        "summary": rn.get("summary", ""),
+                    })
+
+            return EntityNode(
+                uuid=node["uuid"],
+                name=node.get("name", ""),
+                labels=node.get("labels", []),
+                summary=node.get("summary", ""),
+                attributes=node.get("attributes", {}),
+                related_edges=related_edges,
+                related_nodes=related_nodes,
+            )
         try:
             # 使用重试机制获取节点
             node = self._call_with_retry(
