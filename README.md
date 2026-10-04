@@ -1,205 +1,331 @@
 <div align="center">
 
-<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="MiroFish Logo" width="75%"/>
+<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="MiroFish Enterprise Logo" width="70%"/>
 
-<a href="https://trendshift.io/repositories/16144" target="_blank"><img src="https://trendshift.io/api/badge/repositories/16144" alt="666ghj%2FMiroFish | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+# 🌊 MiroFish Enterprise (v3.1)
+### Autonomous Swarm Intelligence & Multi-Agent Predictive Simulation Sandbox
+*Simulate high-fidelity parallel societies, forecast public opinion dynamics, and test macro decisions with zero risk.*
 
-简洁通用的群体智能引擎，预测万物
-</br>
-<em>A Simple and Universal Swarm Intelligence Engine, Predicting Anything</em>
+[![GitHub Release](https://img.shields.io/github/v/release/biezz-2/Mirofish-enterprise?style=for-the-badge&color=2563EB)](https://github.com/biezz-2/Mirofish-enterprise/releases)
+[![Python Version](https://img.shields.io/badge/Python-3.10%20--%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B%20LTS-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![PM2 Ready](https://img.shields.io/badge/PM2-Cluster%20%26%20Fork-2B037A?style=for-the-badge&logo=pm2&logoColor=white)](https://pm2.keymetrics.io/)
+[![Docker Ready](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](./LICENSE)
 
-<a href="https://www.shanda.com/" target="_blank"><img src="./static/image/shanda_logo.png" alt="666ghj%2FMiroFish | Shanda" height="40"/></a>
+---
 
-[![GitHub Stars](https://img.shields.io/github/stars/666ghj/MiroFish?style=flat-square&color=DAA520)](https://github.com/666ghj/MiroFish/stargazers)
-[![GitHub Watchers](https://img.shields.io/github/watchers/666ghj/MiroFish?style=flat-square)](https://github.com/666ghj/MiroFish/watchers)
-[![GitHub Forks](https://img.shields.io/github/forks/666ghj/MiroFish?style=flat-square)](https://github.com/666ghj/MiroFish/network)
-[![Docker](https://img.shields.io/badge/Docker-Build-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/666ghj/MiroFish)
+### 🌐 Language Navigation / Navigasi Bahasa
+**[English (Default)](./README.md)** | **[Bahasa Indonesia](./README-ID.md)** | **[中文文档](./README-ZH.md)**
 
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](http://discord.gg/ePf5aPaHnA)
-[![X](https://img.shields.io/badge/X-Follow-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/mirofish_ai)
-[![Instagram](https://img.shields.io/badge/Instagram-Follow-E4405F?style=flat-square&logo=instagram&logoColor=white)](https://www.instagram.com/mirofish_ai/)
-
-[English](./README.md) | [Bahasa Indonesia](./README-ID.md) | [中文文档](./README-ZH.md)
-
-📚 **Wiki Documentation**: [English](./wiki/en/index.md) | [Bahasa Indonesia](./wiki/index.md)
+📚 **Comprehensive Architecture Wikipedia**:
+[English Documentation (`wiki/en/`)](./wiki/en/index.md) | [Dokumentasi Bahasa Indonesia (`wiki/`)](./wiki/index.md)
 
 </div>
 
-## ⚡ Overview
+---
 
-**MiroFish** is a next-generation AI prediction engine powered by multi-agent technology. By extracting seed information from the real world (such as breaking news, policy drafts, or financial signals), it automatically constructs a high-fidelity parallel digital world. Within this space, thousands of intelligent agents with independent personalities, long-term memory, and behavioral logic freely interact and undergo social evolution. You can inject variables dynamically from a "God's-eye view" to precisely deduce future trajectories — **rehearse the future in a digital sandbox, and win decisions after countless simulations**.
+## ⚡ What is MiroFish Enterprise?
 
-> You only need to: Upload seed materials (data analysis reports or interesting novel stories) and describe your prediction requirements in natural language</br>
-> MiroFish will return: A detailed prediction report and a deeply interactive high-fidelity digital world
+**MiroFish Enterprise** is an industrial-grade swarm intelligence prediction and social simulation sandbox maintained by **[biezz-2](https://github.com/biezz-2)**.
 
-### Our Vision
+By taking seed information from real-world materials (breaking news events, public policy drafts, market signals, or complex literature), MiroFish automatically orchestrates hundreds to thousands of autonomous AI agents within a high-fidelity digital twin society. Each agent is equipped with:
+- **Big Five OCEAN Psychological Profiling**: Dynamic openness, conscientiousness, extraversion, agreeableness, and neuroticism.
+- **Dual GraphRAG Long-Term Memory**: Structured temporal knowledge graphs powered by Zep Cloud and Neo4j.
+- **7-Platform Behavioral Models**: Dedicated interaction and algorithmic feeds for modern social platforms.
 
-MiroFish is dedicated to creating a swarm intelligence mirror that maps reality. By capturing the collective emergence triggered by individual interactions, we break through the limitations of traditional prediction:
+Decision-makers can observe emergent phenomena from a "God's-eye view", inject dynamic counter-measures, and generate evidence-backed predictive intelligence reports.
 
-- **At the Macro Level**: We are a rehearsal laboratory for decision-makers, allowing policies and public relations to be tested at zero risk
-- **At the Micro Level**: We are a creative sandbox for individual users — whether deducing novel endings or exploring imaginative scenarios, everything can be fun, playful, and accessible
+---
 
-From serious predictions to playful simulations, we let every "what if" see its outcome, making it possible to predict anything.
+## 🏛️ System Architecture & Workflow
 
-## 🌐 Live Demo
+```
+                                  [ Seed Materials & Query ]
+                                               │
+                                               ▼
+                         ┌───────────────────────────────────────────┐
+                         │   Step 0: Private Web Research (SearXNG)  │
+                         │   • 3-Layer Anti-Prompt Injection Shield  │
+                         │   • Domain Credibility Scoring (S_domain) │
+                         └─────────────────────┬─────────────────────┘
+                                               │
+                                               ▼
+                         ┌───────────────────────────────────────────┐
+                         │   Step 1: GraphRAG Knowledge Modeling     │
+                         │   • Entity / Relation Ontology Extraction │
+                         │   • Zep Cloud & Graphiti Neo4j Ingestion  │
+                         └─────────────────────┬─────────────────────┘
+                                               │
+                                               ▼
+                         ┌───────────────────────────────────────────┐
+                         │   Step 2: OCEAN & 7-Platform Environment  │
+                         │   • Big Five Personality Synthesis        │
+                         │   • Platform Feed Scoring Calibration     │
+                         └─────────────────────┬─────────────────────┘
+                                               │
+                                               ▼
+                         ┌───────────────────────────────────────────┐
+                         │   Step 3: Parallel Swarm Simulation       │
+                         │   • Synchronized Round Barriers           │
+                         │   • SQLite WAL & SHA-256 Checkpoints      │
+                         └─────────────────────┬─────────────────────┘
+                                               │
+                                               ▼
+                         ┌───────────────────────────────────────────┐
+                         │   Step 4: ReACT ReportAgent Deduction     │
+                         │   • Autonomous Tool Use (InsightForge)    │
+                         │   • Empirical Entity Citation Reports     │
+                         └─────────────────────┬─────────────────────┘
+                                               │
+                                               ▼
+                         ┌───────────────────────────────────────────┐
+                         │   Step 5: Human-in-the-Loop & IPC Chat    │
+                         │   • Real-Time Interactive Agent Interview │
+                         │   • Dynamic Intervention & Variable Shift │
+                         └───────────────────────────────────────────┘
+```
 
-Welcome to visit our online demo environment and experience a prediction simulation on trending public opinion events we've prepared for you: [mirofish-live-demo](https://666ghj.github.io/mirofish-demo/)
+---
 
-## 📸 Screenshots
+## 🚀 Key Enterprise Features
+
+### 1. 🌐 7-Platform Social Simulation Ecosystem
+Simulate behavioral reactions across distinct platform algorithms:
+
+| Platform | Display Name | Content Limit | Echo Chamber | Viral Threshold | Algorithm Persona |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Twitter** | Twitter | 280 chars | Medium (0.5) | 5,000 | Ephemeral, fast-paced |
+| **X** | X | 25,000 chars | Medium (0.5) | 8,000 | Long-form debate & threads |
+| **Reddit** | Reddit | 40,000 chars | High (0.7) | 300 | Deep threaded discussions |
+| **TikTok** | TikTok | 150 chars | Low (0.4) | 50,000 | Algorithmic viral distribution |
+| **Instagram** | Instagram | 2,200 chars | Medium (0.5) | 10,000 | Visual narrative & aesthetic |
+| **Facebook** | Facebook | 63,000 chars | Very High (0.8)| 8,000 | Broad network & closed groups |
+| **Threads** | Threads | 500 chars | Medium (0.5) | 5,000 | Conversational & text-first |
+
+### 2. 🔍 Step 0 Autonomous Web Research (SearXNG)
+- Self-hosted metasearch cluster querying unbiased global sources without tracking.
+- **3-Layer Anti-Prompt Injection Shield**:
+  1. *Heuristic Pattern Sanitizer*: Strips system override tokens, XML command escapes, and evasion attempts.
+  2. *Model-Based Classifier*: Verifies semantic neutrality before feeding data to agents.
+  3. *Structured Output Limiter*: Restricts external content to validated JSON fact schemas.
+- Mathematical domain credibility scoring: $S_{\text{domain}} = w_{\text{tld}} \cdot c_{\text{author}} \cdot \text{decay}(\Delta t)$.
+
+### 3. 🧠 GraphRAG Knowledge Engine
+- Dual backend adapters:
+  - **Zep Cloud Graph**: Real-time episodic memory graphs with temporal edge decay.
+  - **Graphiti Neo4j**: Self-hosted on-premise graph storage for isolated enterprise deployments.
+- Automatic extraction of entities, relationships, timeline events, and cross-agent sentiment affiliations.
+
+### 4. 🛡️ Operational Resilience & Transactional Safety
+- **SQLite Write-Ahead Logging (WAL)** & PostgreSQL multi-database ORM abstraction.
+- **Deterministic Cryptographic Checkpoints**: Every round snapshot is hashed with SHA-256.
+- **Boot-Time Crash Recovery Scanner**: Automatically detects interrupted simulation jobs and restores execution from the last valid checkpoint.
+- **AES-256-GCM Vault**: Hardened credential security for API keys and endpoint secrets.
+
+### 5. 🤖 ReACT ReportAgent Engine
+- Multi-turn autonomous analyst using ReACT (*Reasoning + Acting*):
+  - Formulates structured research hypotheses.
+  - Dispatches targeted tool queries (`InsightForge`, `PanoramaSearch`, `IPCAgentInterview`).
+  - Synthesizes comprehensive reports with citations to graph nodes and timeline timestamps.
+
+### 6. 🔌 Model Context Protocol (MCP) Server
+- Standardized MCP server integration via `mcp_server` (`stdio` transport) allowing AI assistants (Claude, Cursor, Cline) to:
+  - Discover simulation projects (`list_projects`)
+  - Poll job progress and checkpoint telemetry (`get_job_status`)
+  - Run zero-leakage web research (`run_web_research`)
+  - Search temporal knowledge graphs (`search_knowledge_graph`)
+
+---
+
+## 📸 Interface Screenshots
 
 <div align="center">
 <table>
 <tr>
-<td><img src="./static/image/Screenshot/运行截图1.png" alt="Screenshot 1" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图2.png" alt="Screenshot 2" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图1.png" alt="Platform Selection & Topic Input" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图2.png" alt="GraphRAG Knowledge Builder" width="100%"/></td>
 </tr>
 <tr>
-<td><img src="./static/image/Screenshot/运行截图3.png" alt="Screenshot 3" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图4.png" alt="Screenshot 4" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图3.png" alt="Multi-Agent Persona Generator" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图4.png" alt="Parallel Social Simulation Monitor" width="100%"/></td>
 </tr>
 <tr>
-<td><img src="./static/image/Screenshot/运行截图5.png" alt="Screenshot 5" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图6.png" alt="Screenshot 6" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图5.png" alt="Agent Interview & Dynamic Intervention" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图6.png" alt="ReACT Generated Intelligence Report" width="100%"/></td>
 </tr>
 </table>
 </div>
 
-## 🎬 Demo Videos
+---
 
-### 1. Wuhan University Public Opinion Simulation + MiroFish Project Introduction
+## ⚙️ Quick Start Runbook
 
-<div align="center">
-<a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" target="_blank"><img src="./static/image/武大模拟演示封面.png" alt="MiroFish Demo Video" width="75%"/></a>
+### Prerequisites
 
-Click the image to watch the complete demo video for prediction using BettaFish-generated "Wuhan University Public Opinion Report"
-</div>
+| Component | Minimum Version | Purpose |
+| :--- | :--- | :--- |
+| **Node.js** | 18+ LTS | Vite Frontend & PM2 runtime |
+| **Python** | 3.10 – 3.13 | Flask Backend & OASIS Engine |
+| **PM2** | Latest | Microservice process management |
+| **Docker** (Optional) | 24+ | Containerized SearXNG & Neo4j |
 
-### 2. Dream of the Red Chamber Lost Ending Simulation
+---
 
-<div align="center">
-<a href="https://www.bilibili.com/video/BV1cPk3BBExq" target="_blank"><img src="./static/image/红楼梦模拟推演封面.jpg" alt="MiroFish Demo Video" width="75%"/></a>
-
-Click the image to watch MiroFish's deep prediction of the lost ending based on hundreds of thousands of words from the first 80 chapters of "Dream of the Red Chamber"
-</div>
-
-> **Financial Prediction**, **Political News Prediction** and more examples coming soon...
-
-## 🔄 Workflow
-
-1. **Graph Building**: Seed extraction & Individual/collective memory injection & GraphRAG construction
-2. **Environment Setup**: Entity relationship extraction & Persona generation & Agent configuration injection
-3. **Simulation**: Dual-platform parallel simulation & Auto-parse prediction requirements & Dynamic temporal memory updates
-4. **Report Generation**: ReportAgent with rich toolset for deep interaction with post-simulation environment
-5. **Deep Interaction**: Chat with any agent in the simulated world & Interact with ReportAgent
-
-## 🚀 Quick Start
-
-### Option 1: Source Code Deployment (Recommended)
-
-#### Prerequisites
-
-| Tool | Version | Description | Check Installation |
-|------|---------|-------------|-------------------|
-| **Node.js** | 18+ | Frontend runtime, includes npm | `node -v` |
-| **Python** | ≥3.11, ≤3.12 | Backend runtime | `python --version` |
-| **uv** | Latest | Python package manager | `uv --version` |
-
-#### 1. Configure Environment Variables
+### Step 1: Clone Repository
 
 ```bash
-# Copy the example configuration file
-cp .env.example .env
-
-# Edit the .env file and fill in the required API keys
+git clone https://github.com/biezz-2/Mirofish-enterprise.git
+cd Mirofish-enterprise
 ```
 
-**Required Environment Variables:**
+---
+
+### Step 2: Environment Configuration (`.env`)
+
+```bash
+cp .env.example .env
+```
+
+Configure your `.env` variables:
 
 ```env
-# LLM API Configuration (supports any LLM API with OpenAI SDK format)
-# Recommended: Alibaba Qwen-plus model via Bailian Platform: https://bailian.console.aliyun.com/
-# High consumption, try simulations with fewer than 40 rounds first
-LLM_API_KEY=your_api_key
-LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-LLM_MODEL_NAME=qwen-plus
+# Operational Mode
+DEVELOPMENT_MODE=true                # Set true to bypass external API checks during local testing
+SECRET_KEY=mirofish-enterprise-secret-key-2026
+FLASK_DEBUG=false
+PORT=5001
 
-# Zep Cloud Configuration
-# Free monthly quota is sufficient for simple usage: https://app.getzep.com/
-ZEP_API_KEY=your_zep_api_key
+# LLM Gateway (OpenAI-compatible)
+LLM_API_KEY=your-api-key-here
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL_NAME=gpt-4o-mini
+
+# Knowledge Graph (Zep Cloud or Graphiti)
+GRAPH_BACKEND=zep
+ZEP_API_KEY=your-zep-api-key-here
+
+# Step 0 Web Research (SearXNG)
+SEARXNG_ENABLED=true
+SEARXNG_ENDPOINT=http://127.0.0.1:8888
+
+# Simulation Limits
+OASIS_DEFAULT_MAX_ROUNDS=15
+REPORT_AGENT_MAX_TOOL_CALLS=8
 ```
 
-#### 2. Install Dependencies
+---
+
+### Step 3: Install Dependencies
 
 ```bash
-# One-click installation of all dependencies (root + frontend + backend)
-npm run setup:all
+# Frontend dependencies
+cd frontend && npm install && cd ..
+
+# Backend dependencies (Python)
+pip install -r backend/requirements.txt
 ```
 
-Or install step by step:
+---
+
+### Step 4: Run Microservices via PM2 (Recommended)
+
+MiroFish Enterprise includes a pre-configured `ecosystem.config.js`:
 
 ```bash
-# Install Node dependencies (root + frontend)
-npm run setup
+# Launch backend, frontend, and MCP services
+pm2 start ecosystem.config.js
 
-# Install Python dependencies (backend, auto-creates virtual environment)
-npm run setup:backend
+# Save process table for auto-restart on system reboot
+pm2 save
 ```
 
-#### 3. Start Services
+Verify service status:
+```bash
+pm2 status
+```
+
+| ID | Name | Mode | Status | Address |
+| :--- | :--- | :--- | :--- | :--- |
+| `0` | **`mirofish-backend`** | fork | **online** | `http://localhost:5001` |
+| `1` | **`mirofish-frontend`** | cluster | **online** | `http://localhost:3000` |
+| `2` | **`mirofish-mcp`** | fork | **online** | `stdio / JSON-RPC` |
+
+---
+
+### Step 5: Verify Endpoints
 
 ```bash
-# Start both frontend and backend (run from project root)
-npm run dev
+# Backend Health Check
+curl http://127.0.0.1:5001/health
+# Response: {"database":"sqlite","multi_platform":true,"searxng":true,"service":"MiroFish Enterprise Backend (v3.1)","status":"healthy"}
+
+# Platform Configuration Matrix
+curl http://127.0.0.1:5001/api/platforms
+
+# Frontend Web Interface
+curl -I http://127.0.0.1:3000/
+# Response: HTTP/1.1 200 OK
 ```
 
-**Service URLs:**
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:5001`
+---
 
-**Start Individually:**
+## 🧪 Comprehensive Core Test Suite
+
+Run the full verification suite covering all 8 enterprise subsystems:
 
 ```bash
-npm run backend   # Start backend only
-npm run frontend  # Start frontend only
+cd backend
+python3 tests/test_v31_core.py
 ```
 
-### Option 2: Docker Deployment
-
-```bash
-# 1. Configure environment variables (same as source deployment)
-cp .env.example .env
-
-# 2. Pull image and start
-docker compose up -d
+Expected output:
+```
+=================================================================
+      MIROFISH BACKEND v3.1 CORE COMPREHENSIVE TEST SUITE        
+=================================================================
+[1/8] [PASS] 1. Database SQLite Init & Model Relations
+[2/8] [PASS] 2. JobEngine State Transitions (queued->running->checkpointing->completed)
+[3/8] [PASS] 3. Checkpoints Creation, SHA-256 Hash & Crash Recovery
+[4/8] [PASS] 4. Secrets AES-GCM 256-bit Encryption & Decryption
+[5/8] [PASS] 5. 7 Platform Behaviors & Multi-Param Feed Scoring
+[6/8] [PASS] 6. MultiPlatformSimulator Parallel Execution Loop & Recovery
+[7/8] [PASS] 7. SearXNG Web Research Service & Sanitization
+[8/8] [PASS] 8. MCP Server Tools Discovery & Invocation
+-----------------------------------------------------------------
+Hasil Pengujian: 8/8 lolos (100.0%)
+=================================================================
+SEMUA PENGUJIAN LOLOS 100%!
 ```
 
-Reads `.env` from root directory by default, maps ports `3000 (frontend) / 5001 (backend)`
+---
 
-> Mirror address for faster pulling is provided as comments in `docker-compose.yml`, replace if needed.
+## 📖 Complete Wiki Documentation Index
 
-## 📬 Join the Conversation
+All architectural specs, mathematical formulas, and runbooks are available in the repository wiki:
 
-<div align="center">
-<img src="./static/image/QQ群.png" alt="QQ Group" width="60%"/>
-</div>
+| Chapter | English Document | Dokumentasi Bahasa Indonesia | Description |
+| :--- | :--- | :--- | :--- |
+| **Main Portal** | [`wiki/en/index.md`](./wiki/en/index.md) | [`wiki/index.md`](./wiki/index.md) | Executive summary, philosophy & components |
+| **Architecture** | [`wiki/en/architecture.md`](./wiki/en/architecture.md) | [`wiki/arsitektur.md`](./wiki/arsitektur.md) | 7-tier architecture & Mermaid flowcharts |
+| **7 Platforms** | [`wiki/en/multi-platform-expansion.md`](./wiki/en/multi-platform-expansion.md) | [`wiki/ekspansi-multi-platform.md`](./wiki/ekspansi-multi-platform.md) | Platform parameters & feed scoring math |
+| **Web Research** | [`wiki/en/searxng-web-research.md`](./wiki/en/searxng-web-research.md) | [`wiki/riset-web-searxng.md`](./wiki/riset-web-searxng.md) | SearXNG setup & 3-layer anti-injection |
+| **Resilience** | [`wiki/en/operational-readiness.md`](./wiki/en/operational-readiness.md) | [`wiki/kesiapan-operasional.md`](./wiki/kesiapan-operasional.md) | SQLite WAL, SHA-256 checkpoints & AES-GCM |
+| **Codemap** | [`wiki/en/codemap.md`](./wiki/en/codemap.md) | [`wiki/codemap.md`](./wiki/codemap.md) | Directory structure & cross-module calls |
+| **Runbook** | [`wiki/en/operational-guide.md`](./wiki/en/operational-guide.md) | [`wiki/panduan-operasional.md`](./wiki/panduan-operasional.md) | Setup, PM2 deployment & REST API guide |
+| **LLMs Index** | [`wiki/en/llms.txt`](./wiki/en/llms.txt) | [`wiki/llms.txt`](./wiki/llms.txt) | Machine-readable index for LLM agents |
 
-&nbsp;
+---
 
-The MiroFish team is recruiting full-time/internship positions. If you're interested in multi-agent simulation and LLM applications, feel free to send your resume to: **mirofish@shanda.com**
+## 👥 Credits & Authorship
 
-## 📄 Acknowledgments
+- **Project Lead & Maintainer**: **[biezz-2](https://github.com/biezz-2)**
+- **Autonomous System Co-Author**: **[claude-biezz-2](https://github.com/apps/claude-code)**
+- **Foundation Engine**: Supported by **[CAMEL-AI OASIS](https://github.com/camel-ai/oasis)** (Open Agent Social Interaction Simulations).
+- **Technology Stack**: Python 3.13, Flask, SQLAlchemy, Vite, Vue 3, Tailwind CSS, PM2, SearXNG, Zep Cloud, Neo4j.
 
-**MiroFish has received strategic support and incubation from Shanda Group!**
+---
 
-MiroFish's simulation engine is powered by **[OASIS (Open Agent Social Interaction Simulations)](https://github.com/camel-ai/oasis)**, We sincerely thank the CAMEL-AI team for their open-source contributions!
+## 📄 License
 
-## 📈 Project Statistics
-
-<a href="https://github.com/666ghj/MiroFish">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="static/image/star-history-dark.svg" />
-   <source media="(prefers-color-scheme: light)" srcset="static/image/star-history-light.svg" />
-   <img alt="666ghj/MiroFish Star History Chart" src="static/image/star-history-light.svg" />
- </picture>
-</a>
+This project is licensed under the [MIT License](./LICENSE).

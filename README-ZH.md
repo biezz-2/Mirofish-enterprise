@@ -10,11 +10,11 @@
 
 <a href="https://www.shanda.com/" target="_blank"><img src="./static/image/shanda_logo.png" alt="666ghj%2FMiroFish | Shanda" height="40"/></a>
 
-[![GitHub Stars](https://img.shields.io/github/stars/666ghj/MiroFish?style=flat-square&color=DAA520)](https://github.com/666ghj/MiroFish/stargazers)
-[![GitHub Watchers](https://img.shields.io/github/watchers/666ghj/MiroFish?style=flat-square)](https://github.com/666ghj/MiroFish/watchers)
-[![GitHub Forks](https://img.shields.io/github/forks/666ghj/MiroFish?style=flat-square)](https://github.com/666ghj/MiroFish/network)
+[![GitHub Stars](https://img.shields.io/github/stars/biezz-2/Mirofish-enterprise?style=flat-square&color=DAA520)](https://github.com/biezz-2/Mirofish-enterprise/stargazers)
+[![GitHub Watchers](https://img.shields.io/github/watchers/biezz-2/Mirofish-enterprise?style=flat-square)](https://github.com/biezz-2/Mirofish-enterprise/watchers)
+[![GitHub Forks](https://img.shields.io/github/forks/biezz-2/Mirofish-enterprise?style=flat-square)](https://github.com/biezz-2/Mirofish-enterprise/network)
 [![Docker](https://img.shields.io/badge/Docker-Build-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/666ghj/MiroFish)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/biezz-2/Mirofish-enterprise)
 
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](http://discord.gg/ePf5aPaHnA)
 [![X](https://img.shields.io/badge/X-Follow-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/mirofish_ai)
@@ -196,10 +196,10 @@ MiroFish 的仿真引擎由 **[OASIS](https://github.com/camel-ai/oasis)** 驱�
 
 ## 📈 项目统计
 
-<a href="https://github.com/666ghj/MiroFish">
+<a href="https://github.com/biezz-2/Mirofish-enterprise">
  <picture>
    <source media="(prefers-color-scheme: dark)" srcset="static/image/star-history-dark.svg" />
    <source media="(prefers-color-scheme: light)" srcset="static/image/star-history-light.svg" />
-   <img alt="666ghj/MiroFish Star History Chart" src="static/image/star-history-light.svg" />
+   <img alt="biezz-2/Mirofish-enterprise Star History Chart" src="static/image/star-history-light.svg" />
  </picture>
 </a>

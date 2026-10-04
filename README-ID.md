@@ -1,61 +1,140 @@
 <div align="center">
 
-<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="MiroFish Logo" width="75%"/>
+<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="Logo MiroFish Enterprise" width="70%"/>
 
-<a href="https://trendshift.io/repositories/16144" target="_blank"><img src="https://trendshift.io/api/badge/repositories/16144" alt="666ghj%2FMiroFish | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+# 🌊 MiroFish Enterprise (v3.1)
+### Mesin Simulasi Prediksi Kecerdasan Kelompok & Kotak Pasir Digital Sosial Multi-Agen
+*Simulasi masyarakat paralel berakurasi tinggi, proyeksi opini publik, dan gladi bersih keputusan makro berisiko nol.*
 
-Mesin Kecerdasan Kelompok Sederhana & Universal, Memprediksi Segala Hal
-</br>
-<em>A Simple and Universal Swarm Intelligence Engine, Predicting Anything</em>
+[![GitHub Release](https://img.shields.io/github/v/release/biezz-2/Mirofish-enterprise?style=for-the-badge&color=2563EB)](https://github.com/biezz-2/Mirofish-enterprise/releases)
+[![Versi Python](https://img.shields.io/badge/Python-3.10%20--%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B%20LTS-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![PM2 Ready](https://img.shields.io/badge/PM2-Cluster%20%26%20Fork-2B037A?style=for-the-badge&logo=pm2&logoColor=white)](https://pm2.keymetrics.io/)
+[![Docker Ready](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Lisensi](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](./LICENSE)
 
-<a href="https://www.shanda.com/" target="_blank"><img src="./static/image/shanda_logo.png" alt="666ghj%2FMiroFish | Shanda" height="40"/></a>
+---
 
-[![GitHub Stars](https://img.shields.io/github/stars/666ghj/MiroFish?style=flat-square&color=DAA520)](https://github.com/666ghj/MiroFish/stargazers)
-[![GitHub Watchers](https://img.shields.io/github/watchers/666ghj/MiroFish?style=flat-square)](https://github.com/666ghj/MiroFish/watchers)
-[![GitHub Forks](https://img.shields.io/github/forks/666ghj/MiroFish?style=flat-square)](https://github.com/666ghj/MiroFish/network)
-[![Docker](https://img.shields.io/badge/Docker-Build-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/666ghj/MiroFish)
+### 🌐 Navigasi Bahasa / Language Navigation
+**[Bahasa Indonesia (Aktif)](./README-ID.md)** | **[English](./README.md)** | **[中文文档](./README-ZH.md)**
 
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](http://discord.gg/ePf5aPaHnA)
-[![X](https://img.shields.io/badge/X-Follow-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/mirofish_ai)
-[![Instagram](https://img.shields.io/badge/Instagram-Follow-E4405F?style=flat-square&logo=instagram&logoColor=white)](https://www.instagram.com/mirofish_ai/)
-
-[English](./README.md) | [Bahasa Indonesia](./README-ID.md) | [中文文档](./README-ZH.md)
-
-📚 **Dokumentasi Lengkap Wiki**: [Bahasa Indonesia](./wiki/index.md) | [English](./wiki/en/index.md)
+📚 **Portal Wikipedia Arsitektur Komprehensif**:
+[Dokumentasi Bahasa Indonesia (`wiki/`)](./wiki/index.md) | [English Documentation (`wiki/en/`)](./wiki/en/index.md)
 
 </div>
 
-## ⚡ Ikhtisar Proyek
+---
 
-**MiroFish** adalah mesin prediksi berbasis kecerdasan buatan (*AI prediction engine*) generasi baru yang ditenagai oleh teknologi multi-agen (*multi-agent systems*). Dengan mengekstrak informasi benih (*seed information*) dari dunia nyata—seperti berita peristiwa terkini, draf kebijakan publik, dinamika pasar keuangan, hingga naskah literatur kompleks—MiroFish secara otomatis mengonstruksi sebuah dunia digital paralel berakurasi tinggi (*high-fidelity parallel digital sandbox*).
+## ⚡ Apa itu MiroFish Enterprise?
 
-Di dalam ruang simulasi ini, ratusan hingga ribuan agen cerdas yang memiliki kepribadian independen, memori jangka panjang (didukung oleh GraphRAG), serta logika tindakan individual, saling berinteraksi secara bebas dan mengalami evolusi sosial. Anda dapat menyuntikkan variabel baru secara dinamis melalui "sudut pandang pengawas (*God's-eye view*)" untuk mendeduksi lintasan masa depan secara presisi:
+**MiroFish Enterprise** adalah mesin prediksi kecerdasan kelompok (*swarm intelligence*) dan kotak pasir digital sosial multi-agen berskala industri yang dikembangkan dan dikelola oleh **[biezz-2](https://github.com/biezz-2)**.
 
-> **Latih masa depan di dalam kotak pasir digital, dan raih keputusan terbaik setelah simulasi mendalam.**
+Dengan mengekstrak informasi benih (*seed information*) dari dunia nyata—seperti peristiwa berita terkini, draf kebijakan publik, dinamika pasar keuangan, hingga naskah narasi kompleks—MiroFish secara otomatis mengonstruksi sebuah masyarakat digital kembar (*digital twin*) berakurasi tinggi. Setiap agen cerdas di dalam ekosistem dilengkapi dengan:
+- **Profil Psikologis Big Five OCEAN**: Keterbukaan (*openness*), kesadaran (*conscientiousness*), ekstraversi (*extraversion*), keramahan (*agreeableness*), dan neurotisme (*neuroticism*) dinamis.
+- **Memori Jangka Panjang Dual GraphRAG**: Graf pengetahuan temporal terstruktur yang didukung oleh Zep Cloud dan Neo4j.
+- **Model Perilaku 7 Platform Sosial**: Logika interaksi dan algoritma umpan (*feed scoring*) terkalibrasi untuk platform sosial modern.
 
-### Yang Perlu Anda Lakukan:
-- Unggah dokumen benih (laporan analisis data, berita, atau cerita fiksi)
-- Tuliskan kebutuhan prediksi Anda dalam bahasa manusia sehari-hari
-
-### Yang Diberikan MiroFish:
-- **Laporan Prediksi Komprehensif** dengan sitasi entitas graf empiris
-- **Dunia Digital Interaktif** di mana Anda dapat mewawancarai agen mana pun secara langsung
+Pengambil keputusan dapat mengamati kemunculan kolektif (*collective emergence*) melalui "sudut pandang pengawas (*God's-eye view*)", menyuntikkan intervensi dinamis, dan memperoleh laporan intelijen prediksi berbasis bukti empiris.
 
 ---
 
-### Visi Kami
+## 🏛️ Alur Kerja & Arsitektur Sistem
 
-MiroFish berdedikasi membangun cermin kecerdasan kelompok yang memetakan realitas. Dengan menangkap kemunculan kolektif (*collective emergence*) yang dipicu oleh interaksi mikro antar-individu, kami mendobrak batas prediksi tradisional:
-
-- **Tingkat Makro**: Laboratorium gladi bersih bagi pengambil keputusan—menguji kebijakan publik, strategi ekonomi, dan relasi komunikasi publik dengan risiko nol.
-- **Tingkat Mikro**: Kotak pasir kreatif bagi pengguna individu—mendeduksi akhir cerita novel, memproyeksikan dinamika komunitas, dan mengeksplorasi skenario hipotetis secara intuitif.
+```
+                                [ Materi Benih & Pertanyaan Prediksi ]
+                                                  │
+                                                  ▼
+                         ┌─────────────────────────────────────────────────┐
+                         │   Langkah 0: Riset Web Terintegrasi (SearXNG)   │
+                         │   • 3-Layer Anti-Prompt Injection Shield        │
+                         │   • Skoring Kredibilitas Domain (S_domain)      │
+                         └────────────────────────┬────────────────────────┘
+                                                  │
+                                                  ▼
+                         ┌─────────────────────────────────────────────────┐
+                         │   Langkah 1: Rekayasa Graf Pengetahuan GraphRAG │
+                         │   • Ekstraksi Ontologi Entitas & Relasi         │
+                         │   • Ingestion Batch ke Zep Cloud & Neo4j        │
+                         └────────────────────────┬────────────────────────┘
+                                                  │
+                                                  ▼
+                         ┌─────────────────────────────────────────────────┐
+                         │   Langkah 2: Lingkungan 7 Platform & OCEAN      │
+                         │   • Sintesis Profil Kepribadian Big Five        │
+                         │   • Kalibrasi Parameter Feed Scoring Platform   │
+                         └────────────────────────┬────────────────────────┘
+                                                  │
+                                                  ▼
+                         ┌─────────────────────────────────────────────────┐
+                         │   Langkah 3: Simulasi Paralel Swarm             │
+                         │   • Sinkronisasi Barrier Antar-Ronde            │
+                         │   • Persistensi SQLite WAL & Checkpoint SHA-256 │
+                         └────────────────────────┬────────────────────────┘
+                                                  │
+                                                  ▼
+                         ┌─────────────────────────────────────────────────┐
+                         │   Langkah 4: Deduksi ReACT ReportAgent          │
+                         │   • Pemanggilan Perkakas Otonom (InsightForge)  │
+                         │   • Laporan Analitis dengan Sitasi Node Graf    │
+                         └────────────────────────┬────────────────────────┘
+                                                  │
+                                                  ▼
+                         ┌─────────────────────────────────────────────────┐
+                         │   Langkah 5: Human-in-the-Loop & Wawancara IPC  │
+                         │   • Wawancara Interaktif Dua Arah dengan Agen   │
+                         │   • Intervensi Dinamis & Pergeseran Variabel    │
+                         └─────────────────────────────────────────────────┘
+```
 
 ---
 
-## 🌐 Demo Interaktif
+## 🚀 Fitur Unggulan Enterprise
 
-Kunjungi demonstrasi online kami untuk mencoba simulasi prediksi peristiwa opini publik: [mirofish-live-demo](https://666ghj.github.io/mirofish-demo/)
+### 1. 🌐 Ekosistem Simulasi 7 Platform Media Sosial
+MiroFish v3.1 Enterprise mendukung simulasi perilaku opini publik pada 7 platform digital utama:
+
+| Platform | Nama Tampilan | Batas Karakter | Echo Chamber | Ambang Viral | Karakteristik Algoritma |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Twitter** | Twitter | 280 karakter | Sedang (0.5) | 5.000 | Efemeral, laju cepat |
+| **X** | X | 25.000 karakter| Sedang (0.5) | 8.000 | Diskusi panjang & utas mendalam |
+| **Reddit** | Reddit | 40.000 karakter| Tinggi (0.7) | 300 | Diskusi berjenjang berbasis komunitas |
+| **TikTok** | TikTok | 150 karakter | Rendah (0.4) | 50.000 | Distribusi viralitas berbasis algoritma |
+| **Instagram** | Instagram | 2.200 karakter | Sedang (0.5) | 10.000 | Narasi visual & estetika profil |
+| **Facebook** | Facebook | 63.000 karakter| Sangat Tinggi (0.8) | 8.000 | Jaringan luas & grup tertutup |
+| **Threads** | Threads | 500 karakter | Sedang (0.5) | 5.000 | Dialog percakapan berbasis teks |
+
+### 2. 🔍 Riset Web Terintegrasi Langkah 0 (SearXNG)
+- Metasearch privat nir-pelacakan yang mengagregasi sumber terpercaya secara real-time.
+- **3-Layer Anti-Prompt Injection Shield**:
+  1. *Penyaring Pola Heuristik*: Menghapus token instruksi override sistem, pelarian XML, dan upaya manipulasi konteks.
+  2. *Klasifikasi Berbasis Model*: Memvalidasi netralitas semantik sebelum teks disuntikkan ke agen.
+  3. *Pembatas Struktur Output*: Mengunci luaran fakta ke dalam skema JSON terverifikasi.
+- Evaluasi kredibilitas domain matematis: $S_{\text{domain}} = w_{\text{tld}} \cdot c_{\text{author}} \cdot \text{decay}(\Delta t)$.
+
+### 3. 🧠 Mesin Memori Graf Pengetahuan (GraphRAG)
+- Dual backend adapter:
+  - **Zep Cloud Graph**: Graf memori episodik real-time dengan peluruhan tepi temporal dinamis.
+  - **Graphiti Neo4j**: Penyimpanan graf on-premise mandiri untuk instalasi enterprise terisolasi.
+- Ekstraksi otomatis entitas kunci, relasi sosial, lini masa peristiwa, dan polaritas sentimen antar-agen.
+
+### 4. 🛡️ Ketahanan Operasional & Keamanan Transaksional
+- Dukungan transaksi ACID aman menggunakan **SQLite Write-Ahead Logging (WAL)** dan PostgreSQL.
+- **Checkpoint Kriptografis Deterministik**: Setiap snapshot ronde divalidasi dengan ringkasan hash SHA-256.
+- **Pemindai Pemulihan Kerusakan Otomatis**: Mendeteksi pekerjaan simulasi yang terputus saat sistem dinyalakan ulang dan melanjutkan ronde secara mulus.
+- **Brankas Kredensial AES-256-GCM**: Perlindungan tingkat tinggi untuk kunci API dan token rahasia.
+
+### 5. 🤖 Mesin ReACT ReportAgent
+- Analis cerdas otonom multi-putaran dengan pola ReACT (*Penalaran + Tindakan*):
+  - Membentuk hipotesis analisis secara independen.
+  - Memanggil perkakas analitis (`InsightForge`, `PanoramaSearch`, `IPCAgentInterview`).
+  - Menyusun laporan komprehensif lengkap dengan sitasi langsung ke node graf pengetahuan.
+
+### 6. 🔌 Integrasi Model Context Protocol (MCP) Server
+- Server MCP bawaan (`stdio` transport) memungkinkan asisten AI eksternal (Claude, Cursor, Cline) untuk:
+  - Melihat daftar proyek simulasi (`list_projects`)
+  - Memantau progres pekerjaan dan telemetri checkpoint (`get_job_status`)
+  - Menjalankan riset web nir-jejak (`run_web_research`)
+  - Menelusuri graf pengetahuan temporal (`search_knowledge_graph`)
 
 ---
 
@@ -64,198 +143,189 @@ Kunjungi demonstrasi online kami untuk mencoba simulasi prediksi peristiwa opini
 <div align="center">
 <table>
 <tr>
-<td><img src="./static/image/Screenshot/运行截图1.png" alt="Tangkapan Layar 1" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图2.png" alt="Tangkapan Layar 2" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图1.png" alt="Pemilihan Platform & Input Topik" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图2.png" alt="Penyusun Graf Pengetahuan GraphRAG" width="100%"/></td>
 </tr>
 <tr>
-<td><img src="./static/image/Screenshot/运行截图3.png" alt="Tangkapan Layar 3" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图4.png" alt="Tangkapan Layar 4" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图3.png" alt="Generator Persona Multi-Agen" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图4.png" alt="Monitor Simulasi Sosial Paralel" width="100%"/></td>
 </tr>
 <tr>
-<td><img src="./static/image/Screenshot/运行截图5.png" alt="Tangkapan Layar 5" width="100%"/></td>
-<td><img src="./static/image/Screenshot/运行截图6.png" alt="Tangkapan Layar 6" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图5.png" alt="Wawancara Agen & Intervensi Dinamis" width="100%"/></td>
+<td><img src="./static/image/Screenshot/运行截图6.png" alt="Laporan Intelijen Buatan ReACT" width="100%"/></td>
 </tr>
 </table>
 </div>
 
 ---
 
-## 🎬 Video Demonstrasi
+## ⚙️ Panduan Memulai Cepat (Runbook)
 
-### 1. Simulasi Opini Publik Universitas Wuhan + Pengantar MiroFish
-<div align="center">
-<a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" target="_blank"><img src="./static/image/武大模拟演示封面.png" alt="Video Demo MiroFish" width="75%"/></a>
-<br/>
-<em>Klik gambar untuk menonton video prediksi berbasis "Laporan Opini Publik Universitas Wuhan".</em>
-</div>
+### Prasyarat Sistem
 
-### 2. Simulasi Rekonstruksi Akhir Cerita "Dream of the Red Chamber"
-<div align="center">
-<a href="https://www.bilibili.com/video/BV1cPk3BBExq" target="_blank"><img src="./static/image/红楼梦模拟推演封面.jpg" alt="Video Demo MiroFish Red Chamber" width="75%"/></a>
-<br/>
-<em>Klik gambar untuk menonton deduksi mendalam akhir naskah yang hilang berdasarkan 80 bab pembuka novel klasik.</em>
-</div>
+| Komponen | Versi Minimal | Fungsi |
+| :--- | :--- | :--- |
+| **Node.js** | 18+ LTS | Runtime Frontend Vite & PM2 |
+| **Python** | 3.10 – 3.13 | Backend Flask & Mesin OASIS |
+| **PM2** | Terkini | Manajemen proses mikroservis |
+| **Docker** (Opsional) | 24+ | Kluster SearXNG & database Neo4j |
 
 ---
 
-## 🔄 Alur Kerja 5 Langkah MiroFish
-
-```
-[Materi Benih] ──► [Langkah 0: Riset Web SearXNG]
-                         │
-                         ▼
-             [Langkah 1: GraphRAG Zep / Neo4j]
-                         │
-                         ▼
-             [Langkah 2: Profiling OCEAN & 7 Platform]
-                         │
-                         ▼
-             [Langkah 3: Simulasi Paralel Multi-Platform]
-                         │
-                         ▼
-             [Langkah 4: Laporan Prediksi ReACT ReportAgent]
-                         │
-                         ▼
-             [Langkah 5: Eksplorasi Human-in-the-Loop & IPC]
-```
-
-1. **Langkah 0: Riset Web Terintegrasi (SearXNG)**: Pencarian fakta terkini, sanitasi anti-injeksi prompt, dan skoring kredibilitas domain.
-2. **Langkah 1: Rekayasa Graf Pengetahuan (GraphRAG)**: Ekstraksi ontologi entitas/relasi berbasis LLM dan batch ingestion ke Zep Cloud / Neo4j.
-3. **Langkah 2: Penyiapan Lingkungan & Profil Agen**: Sintesis profil kepribadian Big Five OCEAN dan konfigurasi parameter 7 platform media sosial (Twitter, X, Reddit, TikTok, Instagram, Facebook, Threads).
-4. **Langkah 3: Eksekusi Simulasi Paralel**: Subproses multi-platform otonom dengan barrier sinkronisasi ronde, update memori dinamis, dan checkpoint SHA-256.
-5. **Langkah 4: Pembuatan Laporan Prediksi**: Agen cerdas ReACT menyusun outline, memanggil perkakas ZepTools, dan menyusun laporan analitis final.
-6. **Langkah 5: Interaksi Mendalam**: Wawancara interaktif dua arah langsung dengan persona agen di dalam dunia simulasi melalui IPC.
-
----
-
-## 🚀 Panduan Memulai Cepat
-
-### Metode 1: Instalasi Kode Sumber (Direkomendasikan)
-
-#### Prasyarat Sistem
-
-| Perangkat Lunak | Versi Minimal | Fungsi | Perintah Cek |
-| :--- | :--- | :--- | :--- |
-| **Node.js** | 18+ LTS | Runtime frontend & npm | `node -v` |
-| **Python** | 3.10.x - 3.13.x | Runtime backend Flask & OASIS | `python3 --version` |
-| **uv** | Terkini | Manajemen dependensi Python cepat | `uv --version` |
-
-#### 1. Konfigurasi Lingkungan (`.env`)
+### Langkah 1: Kloning Repositori
 
 ```bash
-# Salin contoh file konfigurasi
-cp .env.example .env
-
-# Edit file .env dan masukkan kunci API yang valid
+git clone https://github.com/biezz-2/Mirofish-enterprise.git
+cd Mirofish-enterprise
 ```
 
-**Variabel Lingkungan Utama:**
+---
+
+### Langkah 2: Konfigurasi File Lingkungan (`.env`)
+
+```bash
+cp .env.example .env
+```
+
+Sesuaikan variabel lingkungan utama pada `.env`:
 
 ```env
-# Konfigurasi LLM Gateway (Mendukung format OpenAI SDK)
-LLM_API_KEY=your_api_key
+# Mode Operasional
+DEVELOPMENT_MODE=true                # Aktifkan true untuk melewati validasi API key eksternal saat pengujian lokal
+SECRET_KEY=mirofish-enterprise-secret-key-2026
+FLASK_DEBUG=false
+PORT=5001
+
+# LLM Gateway (Format kompatibel OpenAI)
+LLM_API_KEY=your-api-key-here
 LLM_BASE_URL=https://api.openai.com/v1
 LLM_MODEL_NAME=gpt-4o-mini
 
-# Konfigurasi Zep Cloud Knowledge Graph
-# Kuota gratis bulanan tersedia di: https://app.getzep.com/
-ZEP_API_KEY=your_zep_api_key
+# Graf Pengetahuan (Zep Cloud / Graphiti)
+GRAPH_BACKEND=zep
+ZEP_API_KEY=your-zep-api-key-here
 
-# Modul Riset Web SearXNG (Opsional, Default Aktif)
-SEARXNG_ENABLED=True
+# Riset Web Langkah 0 (SearXNG)
+SEARXNG_ENABLED=true
 SEARXNG_ENDPOINT=http://127.0.0.1:8888
-```
 
-#### 2. Instal Dependensi
-
-```bash
-# Instal seluruh dependensi sekaligus (root + frontend + backend)
-npm run setup:all
-```
-
-Atau instal secara bertahap:
-
-```bash
-# Instal dependensi Node.js (root + frontend)
-npm run setup
-
-# Instal dependensi Python backend
-npm run setup:backend
-```
-
-#### 3. Jalankan Layanan
-
-```bash
-# Jalankan frontend dan backend bersamaan dari direktori root
-npm run dev
-```
-
-**Akses Layanan:**
-- Antarmuka Frontend: `http://localhost:3000`
-- API Backend: `http://localhost:5001`
-
-**Jalankan Terpisah:**
-```bash
-npm run backend   # Menjalankan backend Flask saja
-npm run frontend  # Menjalankan frontend Vite saja
+# Batasan Simulasi
+OASIS_DEFAULT_MAX_ROUNDS=15
+REPORT_AGENT_MAX_TOOL_CALLS=8
 ```
 
 ---
 
-### Metode 2: Deployment Kontainer Docker
+### Langkah 3: Instalasi Dependensi
 
 ```bash
-# 1. Konfigurasi file lingkungan
-cp .env.example .env
+# Instal dependensi antarmuka frontend
+cd frontend && npm install && cd ..
 
-# 2. Tarik image dan jalankan
-docker compose up -d
+# Instal dependensi backend Python
+pip install -r backend/requirements.txt
 ```
 
-Secara default, docker membaca `.env` dari root dan memetakan port `3000` (Frontend) dan `5001` (Backend).
+---
+
+### Langkah 4: Jalankan Layanan dengan PM2 (Direkomendasikan)
+
+MiroFish Enterprise dilengkapi dengan konfigurasi siap pakai `ecosystem.config.js`:
+
+```bash
+# Jalankan backend, frontend, dan server MCP sekaligus
+pm2 start ecosystem.config.js
+
+# Simpan tabel proses agar otomatis aktif saat reboot
+pm2 save
+```
+
+Periksa status proses:
+```bash
+pm2 status
+```
+
+| ID | Nama Proses | Mode | Status | Alamat Layanan |
+| :--- | :--- | :--- | :--- | :--- |
+| `0` | **`mirofish-backend`** | fork | **online** | `http://localhost:5001` |
+| `1` | **`mirofish-frontend`** | cluster | **online** | `http://localhost:3000` |
+| `2` | **`mirofish-mcp`** | fork | **online** | `stdio / JSON-RPC` |
 
 ---
 
-## 📖 Dokumentasi Lengkap Wiki
+### Langkah 5: Uji Coba Endpoint Layanan
 
-Seluruh dokumentasi teknis, diagram arsitektur mendalam, spesifikasi matematis, dan panduan operasional tersedia di portal wiki:
-- [Portal Utama Wikipedia (Bahasa Indonesia)](./wiki/index.md)
-- [Main Wikipedia Portal (English)](./wiki/en/index.md)
-- [Arsitektur Sistem Menyeluruh](./wiki/arsitektur.md) | [Architecture (EN)](./wiki/en/architecture.md)
-- [Spesifikasi 7 Platform Media Sosial](./wiki/ekspansi-multi-platform.md) | [7 Platforms (EN)](./wiki/en/multi-platform-expansion.md)
-- [Riset Web Terintegrasi SearXNG](./wiki/riset-web-searxng.md) | [Web Research (EN)](./wiki/en/searxng-web-research.md)
-- [Kesiapan Operasional & Resiliensi](./wiki/kesiapan-operasional.md) | [Operational Readiness (EN)](./wiki/en/operational-readiness.md)
-- [Codemap & Kepemilikan Subagent](./wiki/codemap.md) | [Codemap (EN)](./wiki/en/codemap.md)
-- [Panduan Pengujian & Deployment](./wiki/panduan-operasional.md) | [Operational Runbook (EN)](./wiki/en/operational-guide.md)
+```bash
+# Cek Kesehatan Backend
+curl http://127.0.0.1:5001/health
+# Respons: {"database":"sqlite","multi_platform":true,"searxng":true,"service":"MiroFish Enterprise Backend (v3.1)","status":"healthy"}
 
----
+# Matriks Konfigurasi 7 Platform
+curl http://127.0.0.1:5001/api/platforms
 
-## 📬 Komunitas & Kontak
-
-<div align="center">
-<img src="./static/image/QQ群.png" alt="Komunitas QQ" width="60%"/>
-</div>
-
-&nbsp;
-
-Tim MiroFish membuka lowongan posisi penuh waktu dan magang. Jika Anda tertarik dengan simulasi multi-agen dan aplikasi LLM, kirimkan riwayat hidup Anda ke: **mirofish@shanda.com**
+# Akses Antarmuka Web Frontend
+curl -I http://127.0.0.1:3000/
+# Respons: HTTP/1.1 200 OK
+```
 
 ---
 
-## 📄 Ucapan Terima Kasih
+## 🧪 Pengujian Komprehensif (Core Test Suite)
 
-**MiroFish menerima dukungan strategis dan inkubasi dari Shanda Group!**
+Jalankan seluruh rangkaian pengujian unit dan integrasi untuk memvalidasi integritas 8 subsistem:
 
-Mesin simulasi MiroFish didukung oleh **[OASIS (Open Agent Social Interaction Simulations)](https://github.com/camel-ai/oasis)**. Kami menyampaikan terima kasih yang tulus kepada tim CAMEL-AI atas kontribusi sumber terbuka mereka!
+```bash
+cd backend
+python3 tests/test_v31_core.py
+```
+
+Luaran hasil pengujian:
+```
+=================================================================
+      MIROFISH BACKEND v3.1 CORE COMPREHENSIVE TEST SUITE        
+=================================================================
+[1/8] [PASS] 1. Database SQLite Init & Model Relations
+[2/8] [PASS] 2. JobEngine State Transitions (queued->running->checkpointing->completed)
+[3/8] [PASS] 3. Checkpoints Creation, SHA-256 Hash & Crash Recovery
+[4/8] [PASS] 4. Secrets AES-GCM 256-bit Encryption & Decryption
+[5/8] [PASS] 5. 7 Platform Behaviors & Multi-Param Feed Scoring
+[6/8] [PASS] 6. MultiPlatformSimulator Parallel Execution Loop & Recovery
+[7/8] [PASS] 7. SearXNG Web Research Service & Sanitization
+[8/8] [PASS] 8. MCP Server Tools Discovery & Invocation
+-----------------------------------------------------------------
+Hasil Pengujian: 8/8 lolos (100.0%)
+=================================================================
+SEMUA PENGUJIAN LOLOS 100%!
+```
 
 ---
 
-## 📈 Statistik Proyek
+## 📖 Indeks Lengkap Dokumentasi Wiki
 
-<a href="https://github.com/666ghj/MiroFish">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="static/image/star-history-dark.svg" />
-   <source media="(prefers-color-scheme: light)" srcset="static/image/star-history-light.svg" />
-   <img alt="Grafik Riwayat Bintang MiroFish" src="static/image/star-history-light.svg" />
- </picture>
-</a>
+Seluruh spesifikasi arsitektur mendalam, rumus matematis, dan buku panduan teknis tersedia di folder `wiki/`:
+
+| Bab | Dokumentasi Bahasa Indonesia | English Document | Ringkasan Topik |
+| :--- | :--- | :--- | :--- |
+| **Portal Utama** | [`wiki/index.md`](./wiki/index.md) | [`wiki/en/index.md`](./wiki/en/index.md) | Ringkasan eksekutif, filosofi & katalog modul |
+| **Arsitektur** | [`wiki/arsitektur.md`](./wiki/arsitektur.md) | [`wiki/en/architecture.md`](./wiki/en/architecture.md) | Arsitektur 7 tier & diagram alur Mermaid |
+| **7 Platform** | [`wiki/ekspansi-multi-platform.md`](./wiki/ekspansi-multi-platform.md) | [`wiki/en/multi-platform-expansion.md`](./wiki/en/multi-platform-expansion.md) | Parameter kuantitatif & rumus feed scoring |
+| **Riset Web** | [`wiki/riset-web-searxng.md`](./wiki/riset-web-searxng.md) | [`wiki/en/searxng-web-research.md`](./wiki/en/searxng-web-research.md) | Setup SearXNG & perisai 3 lapis anti-injeksi |
+| **Resiliensi** | [`wiki/kesiapan-operasional.md`](./wiki/kesiapan-operasional.md) | [`wiki/en/operational-readiness.md`](./wiki/en/operational-readiness.md) | SQLite WAL, checkpoint SHA-256 & brankas AES |
+| **Codemap** | [`wiki/codemap.md`](./wiki/codemap.md) | [`wiki/en/codemap.md`](./wiki/en/codemap.md) | Struktur pohon direktori & matriks panggilan |
+| **Buku Panduan** | [`wiki/panduan-operasional.md`](./wiki/panduan-operasional.md) | [`wiki/en/operational-guide.md`](./wiki/en/operational-guide.md) | Runbook instalasi, PM2 & referensi REST API |
+| **Indeks LLM** | [`wiki/llms.txt`](./wiki/llms.txt) | [`wiki/en/llms.txt`](./wiki/en/llms.txt) | Indeks format teks terbaca mesin untuk LLM |
+
+---
+
+## 👥 Kredit & Kontribusi
+
+- **Pemimpin Proyek & Pengelola**: **[biezz-2](https://github.com/biezz-2)**
+- **Ko-Author Sistem Otonom**: **[claude-biezz-2](https://github.com/apps/claude-code)**
+- **Fondasi Mesin Simulasi**: Didukung oleh **[CAMEL-AI OASIS](https://github.com/camel-ai/oasis)** (Open Agent Social Interaction Simulations).
+- **Teknologi Utama**: Python 3.13, Flask, SQLAlchemy, Vite, Vue 3, Tailwind CSS, PM2, SearXNG, Zep Cloud, Neo4j.
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dilisensikan di bawah lisensi terbuka [MIT License](./LICENSE).
