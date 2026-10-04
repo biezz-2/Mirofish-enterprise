@@ -178,11 +178,7 @@ docker compose up -d
 
 > 在 `docker-compose.yml` 中已通过注释提供加速镜像地址，可按需替换
 
-## 📬 更多交流
 
-<div align="center">
-<img src="./static/image/QQ群.png" alt="QQ交流群" width="60%"/>
-</div>
 
 &nbsp;
 
