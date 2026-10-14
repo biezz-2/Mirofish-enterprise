@@ -1,0 +1,1 @@
+MiroFish Enterprise is a powerful simulation platform for public opinion analysis. It uses GraphRAG and Swarm agents.

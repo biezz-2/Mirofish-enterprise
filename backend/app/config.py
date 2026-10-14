@@ -39,6 +39,9 @@ class Config:
     FALKORDB_PORT = int(os.environ.get('FALKORDB_PORT', '6379'))
     FALKORDB_URI = os.environ.get('FALKORDB_URI', 'redis://127.0.0.1:6379')
     GRAPHITI_GROUP_ID = os.environ.get('GRAPHITI_GROUP_ID', 'main')
+
+    # SearXNG Metasearch
+    SEARCHXNG_URL = os.environ.get('SEARCHXNG_URL', 'http://192.168.101.19:8089')
     
     # 文件上传配置
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB

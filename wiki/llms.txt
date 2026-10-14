@@ -10,6 +10,7 @@
 - [Kesiapan Operasional, Persistensi, dan Ketahanan](./kesiapan-operasional.md): Skema relasional SQLite WAL/PostgreSQL, SHA-256 checkpoint hashing, crash scanner, brankas AES-256-GCM, dan 9Router.
 - [Codemap Komprehensif & Dependensi](./codemap.md): Pohon direktori kanonikal, matriks dependensi, alur data mikro, dan pembagian kepemilikan 10 subagent.
 - [Panduan Deployment, Eksekusi, & Pengujian](./panduan-operasional.md): Prasyarat, setup .env, Docker Compose, konfigurasi PM2 lintas-OS, katalog REST API, dan pengujian gerbang ketahanan E1/E2.
+- [Arsitektur Riset Web Step 0 & Pemodelan GraphRAG Step 1](./step1-web-grounding-anti-halusinasi.md): Penjaminan integritas data empiris, eliminasi halusinasi, sanitasi anti-prompt injection, dan evaluasi NLI.
 
 ## English Documentation
 - [Main Wikipedia Portal](./en/index.md): System executive summary, design philosophy, architectural evolution, and component catalog.

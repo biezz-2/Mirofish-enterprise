@@ -1,6 +1,14 @@
 """
 Titik Masuk Eksekusi Server MCP MiroFish
 """
+import sys
+import os
+
+# Memastikan direktori backend berada di sys.path
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 from mcp_server.server import MCPServer
 
 if __name__ == "__main__":
