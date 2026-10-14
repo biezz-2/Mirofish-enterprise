@@ -3,13 +3,13 @@
     <div class="flex items-center justify-between mb-4">
       <div>
         <h3 class="text-lg font-bold text-white">{{ $t('dashboard.activeJobs') }}</h3>
-        <p class="text-xs text-slate-400">Pekerjaan simulasi, checkpoint state-machine, dan pemulihan pasca-crash</p>
+        <p class="text-xs text-slate-400">{{ $t('dashboard.recoverySubtitle') }}</p>
       </div>
       <button
         @click="fetchJobs"
         class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-300 transition-colors"
       >
-        Segarkan
+        {{ $t('dashboard.refresh') }}
       </button>
     </div>
 
@@ -42,7 +42,7 @@
                   'bg-slate-800 text-slate-400': job.state === 'completed' || job.state === 'queued'
                 }"
               >
-                {{ job.state }}
+                {{ $t('dashboard.states.' + job.state) || job.state }}
               </span>
             </td>
             <td class="px-4 py-3 text-slate-300">{{ job.current_round }} / {{ job.total_rounds }}</td>

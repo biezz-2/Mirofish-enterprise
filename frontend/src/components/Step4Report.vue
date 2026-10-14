@@ -1278,6 +1278,7 @@ const PanoramaDisplay = {
 const InterviewDisplay = {
   props: ['result', 'resultLength'],
   setup(props) {
+    const { t } = useI18n()
     // Format result size for display
     const formatSize = (length) => {
       if (!length) return ''
@@ -1427,16 +1428,16 @@ const InterviewDisplay = {
       // Header Section
       h('div', { class: 'interview-header' }, [
         h('div', { class: 'header-main' }, [
-          h('div', { class: 'header-title' }, 'Agent Interview'),
+          h('div', { class: 'header-title' }, t('step4.agentInterview')),
           h('div', { class: 'header-stats' }, [
             h('span', { class: 'stat-item' }, [
               h('span', { class: 'stat-value' }, props.result.successCount || props.result.interviews.length),
-              h('span', { class: 'stat-label' }, 'Interviewed')
+              h('span', { class: 'stat-label' }, t('step4.interviewed'))
             ]),
             props.result.totalCount > 0 && h('span', { class: 'stat-divider' }, '/'),
             props.result.totalCount > 0 && h('span', { class: 'stat-item' }, [
               h('span', { class: 'stat-value' }, props.result.totalCount),
-              h('span', { class: 'stat-label' }, 'Total')
+              h('span', { class: 'stat-label' }, t('step4.totalLabel'))
             ]),
             props.resultLength && h('span', { class: 'stat-divider' }, '·'),
             props.resultLength && h('span', { class: 'stat-size' }, formatSize(props.resultLength))
@@ -1471,7 +1472,7 @@ const InterviewDisplay = {
         
         // Selection Reason - 选择理由
         props.result.interviews[activeIndex.value]?.selectionReason && h('div', { class: 'selection-reason' }, [
-          h('div', { class: 'reason-label' }, '选择理由'),
+          h('div', { class: 'reason-label' }, t('step4.selectionReason')),
           h('div', { class: 'reason-content' }, props.result.interviews[activeIndex.value].selectionReason)
         ]),
         
@@ -1781,7 +1782,7 @@ const activeStep = computed(() => {
   if (doneSteps.length > 0) return doneSteps[doneSteps.length - 1]
   
   // 否则返回第一个步骤
-  return steps[0] || { noLabel: '--', title: '等待开始', status: 'todo', meta: '' }
+  return steps[0] || { noLabel: '--', title: t('common.waiting'), status: 'todo', meta: '' }
 })
 
 const workflowSteps = computed(() => {

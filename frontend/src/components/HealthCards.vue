@@ -13,7 +13,7 @@
         ></span>
       </div>
       <div class="mt-2.5">
-        <div class="text-base font-bold text-white capitalize">{{ card.status }}</div>
+        <div class="text-base font-bold text-white capitalize">{{ $t('common.' + card.status) || card.status }}</div>
         <div class="text-[11px] text-slate-500 mt-0.5 truncate">{{ card.detail }}</div>
       </div>
     </div>

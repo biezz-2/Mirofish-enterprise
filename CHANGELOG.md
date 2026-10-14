@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.3.0-enterprise] - 2026-10-15
+
+### Added
+- **Complete Indonesian Localization & 100% Key Parity (`locales/id.json`)**:
+  - Full formal Indonesian translation across all namespaces: navigation, simulation workflow (Steps 0–5), graph exploration, historical databases, job recovery, system health monitoring, reporting, and logs.
+  - Full 3-way key parity across `locales/en.json`, `locales/zh.json`, and `locales/id.json` (857 keys each, 0 missing keys, 0 placeholder mismatches).
+- **Multi-locale Fallback Configuration (`frontend/src/i18n/index.js`)**:
+  - Configured fallback chain `['en', 'zh']` ensuring clean fallback behavior without defaulting to untranslated Mandarin strings.
+- **Dynamic Localization for Graph & Report Inspection**:
+  - Extracted dynamic i18n keys for graph node properties, UUID, timestamps, entity types, edge labels, and self-relations in `frontend/src/components/GraphPanel.vue`.
+  - Added localized interview dialogue state, selection reasons, and status labels in `frontend/src/components/Step4Report.vue`.
+  - Localized dashboard recovery table status and health metric badges in `frontend/src/components/JobRecoveryTable.vue` and `frontend/src/components/HealthCards.vue`.
+
+### Fixed
+- Fixed untranslated English and Chinese strings appearing across UI views when Indonesian language is selected.
+- Eliminated hardcoded Chinese characters in `GraphPanel.vue` and `Step4Report.vue` templates.
+- Fixed missing i18n binding for dashboard subtitle and back button in `frontend/src/views/DashboardView.vue`.
+
+---
+
 ## [3.2.0-enterprise] - 2026-10-14
 
 ### Added
