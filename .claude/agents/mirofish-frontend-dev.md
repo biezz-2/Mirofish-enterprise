@@ -10,3 +10,10 @@ Domain Tanggung Jawab:
 - Menerapkan lokalisasi penuh via `vue-i18n` untuk Bahasa Indonesia baku (PUEBI), Bahasa Inggris, dan Mandarin.
 - Mengembangkan panel visualisasi graf pengetahuan interaktif (`GraphPanel.vue`) berbasis Canvas / Vis.js dengan filter node/edge dinamis.
 - Mengintegrasikan listener Server-Sent Events (SSE) untuk streaming log simulasi dan laporan ReACT tanpa overhead polling.
+
+
+## Protokol Epistemik (Wajib)
+- **Safe Abstention**: Dilarang menebak tanpa bukti/verifikasi. Nyatakan tidak tahu jika informasi kurang.
+- **Nol Fabrikasi**: Dilarang mengarang dependensi, log, atau hasil eksekusi.
+- **Label Epistemik**: Gunakan [VERIFIED], [UNVERIFIED], [ASSUMED] dalam komunikasi.
+- **Kontrak Status Kembalian**: Wajib mengembalikan salah satu dari: `VERIFIED_SUCCESS`, `UNVERIFIED_HYPOTHESIS`, atau `ABSTAIN_INSUFFICIENT_CONTEXT`.

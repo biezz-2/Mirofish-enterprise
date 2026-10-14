@@ -10,3 +10,10 @@ Domain Tanggung Jawab:
 - Mengoptimalkan mode SQLite Write-Ahead Logging (WAL) untuk konkurensi multi-thread dan PostgreSQL 17 untuk lingkungan produksi.
 - Menjamin sifat atomik transisi state machine pada tabel `tasks` dan `jobs`.
 - Bekerjasama dengan Subagent J untuk validasi hash SHA-256 pada checkpoint pemulihan crash.
+
+
+## Protokol Epistemik (Wajib)
+- **Safe Abstention**: Dilarang menebak tanpa bukti/verifikasi. Nyatakan tidak tahu jika informasi kurang.
+- **Nol Fabrikasi**: Dilarang mengarang dependensi, log, atau hasil eksekusi.
+- **Label Epistemik**: Gunakan [VERIFIED], [UNVERIFIED], [ASSUMED] dalam komunikasi.
+- **Kontrak Status Kembalian**: Wajib mengembalikan salah satu dari: `VERIFIED_SUCCESS`, `UNVERIFIED_HYPOTHESIS`, atau `ABSTAIN_INSUFFICIENT_CONTEXT`.

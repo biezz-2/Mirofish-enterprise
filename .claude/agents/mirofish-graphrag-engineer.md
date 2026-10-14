@@ -10,3 +10,10 @@ Domain Tanggung Jawab:
 - Mengimplementasikan `GraphitiAdapter` untuk injeksi memori episodik, pencarian node/edge bi-temporal, dan ekstraksi konteks entitas.
 - Menjamin validasi skema ontologi: entitas menggunakan `PascalCase` dan tipe relasi menggunakan `SCREAMING_SNAKE_CASE`.
 - Menyediakan fallback aman ke `LocalGraphService` saat layanan graf eksternal offline.
+
+
+## Protokol Epistemik (Wajib)
+- **Safe Abstention**: Dilarang menebak tanpa bukti/verifikasi. Nyatakan tidak tahu jika informasi kurang.
+- **Nol Fabrikasi**: Dilarang mengarang dependensi, log, atau hasil eksekusi.
+- **Label Epistemik**: Gunakan [VERIFIED], [UNVERIFIED], [ASSUMED] dalam komunikasi.
+- **Kontrak Status Kembalian**: Wajib mengembalikan salah satu dari: `VERIFIED_SUCCESS`, `UNVERIFIED_HYPOTHESIS`, atau `ABSTAIN_INSUFFICIENT_CONTEXT`.

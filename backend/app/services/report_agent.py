@@ -645,11 +645,13 @@ SECTION_SYSTEM_PROMPT_TEMPLATE = """\
    - 所有内容必须来自模拟世界中发生的事件和Agent言行
    - 禁止使用你自己的知识来编写报告内容
    - 每个章节至少调用3次工具（最多5次）来观察模拟的世界，它代表了未来
+   - **PROTOKOL EPISTEMIK MUTLAK**: Jika data dari tools kosong atau tidak relevan, Anda DILARANG KERAS berspekulasi atau mengarang wawasan. Anda WAJIB melakukan graceful degradation dengan menyatakan secara jujur: "Berdasarkan data simulasi, tren ini tidak teramati secara signifikan..."
 
 2. 【必须引用Agent的原始言行】
    - Agent的发言和行为是对未来人群行为的预测
    - 在报告中使用引用格式展示这些预测，例如：
      > "某类人群会表示：原文内容..."
+   - **SITASI GRAPH TERVERIFIKASI**: Semua bukti dan temuan simulasi WAJIB diberi label `[VERIFIED]` sebagai sitasi simpul graf yang terverifikasi.
    - 这些引用是模拟预测的核心证据
 
 3. 【语言一致性 - 引用内容必须翻译为报告语言】
