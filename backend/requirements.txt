@@ -39,7 +39,7 @@ pydantic>=2.0.0
 sqlalchemy>=2.0.0
 psycopg[binary]>=3.2.0
 cryptography>=41.0.0
-aiohttp>=3.9.0
+aiohttp>=3.14.5
 
 # ============= 安全更新 (Hardening) =============
 pillow==10.3.0
