@@ -11,6 +11,8 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
 
 from ..utils.locale import t
+from .db_session import get_db_session
+from .entities import TaskModel
 
 
 class TaskStatus(str, Enum):
@@ -42,8 +44,8 @@ class Task:
             "task_id": self.task_id,
             "task_type": self.task_type,
             "status": self.status.value,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
+            "created_at": self.created_at.isoformat() if isinstance(self.created_at, datetime) else self.created_at,
+            "updated_at": self.updated_at.isoformat() if isinstance(self.updated_at, datetime) else self.updated_at,
             "progress": self.progress,
             "message": self.message,
             "progress_detail": self.progress_detail,
@@ -71,6 +73,69 @@ class TaskManager:
                     cls._instance._tasks: Dict[str, Task] = {}
                     cls._instance._task_lock = threading.Lock()
         return cls._instance
+
+    def _sync_to_db(self, task: Task) -> None:
+        try:
+            with get_db_session() as session:
+                db_task = session.query(TaskModel).filter_by(id=task.task_id).first()
+                if db_task:
+                    db_task.status = task.status.value
+                    db_task.progress = task.progress
+                    db_task.message = task.message
+                    db_task.result = task.result
+                    db_task.error = task.error
+                    db_task.metadata_json = task.metadata
+                    db_task.progress_detail = task.progress_detail
+                    db_task.updated_at = datetime.now()
+                else:
+                    db_task = TaskModel(
+                        id=task.task_id,
+                        project_id=task.metadata.get("project_id", "default_proj_id_for_standalone_task"), # required FK
+                        task_type=task.task_type,
+                        status=task.status.value,
+                        progress=task.progress,
+                        message=task.message,
+                        result=task.result,
+                        error=task.error,
+                        metadata_json=task.metadata,
+                        progress_detail=task.progress_detail,
+                        created_at=task.created_at,
+                        updated_at=datetime.now()
+                    )
+                    session.add(db_task)
+        except Exception:
+            pass
+
+    def _sync_from_db(self, task_id: str) -> Optional[Task]:
+        try:
+            with get_db_session() as session:
+                db_task = session.query(TaskModel).filter_by(id=task_id).first()
+                if db_task:
+                    status = TaskStatus.FAILED
+                    try:
+                        status = TaskStatus(db_task.status)
+                    except ValueError:
+                        pass
+
+                    task = Task(
+                        task_id=db_task.id,
+                        task_type=db_task.task_type,
+                        status=status,
+                        created_at=db_task.created_at,
+                        updated_at=db_task.updated_at,
+                        progress=db_task.progress or 0,
+                        message=db_task.message or "",
+                        result=db_task.result,
+                        error=db_task.error,
+                        metadata=db_task.metadata_json or {},
+                        progress_detail=db_task.progress_detail or {}
+                    )
+                    with self._task_lock:
+                        self._tasks[task_id] = task
+                    return task
+        except Exception:
+            pass
+        return None
     
     def create_task(self, task_type: str, metadata: Optional[Dict] = None) -> str:
         """
@@ -97,13 +162,18 @@ class TaskManager:
         
         with self._task_lock:
             self._tasks[task_id] = task
+
+        self._sync_to_db(task)
         
         return task_id
     
     def get_task(self, task_id: str) -> Optional[Task]:
         """获取任务"""
         with self._task_lock:
-            return self._tasks.get(task_id)
+            task = self._tasks.get(task_id)
+            if not task:
+                task = self._sync_from_db(task_id)
+            return task
     
     def update_task(
         self,
@@ -117,18 +187,14 @@ class TaskManager:
     ):
         """
         更新任务状态
-        
-        Args:
-            task_id: 任务ID
-            status: 新状态
-            progress: 进度
-            message: 消息
-            result: 结果
-            error: 错误信息
-            progress_detail: 详细进度信息
         """
         with self._task_lock:
+            task = self.get_task(task_id) # uses lock internally, but we are already in lock, so get from dict to avoid deadlock
+
             task = self._tasks.get(task_id)
+            if not task:
+                 task = self._sync_from_db(task_id)
+
             if task:
                 task.updated_at = datetime.now()
                 if status is not None:
@@ -143,6 +209,8 @@ class TaskManager:
                     task.error = error
                 if progress_detail is not None:
                     task.progress_detail = progress_detail
+
+                self._sync_to_db(task)
     
     def complete_task(self, task_id: str, result: Dict):
         """标记任务完成"""
@@ -183,4 +251,3 @@ class TaskManager:
             ]
             for tid in old_ids:
                 del self._tasks[tid]
-

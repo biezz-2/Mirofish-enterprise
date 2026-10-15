@@ -3,34 +3,71 @@ Model Relasional Database MiroFish (SQLAlchemy)
 Mendukung SQLite (default) dan migrasi ke PostgreSQL
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Float, Boolean, Text, DateTime, ForeignKey
+from sqlalchemy import Column, String, Integer, Float, Boolean, Text, DateTime, ForeignKey, JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.ext.compiler import compiles
+
+# Custom JSON type that uses JSONB on PostgreSQL and JSON on SQLite
+class CustomJSON(JSON):
+    pass
+
+@compiles(CustomJSON, "postgresql")
+def compile_custom_json_pg(type_, compiler, **kw):
+    return "JSONB"
+
+@compiles(CustomJSON, "sqlite")
+def compile_custom_json_sqlite(type_, compiler, **kw):
+    return "JSON"
 
 Base = declarative_base()
 
 class ProjectModel(Base):
     __tablename__ = "projects"
-    id = Column(String(64), primary_key=True)
+    id = Column(String(64), primary_key=True) # changed from id
     name = Column(String(255), nullable=False)
+    status = Column(String(32), nullable=False, default="created") # added status
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) # added updated_at
+    files = Column(CustomJSON, default=list) # added files
+    total_text_length = Column(Integer, default=0) # added total_text_length
+    ontology = Column(CustomJSON, nullable=True) # added ontology
+    analysis_summary = Column(Text, nullable=True) # added analysis_summary
+    graph_id = Column(String(128), nullable=True) # added graph_id
+    graph_build_task_id = Column(String(128), nullable=True) # added graph_build_task_id
+    zep_batch_id = Column(String(128), nullable=True) # added zep_batch_id
+    zep_batch_operation_id = Column(String(128), nullable=True) # added zep_batch_operation_id
+    simulation_requirement = Column(Text, nullable=True) # added simulation_requirement
+    chunk_size = Column(Integer, default=500) # added chunk_size
+    chunk_overlap = Column(Integer, default=50) # added chunk_overlap
+    error = Column(Text, nullable=True) # added error
+
     tasks = relationship("TaskModel", back_populates="project", cascade="all, delete-orphan")
 
 class TaskModel(Base):
     __tablename__ = "tasks"
-    id = Column(String(64), primary_key=True)
-    project_id = Column(String(64), ForeignKey("projects.id"), nullable=False)
-    task_type = Column(String(32), nullable=False)
+    id = Column(String(64), primary_key=True) # changed from id
+    project_id = Column(String(64), ForeignKey("projects.id"), nullable=False) # changed from projects.id
+    task_type = Column(String(64), nullable=False) # changed length from 32 to 64
     status = Column(String(32), default="pending")
+    progress = Column(Integer, default=0) # added progress
+    message = Column(Text, default="") # added message
+    result = Column(CustomJSON, nullable=True) # added result
+    error = Column(Text, nullable=True) # added error
+    metadata_json = Column(CustomJSON, default=dict) # added metadata, renamed due to sqlalchemy reserved keyword
+    progress_detail = Column(CustomJSON, default=dict) # added progress_detail
     params_json = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) # added updated_at
+
     project = relationship("ProjectModel", back_populates="tasks")
     jobs = relationship("JobModel", back_populates="task", cascade="all, delete-orphan")
 
 class JobModel(Base):
     __tablename__ = "jobs"
     id = Column(String(64), primary_key=True)
-    task_id = Column(String(64), ForeignKey("tasks.id"), nullable=False)
+    task_id = Column(String(64), ForeignKey("tasks.id"), nullable=False) # changed from tasks.id
     project_id = Column(String(64), nullable=False)
     state = Column(String(32), default="queued")
     pid = Column(Integer, nullable=True)
@@ -56,21 +93,21 @@ class CheckpointModel(Base):
 class PlatformConfigModel(Base):
     __tablename__ = "platforms_config"
     id = Column(String(64), primary_key=True)
-    project_id = Column(String(64), ForeignKey("projects.id"), nullable=False)
+    project_id = Column(String(64), ForeignKey("projects.id"), nullable=False) # changed from projects.id
     platform = Column(String(32), nullable=False)
     params_json = Column(Text, nullable=False)
 
 class ResearchReportModel(Base):
     __tablename__ = "research_reports"
     id = Column(String(64), primary_key=True)
-    project_id = Column(String(64), ForeignKey("projects.id"), nullable=True)
+    project_id = Column(String(64), ForeignKey("projects.id"), nullable=True) # changed from projects.id
     query = Column(String(512), nullable=False)
     research_type = Column(String(32), default="general")
-    facts_json = Column(Text, nullable=True)
-    entities_json = Column(Text, nullable=True)
-    trends_json = Column(Text, nullable=True)
+    facts_json = Column(CustomJSON, nullable=True) # converted to CustomJSON
+    entities_json = Column(CustomJSON, nullable=True) # converted to CustomJSON
+    trends_json = Column(CustomJSON, nullable=True) # converted to CustomJSON
     credibility_score = Column(Float, default=0.0)
-    raw_results_json = Column(Text, nullable=True)
+    raw_results_json = Column(CustomJSON, nullable=True) # converted to CustomJSON
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class SettingsModel(Base):
@@ -85,5 +122,5 @@ class AuditLogModel(Base):
     actor = Column(String(64), nullable=False)
     action = Column(String(64), nullable=False)
     resource_id = Column(String(64), nullable=True)
-    details_json = Column(Text, nullable=True)
+    details_json = Column(CustomJSON, nullable=True) # converted to CustomJSON
     created_at = Column(DateTime, default=datetime.utcnow)
