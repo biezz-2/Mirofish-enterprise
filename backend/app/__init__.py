@@ -78,9 +78,9 @@ def create_app(config_class=Config):
     app.register_blueprint(research_bp)
 
     # Inisialisasi Database Relasional & Pemindaian Pemulihan Pasca-Crash
-    from .models.db_session import init_db
+    from .models.db_session import init_db, get_engine
     from .services.recovery import startup_recovery_scan
-    db_uri = os.environ.get("DATABASE_URI", "sqlite:///mirofish.db")
+    db_uri = os.environ.get("DATABASE_URI", Config.DATABASE_URI)
     try:
         init_db(db_uri)
         recovered = startup_recovery_scan()
@@ -125,10 +125,13 @@ def create_app(config_class=Config):
     @app.route('/health')
     @app.route('/api/health')
     def health():
+        engine = get_engine()
+        db_type = engine.dialect.name if engine else 'uninitialized'
+        db_label = f"supabase ({db_type})" if "postgresql" in db_type else db_type
         return {
             'status': 'healthy',
             'service': 'MiroFish Enterprise Backend (v3.1)',
-            'database': 'sqlite',
+            'database': db_label,
             'multi_platform': True,
             'searxng': True
         }

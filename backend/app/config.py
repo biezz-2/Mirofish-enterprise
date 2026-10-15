@@ -47,6 +47,12 @@ class Config:
     # SearXNG Metasearch
     SEARCHXNG_URL = os.environ.get('SEARCHXNG_URL', 'http://192.168.101.19:8089')
     
+    # Database 配置 (Supabase PostgreSQL / Self-Hosted Supabase)
+    DATABASE_URI = os.environ.get(
+        'DATABASE_URI',
+        'postgresql+psycopg://postgres.your-tenant-id:your_password@127.0.0.1:5432/postgres?options=-csearch_path%3Dmirofish,public'
+    )
+    
     # 文件上传配置
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../uploads')

@@ -11,7 +11,15 @@ _SessionFactory = None
 
 def init_db(database_uri: str):
     global _engine, _SessionFactory
-    _engine = create_engine(database_uri, echo=False)
+    connect_args = {}
+    if "postgresql" in database_uri and "options=" not in database_uri:
+        connect_args["options"] = "-csearch_path=mirofish,public"
+    _engine = create_engine(
+        database_uri,
+        echo=False,
+        pool_pre_ping=True,
+        connect_args=connect_args
+    )
     Base.metadata.create_all(_engine)
     _SessionFactory = scoped_session(sessionmaker(bind=_engine, expire_on_commit=False))
     return _engine

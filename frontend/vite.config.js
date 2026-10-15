@@ -14,7 +14,10 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
-    allowedHosts: ['mirofish.biezz.my.id', 'localhost'],
+    allowedHosts: true,
+    hmr: {
+      clientPort: 443
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5001',
