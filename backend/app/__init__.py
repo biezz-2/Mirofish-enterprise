@@ -117,10 +117,13 @@ def create_app(config_class=Config):
     @app.route('/health')
     @app.route('/api/health')
     def health():
+        import os
+        db_uri = os.environ.get("DATABASE_URI", "sqlite:///mirofish.db")
+        db_type = "postgresql" if db_uri.startswith("postgresql") else "sqlite"
         return {
             'status': 'healthy',
             'service': 'MiroFish Enterprise Backend (v3.1)',
-            'database': 'sqlite',
+            'database': db_type,
             'multi_platform': True,
             'searxng': True
         }

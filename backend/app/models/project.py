@@ -12,6 +12,8 @@ from typing import Dict, Any, List, Optional
 from enum import Enum
 from dataclasses import dataclass, field, asdict
 from ..config import Config
+from .db_session import get_db_session
+from .entities import ProjectModel
 
 
 class ProjectStatus(str, Enum):
@@ -149,14 +151,15 @@ class ProjectManager:
         cls._ensure_projects_dir()
         
         project_id = f"proj_{uuid.uuid4().hex[:12]}"
-        now = datetime.now().isoformat()
+        now = datetime.utcnow()
+        now_str = now.isoformat()
         
         project = Project(
             project_id=project_id,
             name=name,
             status=ProjectStatus.CREATED,
-            created_at=now,
-            updated_at=now
+            created_at=now_str,
+            updated_at=now_str
         )
         
         # 创建项目目录结构
@@ -165,6 +168,24 @@ class ProjectManager:
         os.makedirs(project_dir, exist_ok=True)
         os.makedirs(files_dir, exist_ok=True)
         
+        # 保存到数据库
+        try:
+            with get_db_session() as session:
+                db_project = ProjectModel(
+                    id=project.project_id,
+                    name=project.name,
+                    status=project.status.value,
+                    created_at=now,
+                    updated_at=now,
+                    files=project.files,
+                    total_text_length=project.total_text_length,
+                    chunk_size=project.chunk_size,
+                    chunk_overlap=project.chunk_overlap
+                )
+                session.add(db_project)
+        except Exception:
+            pass # fallback to JSON
+
         # 保存项目元数据
         cls.save_project(project)
         
@@ -173,7 +194,52 @@ class ProjectManager:
     @classmethod
     def save_project(cls, project: Project) -> None:
         """保存项目元数据"""
-        project.updated_at = datetime.now().isoformat()
+        project.updated_at = datetime.utcnow().isoformat()
+
+        # 1. 更新到数据库
+        try:
+            with get_db_session() as session:
+                db_project = session.query(ProjectModel).filter_by(id=project.project_id).first()
+                if db_project:
+                    db_project.name = project.name
+                    db_project.status = project.status.value
+                    db_project.updated_at = datetime.utcnow()
+                    db_project.files = project.files
+                    db_project.total_text_length = project.total_text_length
+                    db_project.ontology = project.ontology
+                    db_project.analysis_summary = project.analysis_summary
+                    db_project.graph_id = project.graph_id
+                    db_project.graph_build_task_id = project.graph_build_task_id
+                    db_project.zep_batch_id = project.zep_batch_id
+                    db_project.zep_batch_operation_id = project.zep_batch_operation_id
+                    db_project.simulation_requirement = project.simulation_requirement
+                    db_project.chunk_size = project.chunk_size
+                    db_project.chunk_overlap = project.chunk_overlap
+                    db_project.error = project.error
+                else:
+                    db_project = ProjectModel(
+                        id=project.project_id,
+                        name=project.name,
+                        status=project.status.value,
+                        created_at=datetime.fromisoformat(project.created_at) if project.created_at else datetime.utcnow(),
+                        updated_at=datetime.utcnow(),
+                        files=project.files,
+                        total_text_length=project.total_text_length,
+                        ontology=project.ontology,
+                        analysis_summary=project.analysis_summary,
+                        graph_id=project.graph_id,
+                        graph_build_task_id=project.graph_build_task_id,
+                        zep_batch_id=project.zep_batch_id,
+                        zep_batch_operation_id=project.zep_batch_operation_id,
+                        simulation_requirement=project.simulation_requirement,
+                        chunk_size=project.chunk_size,
+                        chunk_overlap=project.chunk_overlap,
+                        error=project.error
+                    )
+                    session.add(db_project)
+        except Exception:
+            pass
+
         meta_path = cls._get_project_meta_path(project.project_id)
         
         with open(meta_path, 'w', encoding='utf-8') as f:
@@ -190,15 +256,50 @@ class ProjectManager:
         Returns:
             Project对象，如果不存在返回None
         """
+        # Try DB first
+        try:
+            with get_db_session() as session:
+                db_proj = session.query(ProjectModel).filter_by(id=project_id).first()
+                if db_proj:
+                    status_val = db_proj.status
+                    try:
+                        status = ProjectStatus(status_val)
+                    except ValueError:
+                        status = ProjectStatus.FAILED
+
+                    return Project(
+                        project_id=db_proj.id,
+                        name=db_proj.name,
+                        status=status,
+                        created_at=db_proj.created_at.isoformat() if db_proj.created_at else "",
+                        updated_at=db_proj.updated_at.isoformat() if db_proj.updated_at else "",
+                        files=db_proj.files or [],
+                        total_text_length=db_proj.total_text_length or 0,
+                        ontology=db_proj.ontology,
+                        analysis_summary=db_proj.analysis_summary,
+                        graph_id=db_proj.graph_id,
+                        graph_build_task_id=db_proj.graph_build_task_id,
+                        zep_batch_id=db_proj.zep_batch_id,
+                        zep_batch_operation_id=db_proj.zep_batch_operation_id,
+                        simulation_requirement=db_proj.simulation_requirement,
+                        chunk_size=db_proj.chunk_size or 500,
+                        chunk_overlap=db_proj.chunk_overlap or 50,
+                        error=db_proj.error
+                    )
+        except Exception:
+            pass
+
         meta_path = cls._get_project_meta_path(project_id)
         
         if not os.path.exists(meta_path):
             return None
         
-        with open(meta_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
-        return Project.from_dict(data)
+        try:
+            with open(meta_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return Project.from_dict(data)
+        except Exception:
+            return None
     
     @classmethod
     def list_projects(cls, limit: Optional[int] = 50) -> List[Project]:
@@ -213,6 +314,39 @@ class ProjectManager:
         """
         cls._ensure_projects_dir()
         
+        # Try from DB
+        try:
+            with get_db_session() as session:
+                db_projects = session.query(ProjectModel).order_by(ProjectModel.created_at.desc())
+                if limit:
+                    db_projects = db_projects.limit(limit)
+
+                projects = []
+                for db_proj in db_projects:
+                    proj = Project(
+                        project_id=db_proj.id,
+                        name=db_proj.name,
+                        status=ProjectStatus(db_proj.status) if db_proj.status else ProjectStatus.CREATED,
+                        created_at=db_proj.created_at.isoformat() if db_proj.created_at else "",
+                        updated_at=db_proj.updated_at.isoformat() if db_proj.updated_at else "",
+                        files=db_proj.files or [],
+                        total_text_length=db_proj.total_text_length or 0,
+                        ontology=db_proj.ontology,
+                        analysis_summary=db_proj.analysis_summary,
+                        graph_id=db_proj.graph_id,
+                        graph_build_task_id=db_proj.graph_build_task_id,
+                        zep_batch_id=db_proj.zep_batch_id,
+                        zep_batch_operation_id=db_proj.zep_batch_operation_id,
+                        simulation_requirement=db_proj.simulation_requirement,
+                        chunk_size=db_proj.chunk_size or 500,
+                        chunk_overlap=db_proj.chunk_overlap or 50,
+                        error=db_proj.error
+                    )
+                    projects.append(proj)
+                return projects
+        except Exception:
+            pass
+
         projects = []
         for project_id in os.listdir(cls.PROJECTS_DIR):
             project = cls.get_project(project_id)
@@ -245,6 +379,13 @@ class ProjectManager:
         Returns:
             是否删除成功
         """
+        # Delete from db
+        try:
+            with get_db_session() as session:
+                session.query(ProjectModel).filter_by(id=project_id).delete()
+        except Exception:
+            pass
+
         project_dir = cls._get_project_dir(project_id)
         
         if not os.path.exists(project_dir):
