@@ -24,6 +24,7 @@ def run_async(coro):
     return loop.run_until_complete(coro)
 
 @research_bp.route('/searchxng', methods=['POST'])
+@require_auth
 def search_with_searchxng():
     data = request.get_json() or {}
     query = data.get('query', '').strip()

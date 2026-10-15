@@ -10,6 +10,7 @@ import traceback
 import threading
 from contextlib import ExitStack, nullcontext
 from flask import request, jsonify
+from ..utils.auth import require_auth, require_resource_ownership
 from zep_cloud import NotFoundError
 
 from . import graph_bp
@@ -131,6 +132,8 @@ def allowed_file(filename: str) -> bool:
 # ============== 项目管理接口 ==============
 
 @graph_bp.route('/project/<project_id>', methods=['GET'])
+@require_auth
+@require_resource_ownership('project')
 def get_project(project_id: str):
     """
     获取项目详情
@@ -150,6 +153,7 @@ def get_project(project_id: str):
 
 
 @graph_bp.route('/project/list', methods=['GET'])
+@require_auth
 def list_projects():
     """
     列出所有项目
@@ -165,6 +169,8 @@ def list_projects():
 
 
 @graph_bp.route('/project/<project_id>', methods=['DELETE'])
+@require_auth
+@require_resource_ownership('project')
 def delete_project(project_id: str):
     with _project_build_lock(project_id):
         return _delete_project_impl(project_id)
@@ -212,6 +218,8 @@ def _delete_project_impl(project_id: str):
 
 
 @graph_bp.route('/project/<project_id>/reset', methods=['POST'])
+@require_auth
+@require_resource_ownership('project')
 def reset_project(project_id: str):
     with _project_build_lock(project_id):
         return _reset_project_impl(project_id)
@@ -264,6 +272,7 @@ def _reset_project_impl(project_id: str):
 # ============== 接口1：上传文件并生成本体 ==============
 
 @graph_bp.route('/ontology/generate', methods=['POST'])
+@require_auth
 def generate_ontology():
     """
     接口1：上传文件，分析生成本体定义
@@ -447,6 +456,7 @@ def generate_ontology():
 # ============== 接口2：构建图谱 ==============
 
 @graph_bp.route('/build', methods=['POST'])
+@require_auth
 def build_graph():
     """Serialize build claims for the same project within this process."""
 
@@ -833,6 +843,8 @@ def _build_graph_impl():
 # ============== 任务查询接口 ==============
 
 @graph_bp.route('/task/<task_id>', methods=['GET'])
+@require_auth
+@require_resource_ownership('task')
 def get_task(task_id: str):
     """
     查询任务状态
@@ -852,6 +864,7 @@ def get_task(task_id: str):
 
 
 @graph_bp.route('/tasks', methods=['GET'])
+@require_auth
 def list_tasks():
     """
     列出所有任务
@@ -868,6 +881,8 @@ def list_tasks():
 # ============== 图谱数据接口 ==============
 
 @graph_bp.route('/data/<graph_id>', methods=['GET'])
+@require_auth
+@require_resource_ownership('graph')
 def get_graph_data(graph_id: str):
     """
     获取图谱数据（节点和边）
@@ -904,6 +919,8 @@ def get_graph_data(graph_id: str):
 
 
 @graph_bp.route('/delete/<graph_id>', methods=['DELETE'])
+@require_auth
+@require_resource_ownership('graph')
 def delete_graph(graph_id: str):
     """
     删除Zep图谱

@@ -30,6 +30,7 @@ logger = get_logger('mirofish.api.report')
 # ============== 报告生成接口 ==============
 
 @report_bp.route('/generate', methods=['POST'])
+@require_auth
 def generate_report():
     """
     生成模拟分析报告（异步任务）
@@ -320,6 +321,7 @@ def generate_report():
 
 
 @report_bp.route('/generate/status', methods=['POST'])
+@require_auth
 def get_generate_status():
     """
     查询报告生成任务进度
@@ -394,6 +396,8 @@ def get_generate_status():
 # ============== 报告获取接口 ==============
 
 @report_bp.route('/<report_id>', methods=['GET'])
+@require_auth
+@require_resource_ownership('report')
 def get_report(report_id: str):
     """
     获取报告详情
@@ -436,6 +440,8 @@ def get_report(report_id: str):
 
 
 @report_bp.route('/by-simulation/<simulation_id>', methods=['GET'])
+@require_auth
+@require_resource_ownership('simulation')
 def get_report_by_simulation(simulation_id: str):
     """
     根据模拟ID获取报告
@@ -475,6 +481,7 @@ def get_report_by_simulation(simulation_id: str):
 
 
 @report_bp.route('/list', methods=['GET'])
+@require_auth
 def list_reports():
     """
     列出所有报告
@@ -515,6 +522,8 @@ def list_reports():
 
 
 @report_bp.route('/<report_id>/download', methods=['GET'])
+@require_auth
+@require_resource_ownership('report')
 def download_report(report_id: str):
     """
     下载报告（Markdown格式）
@@ -561,6 +570,8 @@ def download_report(report_id: str):
 
 
 @report_bp.route('/<report_id>', methods=['DELETE'])
+@require_auth
+@require_resource_ownership('report')
 def delete_report(report_id: str):
     """删除报告"""
     try:
@@ -589,6 +600,7 @@ def delete_report(report_id: str):
 # ============== Report Agent对话接口 ==============
 
 @report_bp.route('/chat', methods=['POST'])
+@require_auth
 def chat_with_report_agent():
     """
     与Report Agent对话
@@ -686,6 +698,8 @@ def chat_with_report_agent():
 # ============== 报告进度与分章节接口 ==============
 
 @report_bp.route('/<report_id>/progress', methods=['GET'])
+@require_auth
+@require_resource_ownership('report')
 def get_report_progress(report_id: str):
     """
     获取报告生成进度（实时）
@@ -727,6 +741,8 @@ def get_report_progress(report_id: str):
 
 
 @report_bp.route('/<report_id>/sections', methods=['GET'])
+@require_auth
+@require_resource_ownership('report')
 def get_report_sections(report_id: str):
     """
     获取已生成的章节列表（分章节输出）
@@ -778,6 +794,8 @@ def get_report_sections(report_id: str):
 
 
 @report_bp.route('/<report_id>/section/<int:section_index>', methods=['GET'])
+@require_auth
+@require_resource_ownership('report')
 def get_single_section(report_id: str, section_index: int):
     """
     获取单个章节内容
@@ -824,6 +842,8 @@ def get_single_section(report_id: str, section_index: int):
 # ============== 报告状态检查接口 ==============
 
 @report_bp.route('/check/<simulation_id>', methods=['GET'])
+@require_auth
+@require_resource_ownership('simulation')
 def check_report_status(simulation_id: str):
     """
     检查模拟是否有报告，以及报告状态
@@ -875,6 +895,8 @@ def check_report_status(simulation_id: str):
 # ============== Agent 日志接口 ==============
 
 @report_bp.route('/<report_id>/agent-log', methods=['GET'])
+@require_auth
+@require_resource_ownership('report')
 def get_agent_log(report_id: str):
     """
     获取 Report Agent 的详细执行日志
@@ -934,6 +956,8 @@ def get_agent_log(report_id: str):
 
 
 @report_bp.route('/<report_id>/agent-log/stream', methods=['GET'])
+@require_auth
+@require_resource_ownership('report')
 def stream_agent_log(report_id: str):
     """
     获取完整的 Agent 日志（一次性获取全部）
@@ -970,6 +994,8 @@ def stream_agent_log(report_id: str):
 # ============== 控制台日志接口 ==============
 
 @report_bp.route('/<report_id>/console-log', methods=['GET'])
+@require_auth
+@require_resource_ownership('report')
 def get_console_log(report_id: str):
     """
     获取 Report Agent 的控制台输出日志
@@ -1016,6 +1042,8 @@ def get_console_log(report_id: str):
 
 
 @report_bp.route('/<report_id>/console-log/stream', methods=['GET'])
+@require_auth
+@require_resource_ownership('report')
 def stream_console_log(report_id: str):
     """
     获取完整的控制台日志（一次性获取全部）
@@ -1052,6 +1080,7 @@ def stream_console_log(report_id: str):
 # ============== 工具调用接口（供调试使用）==============
 
 @report_bp.route('/tools/search', methods=['POST'])
+@require_auth
 def search_graph_tool():
     """
     图谱搜索工具接口（供调试使用）
@@ -1100,6 +1129,7 @@ def search_graph_tool():
 
 
 @report_bp.route('/tools/statistics', methods=['POST'])
+@require_auth
 def get_graph_statistics_tool():
     """
     图谱统计工具接口（供调试使用）
