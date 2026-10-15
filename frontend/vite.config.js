@@ -15,6 +15,9 @@ export default defineConfig({
     port: 3000,
     open: true,
     allowedHosts: true,
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+    },
     hmr: {
       clientPort: 443
     },

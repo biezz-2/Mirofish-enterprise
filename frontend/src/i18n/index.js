@@ -14,7 +14,16 @@ for (const path in localeFiles) {
   }
 }
 
-const savedLocale = localStorage.getItem('locale') || 'zh'
+let savedLocale = 'zh'
+try {
+  savedLocale = localStorage.getItem('locale') || 'zh'
+} catch (e) {
+  savedLocale = 'zh'
+}
+
+if (!messages[savedLocale]) {
+  savedLocale = 'zh'
+}
 
 const i18n = createI18n({
   legacy: false,
