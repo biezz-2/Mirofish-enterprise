@@ -101,7 +101,7 @@ class MCPServer:
             else:
                 res = {
                     "job_id": job_id,
-                    "runner_status": "idle",
+                    "runner_status": "running",
                     "current_round": 12,
                     "progress_percent": 24.0,
                     "source": "mock_fallback"

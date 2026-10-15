@@ -126,9 +126,17 @@ class WebResearchService:
         facts = []
         for r in report.web_results[:5]:
             if len(r.content) > 30:
-                facts.append(r.content[:160] + "...")
-        report.summarized_facts = facts or [f"Informasi terkini mengenai {report.query} berhasil ditemukan."]
-        report.trends = [f"Peningkatan diskusi terkait {report.query} di media daring."]
+                # Menghitung kredibilitas skor sederhana per sumber
+                s = r.relevance_score
+                if r.category == "news":
+                    s += 0.15
+                if len(report.web_results) >= 5:
+                    s += 0.05
+                # Label epistemik berdasarkan skor kredibilitas
+                label = "[VERIFIED]" if s >= 0.7 else "[UNVERIFIED]"
+                facts.append(f"{label} {r.content[:160]}...")
+        report.summarized_facts = facts or [f"[UNVERIFIED] Informasi terkini mengenai {report.query} berhasil ditemukan."]
+        report.trends = [f"[UNVERIFIED] Peningkatan diskusi terkait {report.query} di media daring."]
 
     async def _extract_entities(self, report: ResearchReport):
         """Ekstraksi entitas sederhana dari hasil pencarian."""
