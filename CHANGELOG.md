@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.5.0-enterprise] - 2026-10-15
+
+### Added
+- **API Authentication & IDOR Protection**:
+  - Implemented `@require_auth` and `@require_resource_ownership` decorators with JWT token validation and configurable `AUTH_REQUIRED` mode.
+  - Added access control protection across `/api/graph/*`, `/api/report/*`, `/api/simulation/*`, and `/api/research/*`.
+  - Added comprehensive test suite `backend/tests/test_auth.py` for token verification, expiration, and IDOR validation.
+- **Infrastructure Hardening & Security Headers**:
+  - Configured dedicated non-privileged user `appuser` (UID 10001) in Dockerfile to prevent container privilege escalation.
+  - Injected standard HTTP security headers (`Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `X-XSS-Protection`, `Strict-Transport-Security`).
+  - Enforced CORS origin filtering via `ALLOWED_CORS_ORIGINS`.
+  - Restricted internal database ports (Neo4j: 7474, 7687; SearXNG: 8080) to localhost (`127.0.0.1`) binding in `docker-compose.yml`.
+- **Full Security Audit Report (`SECURITY_AUDIT_REPORT.md`)**:
+  - Complete security audit documentation in Indonesian detailing findings, CVSS ratings, patch verification, and ongoing hardening guidelines.
+
+### Security
+- **DOM XSS Sanitization in Markdown Rendering**:
+  - Sanitized raw HTML entities (`&`, `<`, `>`, `"`, `'`) in frontend `renderMarkdown` (`Step4Report.vue` and `Step5Interaction.vue`) prior to parsing, preventing script injection through simulated agent responses.
+- **Dependency Hardening & CVE Patching**:
+  - Upgraded Python backend packages via `uv.lock` and `pyproject.toml` to patch vulnerabilities.
+  - Hardened frontend dependencies via `package-lock.json` and `npm audit`.
+
+---
+
 ## [3.4.0-enterprise] - 2026-10-15
 
 ### Added

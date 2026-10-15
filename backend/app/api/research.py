@@ -4,6 +4,7 @@ Endpoint pencarian privat, ekstraksi fakta/entitas, scoring kredibilitas
 """
 import asyncio
 from flask import Blueprint, request, jsonify
+from ..utils.auth import require_auth
 from ..services.web_research_service import WebResearchService
 from ..utils.logger import get_logger
 

@@ -8,6 +8,7 @@ from app.utils.auth import require_auth, require_resource_ownership
 
 app = Flask(__name__)
 app.testing = True
+app.config['AUTH_REQUIRED'] = True
 
 @app.route('/protected')
 @require_auth

@@ -1878,8 +1878,16 @@ const renderMarkdown = (content) => {
   // 去掉开头的二级标题（## xxx），因为章节标题已在外层显示
   let processedContent = content.replace(/^##\s+.+\n+/, '')
   
+  // Sanitasi karakter HTML mentah untuk mencegah DOM XSS injection sebelum markdown formatting
+  let html = processedContent
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+  
   // 处理代码块
-  let html = processedContent.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="code-block"><code>$2</code></pre>')
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="code-block"><code>$2</code></pre>')
   
   // 处理行内代码
   html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')

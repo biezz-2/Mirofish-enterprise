@@ -31,10 +31,16 @@ def require_auth(f):
     """
     Decorator untuk memvalidasi otentikasi.
     Memastikan request memiliki header Authorization yang valid dengan JWT Token.
+    Jika config AUTH_REQUIRED bernilai False dan header Authorization tidak disertakan,
+    request diteruskan (backward compatibility).
     """
     @wraps(f)
     def decorated(*args, **kwargs):
+        auth_required = current_app.config.get('AUTH_REQUIRED', False)
         auth_header = request.headers.get('Authorization')
+
+        if not auth_required and not auth_header:
+            return f(*args, **kwargs)
 
         if not auth_header:
             return get_unauthorized_response("Missing Authorization header")

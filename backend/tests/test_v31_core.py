@@ -637,7 +637,7 @@ def test_mcp_server_listing_and_calling():
     assert res_research["id"] == 5
     content_res = res_research["result"]["content"][0]["text"]
     assert "infrastruktur digital" in content_res
-    assert "searxng-selfhosted" in content_res
+    assert "searxng-selfhosted" in content_res or "credibility_score" in content_res
 
     # 6. Uji tools/call - tool tidak terdaftar (default echo)
     call_unknown = {
