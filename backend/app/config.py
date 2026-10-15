@@ -21,6 +21,9 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'mirofish-secret-key')
     DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
+    # CORS配置
+    ALLOWED_CORS_ORIGINS = os.environ.get('ALLOWED_CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
+
     # JSON配置 - 禁用ASCII转义，让中文直接显示
     JSON_AS_ASCII = False
     

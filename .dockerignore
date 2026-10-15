@@ -21,3 +21,11 @@ frontend/dist
 frontend/.vite
 
 backend/uploads
+
+# Security additions
+docker-compose.yml
+ecosystem.config.js
+backend/mirofish.db
+backend/mirofish.db-wal
+backend/mirofish.db-shm
+*.log

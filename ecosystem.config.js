@@ -3,8 +3,8 @@ module.exports = {
     {
       name: "mirofish-backend",
       script: "run.py",
-      interpreter: "/home/biezz/Documents/Project/coding/Mirofish-enterprise/backend/.venv/bin/python",
-      cwd: "/home/biezz/Documents/Project/coding/Mirofish-enterprise/backend",
+      interpreter: "python3",
+      cwd: "./backend",
       instances: 1,
       autorestart: true,
       watch: false,
@@ -14,8 +14,8 @@ module.exports = {
         FLASK_PORT: 5001,
         FLASK_HOST: "0.0.0.0",
         PYTHONUNBUFFERED: "1",
-        DATABASE_URI: "sqlite:////home/biezz/Documents/Project/coding/Mirofish-enterprise/backend/mirofish.db",
-        SEARCHXNG_URL: "http://192.168.101.19:8089",
+        DATABASE_URI: "sqlite:///mirofish.db",
+        SEARCHXNG_URL: "http://127.0.0.1:8888",
         LLM_MODEL_NAME: "mirofish-agent",
         DEFAULT_LOCALE: "id"
       }
@@ -24,7 +24,7 @@ module.exports = {
       name: "mirofish-frontend",
       script: "npm",
       args: "run dev -- --host 0.0.0.0 --port 3001",
-      cwd: "/home/biezz/Documents/Project/coding/Mirofish-enterprise/frontend",
+      cwd: "./frontend",
       instances: 1,
       autorestart: true,
       watch: false,

@@ -6,7 +6,7 @@ services:
     container_name: mirofish-searxng
     restart: unless-stopped
     ports:
-      - "8888:8080"
+      - "127.0.0.1:8888:8080"
     volumes:
       - ./searchxng:/etc/searxng:rw
     environment:
@@ -23,10 +23,10 @@ services:
     container_name: mirofish-neo4j
     restart: unless-stopped
     ports:
-      - "7474:7474" # HTTP UI
-      - "7687:7687" # Bolt
+      - "127.0.0.1:7474:7474" # HTTP UI
+      - "127.0.0.1:7687:7687" # Bolt
     environment:
-      - NEO4J_AUTH=neo4j/mirofish_secret_password
+      - NEO4J_AUTH=${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD}
       - NEO4J_PLUGINS=["apoc"]
     volumes:
       - neo4j_data:/data
