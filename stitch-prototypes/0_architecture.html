@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mirofish v3.1 Enterprise — System Design & Master Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            obsidian: '#080c14',
+            surface: '#0f172a',
+            'surface-card': '#131e36',
+            'surface-light': '#1e293b',
+            cyan: { DEFAULT: '#00f2fe', dim: '#009ba3', glow: 'rgba(0, 242, 254, 0.35)' },
+            purple: { DEFAULT: '#a855f7', dim: '#7e22ce', glow: 'rgba(168, 85, 247, 0.35)' },
+            emerald: { DEFAULT: '#10b981', dim: '#047857' },
+            amber: { DEFAULT: '#f59e0b', dim: '#b45309' }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #080c14; color: #f1f5f9; }
+    .glass {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-cyan {
+      background: rgba(0, 242, 254, 0.04);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+    }
+    .glass-purple {
+      background: rgba(168, 85, 247, 0.04);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 25px -5px rgba(0, 242, 254, 0.3);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-6 md:p-10 font-sans space-y-10">
+
+  <!-- Header & Metadata Banner -->
+  <div class="glass rounded-2xl p-6 md:p-8 border border-cyan/30 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
+    <div>
+      <div class="flex items-center space-x-3 mb-2">
+        <span class="w-3 h-3 rounded-full bg-cyan animate-ping"></span>
+        <span class="text-xs font-mono font-bold tracking-widest text-cyan uppercase bg-cyan/10 px-2.5 py-1 rounded border border-cyan/30">Official System Architecture</span>
+        <span class="text-xs font-mono text-slate-400">Spec v3.1 Enterprise</span>
+      </div>
+      <h1 class="text-2xl md:text-4xl font-extrabold text-white tracking-tight">
+        MiroFish v3.1 Enterprise — <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan to-purple">Master System Design</span>
+      </h1>
+      <p class="text-slate-400 text-sm mt-2 max-w-3xl leading-relaxed">
+        Topologi multi-tier berorientasi ketahanan tinggi, pipeline grounding anti-halusinasi 5-langkah, rekayasa GraphRAG (Graphiti/FalkorDB/Neo4j), orkestrasi 7-platform OASIS, ReACT ReportAgent, dan persistensi transaksional ACID.
+      </p>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3 font-mono text-xs">
+      <div class="p-3 rounded-xl bg-surface-card border border-slate-700/60">
+        <div class="text-slate-400">CORE STATUS</div>
+        <div class="text-emerald font-semibold flex items-center space-x-1 mt-0.5">
+          <span class="w-2 h-2 rounded-full bg-emerald inline-block"></span>
+          <span>ALL ENGINES ONLINE</span>
+        </div>
+      </div>
+      <div class="p-3 rounded-xl bg-surface-card border border-slate-700/60">
+        <div class="text-slate-400">STORAGE ARCHITECTURE</div>
+        <div class="text-cyan font-semibold mt-0.5">SQLite WAL + Postgres</div>
+      </div>
+      <div class="p-3 rounded-xl bg-surface-card border border-slate-700/60">
+        <div class="text-slate-400">AI GATEWAY</div>
+        <div class="text-purple font-semibold mt-0.5">9Router Resilient Proxy</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: Multi-Tier System Topology -->
+  <section class="space-y-6">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div class="flex items-center space-x-3">
+        <span class="text-cyan font-mono font-bold">01 /</span>
+        <h2 class="text-xl md:text-2xl font-bold text-white">Topologi Arsitektur Berlapis (Multi-Tiered Topology)</h2>
+      </div>
+      <span class="text-xs font-mono text-slate-400">Sesuai Dokumen wiki/arsitektur.md §1</span>
+    </div>
+
+    <!-- Tier 1: Presentation Layer -->
+    <div class="glass p-5 rounded-2xl border-l-4 border-l-cyan space-y-3">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center space-x-2">
+          <span class="material-symbols-outlined text-cyan text-xl">devices</span>
+          <h3 class="font-bold text-white text-base">LAPISAN PRESENTASI (UI/UX)</h3>
+          <span class="text-[11px] font-mono bg-cyan/10 text-cyan px-2 py-0.5 rounded border border-cyan/20">Port 3000 / 3001</span>
+        </div>
+        <span class="text-xs font-mono text-slate-400">Protocol: REST API • Server-Sent Events (SSE) • Model Context Protocol (MCP)</span>
+      </div>
+      <p class="text-xs text-slate-300">
+        Vue 3 SPA + Vite + TailwindCSS + Element Plus + vue-i18n (Tri-Lingual: Bahasa Indonesia baku PUEBI, Chinese, English) + Vis.js/ECharts Canvas Engine.
+      </p>
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-[11px] font-mono text-slate-300 pt-2 border-t border-slate-800/80">
+        <div class="p-2 rounded bg-surface/80 border border-slate-700/50">/ (Home Ingest)</div>
+        <div class="p-2 rounded bg-surface/80 border border-slate-700/50">/dashboard (Ops)</div>
+        <div class="p-2 rounded bg-surface/80 border border-slate-700/50">/process/:id (Graph)</div>
+        <div class="p-2 rounded bg-surface/80 border border-slate-700/50">/arena (7-Platform)</div>
+        <div class="p-2 rounded bg-surface/80 border border-slate-700/50">/report/:id (ReACT)</div>
+        <div class="p-2 rounded bg-surface/80 border border-slate-700/50">/interaction (IPC)</div>
+      </div>
+    </div>
+
+    <!-- Vertical Connector -->
+    <div class="flex justify-center">
+      <div class="w-0.5 h-6 bg-gradient-to-b from-cyan to-purple"></div>
+    </div>
+
+    <!-- Tier 2: Orchestration & API Gateway -->
+    <div class="glass p-5 rounded-2xl border-l-4 border-l-purple space-y-3">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center space-x-2">
+          <span class="material-symbols-outlined text-purple text-xl">hub</span>
+          <h3 class="font-bold text-white text-base">LAPISAN ORKESTRASI &amp; API GATEWAY</h3>
+          <span class="text-[11px] font-mono bg-purple/10 text-purple px-2 py-0.5 rounded border border-purple/20">Port 5001 (Flask App Factory)</span>
+        </div>
+        <span class="text-xs font-mono text-slate-400">Modular Blueprints with graph_lifecycle_lock</span>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+        <div class="p-3 rounded-xl bg-surface-card border border-slate-700/50">
+          <div class="font-semibold text-slate-200">api/research.py</div>
+          <div class="text-[11px] text-slate-400 mt-1">SearXNG Search &amp; Sanitasi Injeksi</div>
+        </div>
+        <div class="p-3 rounded-xl bg-surface-card border border-slate-700/50">
+          <div class="font-semibold text-slate-200">api/graph.py</div>
+          <div class="text-[11px] text-slate-400 mt-1">Ontology, Graphiti &amp; Neo4j Lock</div>
+        </div>
+        <div class="p-3 rounded-xl bg-surface-card border border-slate-700/50">
+          <div class="font-semibold text-slate-200">api/simulation.py</div>
+          <div class="text-[11px] text-slate-400 mt-1">7-Platform OASIS Swarm Manager</div>
+        </div>
+        <div class="p-3 rounded-xl bg-surface-card border border-slate-700/50">
+          <div class="font-semibold text-slate-200">api/report.py</div>
+          <div class="text-[11px] text-slate-400 mt-1">ReportAgent ReACT Loop Control</div>
+        </div>
+        <div class="p-3 rounded-xl bg-surface-card border border-slate-700/50">
+          <div class="font-semibold text-slate-200">backend/mcp_server/</div>
+          <div class="text-[11px] text-slate-400 mt-1">7 Native MCP Enterprise Tools</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vertical Connector -->
+    <div class="flex justify-center">
+      <div class="w-0.5 h-6 bg-gradient-to-b from-purple to-slate-700"></div>
+    </div>
+
+    <!-- Tier 3: 3 Core Functional Engines -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Engine 1: Web Research (Step 0) -->
+      <div class="glass p-5 rounded-2xl border-t-2 border-t-cyan flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center space-x-2 text-cyan mb-2">
+            <span class="material-symbols-outlined">travel_explore</span>
+            <span class="font-bold text-sm uppercase tracking-wider font-mono">LANGKAH 0: RISET WEB SEARXNG</span>
+          </div>
+          <h4 class="font-bold text-white text-base">Anti-Hallucination Fact Grounding</h4>
+          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+            Metasearch privat mandiri (Docker port 8080) mengompilasi bukti eksternal terkini sebelum ontologi dibentuk.
+          </p>
+          <ul class="text-xs text-slate-400 space-y-1.5 mt-3 font-mono">
+            <li class="flex items-center space-x-2">
+              <span class="text-cyan">▸</span>
+              <span>Filter Pola Deterministik Regex</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <span class="text-cyan">▸</span>
+              <span>XML Guard Context Enclosure</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <span class="text-cyan">▸</span>
+              <span>LLM Fact Scorer &amp; Domain Whitelist</span>
+            </li>
+          </ul>
+        </div>
+        <div class="p-2.5 rounded bg-surface/90 border border-slate-800 text-[11px] font-mono text-cyan">
+          OUTPUT: sanitized_facts.json
+        </div>
+      </div>
+
+      <!-- Engine 2: Graph Engine (Step 1) -->
+      <div class="glass p-5 rounded-2xl border-t-2 border-t-purple flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center space-x-2 text-purple mb-2">
+            <span class="material-symbols-outlined">account_tree</span>
+            <span class="font-bold text-sm uppercase tracking-wider font-mono">LANGKAH 1: KNOWLEDGE GRAPH</span>
+          </div>
+          <h4 class="font-bold text-white text-base">Graphiti + FalkorDB / Neo4j</h4>
+          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+            Ekosistem GraphRAG enterprise dengan FastMCP Control Plane, persistensi in-memory FalkorDB/Redis, dan fallback Neo4j.
+          </p>
+          <ul class="text-xs text-slate-400 space-y-1.5 mt-3 font-mono">
+            <li class="flex items-center space-x-2">
+              <span class="text-purple">▸</span>
+              <span>Skema PascalCase (Nodes)</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <span class="text-purple">▸</span>
+              <span>SCREAMING_SNAKE (Edges)</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <span class="text-purple">▸</span>
+              <span>ZepEntityReader Degree Filter</span>
+            </li>
+          </ul>
+        </div>
+        <div class="p-2.5 rounded bg-surface/90 border border-slate-800 text-[11px] font-mono text-purple">
+          ISOLATION: 1 Project = 1 Graph
+        </div>
+      </div>
+
+      <!-- Engine 3: 7-Platform Simulation (Step 2 & 3) -->
+      <div class="glass p-5 rounded-2xl border-t-2 border-t-emerald flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center space-x-2 text-emerald mb-2">
+            <span class="material-symbols-outlined">groups</span>
+            <span class="font-bold text-sm uppercase tracking-wider font-mono">LANGKAH 2 &amp; 3: SWARM SIMULATION</span>
+          </div>
+          <h4 class="font-bold text-white text-base">7-Platform OASIS Engine</h4>
+          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+            Multi-platform agent simulation (Twitter, X, Reddit, TikTok, Instagram, Facebook, Threads) dengan psikometri OCEAN.
+          </p>
+          <ul class="text-xs text-slate-400 space-y-1.5 mt-3 font-mono">
+            <li class="flex items-center space-x-2">
+              <span class="text-emerald">▸</span>
+              <span>Algoritma Feed &amp; Viral Cascade</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <span class="text-emerald">▸</span>
+              <span>Dynamic Graph Memory Updater</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <span class="text-emerald">▸</span>
+              <span>Action Logging (actions.jsonl)</span>
+            </li>
+          </ul>
+        </div>
+        <div class="p-2.5 rounded bg-surface/90 border border-slate-800 text-[11px] font-mono text-emerald">
+          RESUME: Checkpoints SHA-256
+        </div>
+      </div>
+    </div>
+
+    <!-- Tier 4: Report Agent & Persistence -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+      <div class="glass p-5 rounded-2xl border-l-4 border-l-amber space-y-2">
+        <div class="flex items-center space-x-2">
+          <span class="material-symbols-outlined text-amber">psychology</span>
+          <h4 class="font-bold text-white text-sm uppercase tracking-wider font-mono">LANGKAH 4 &amp; 5: ANALYTICS &amp; INTERACTION</h4>
+        </div>
+        <p class="text-xs text-slate-300">
+          <strong>ReportAgent ReACT Loop:</strong> Thought ➔ Action ➔ Observation ➔ Reflection dengan tool suite ZepTools (Search, InsightForge, PanoramaEngine, IPC Interview). Serta live IPC channel di <code class="text-amber">simulations/&lt;id&gt;/ipc/</code> untuk interaksi Human-in-the-Loop.
+        </p>
+      </div>
+      <div class="glass p-5 rounded-2xl border-l-4 border-l-cyan space-y-2">
+        <div class="flex items-center space-x-2">
+          <span class="material-symbols-outlined text-cyan">security</span>
+          <h4 class="font-bold text-white text-sm uppercase tracking-wider font-mono">PERSISTENSI, RECOVERY &amp; AI GATEWAY</h4>
+        </div>
+        <p class="text-xs text-slate-300">
+          <strong>9Router AI Gateway:</strong> Circuit breaker, exponential backoff, rate limit balancer &amp; AES-256-GCM secret encryption. Didukung SQLite WAL / PostgreSQL transaksional dan Continuous Recovery Scanner (Zero-Loss Resume).
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: End-to-End 5-Step Pipeline Flowchart -->
+  <section class="space-y-6">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div class="flex items-center space-x-3">
+        <span class="text-cyan font-mono font-bold">02 /</span>
+        <h2 class="text-xl md:text-2xl font-bold text-white">Diagram Alur Sistem End-to-End (5-Step Pipeline)</h2>
+      </div>
+      <span class="text-xs font-mono text-slate-400">Mermaid Spec: wiki/arsitektur.md §2</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+      <!-- Step 0 Card -->
+      <div class="glass p-4 rounded-xl border border-cyan/40 flex flex-col justify-between">
+        <div class="space-y-2">
+          <div class="text-[11px] font-mono text-cyan font-bold">LANGKAH 0</div>
+          <div class="text-sm font-bold text-white">Ingesti &amp; Riset Faktual</div>
+          <p class="text-[11px] text-slate-300">Input Benih (PDF/TXT) + Pencarian SearXNG + Sanitasi Anti-Injeksi.</p>
+        </div>
+        <div class="mt-4 pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-400">
+          Corpus Gabungan
+        </div>
+      </div>
+
+      <!-- Step 1 Card -->
+      <div class="glass p-4 rounded-xl border border-purple/40 flex flex-col justify-between">
+        <div class="space-y-2">
+          <div class="text-[11px] font-mono text-purple font-bold">LANGKAH 1</div>
+          <div class="text-sm font-bold text-white">Rekayasa GraphRAG</div>
+          <p class="text-[11px] text-slate-300">Chunking adaptif, Ontologi LLM, validasi skema, dan ingesti ke FalkorDB/Neo4j.</p>
+        </div>
+        <div class="mt-4 pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-400">
+          Knowledge Graph Ready
+        </div>
+      </div>
+
+      <!-- Step 2 Card -->
+      <div class="glass p-4 rounded-xl border border-emerald/40 flex flex-col justify-between">
+        <div class="space-y-2">
+          <div class="text-[11px] font-mono text-emerald font-bold">LANGKAH 2</div>
+          <div class="text-sm font-bold text-white">Penyiapan Agen</div>
+          <p class="text-[11px] text-slate-300">Ekstraksi simpul graf, persona OCEAN, gaya bahasa PUEBI, parameter 7 platform.</p>
+        </div>
+        <div class="mt-4 pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-400">
+          agent_profiles.json
+        </div>
+      </div>
+
+      <!-- Step 3 Card -->
+      <div class="glass p-4 rounded-xl border border-emerald/40 flex flex-col justify-between">
+        <div class="space-y-2">
+          <div class="text-[11px] font-mono text-emerald font-bold">LANGKAH 3</div>
+          <div class="text-sm font-bold text-white">Simulasi 7-Platform</div>
+          <p class="text-[11px] text-slate-300">Eksekusi paralel ronde 1..N, memory injection graf baru, snapshot SHA-256.</p>
+        </div>
+        <div class="mt-4 pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-400">
+          actions.jsonl (7 Platforms)
+        </div>
+      </div>
+
+      <!-- Step 4 Card -->
+      <div class="glass p-4 rounded-xl border border-amber/40 flex flex-col justify-between">
+        <div class="space-y-2">
+          <div class="text-[11px] font-mono text-amber font-bold">LANGKAH 4</div>
+          <div class="text-sm font-bold text-white">Laporan ReACT</div>
+          <p class="text-[11px] text-slate-300">ReportAgent multi-turn reflection, pemanggilan ZepTools, dan sintesis bab.</p>
+        </div>
+        <div class="mt-4 pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-400">
+          final_report.md
+        </div>
+      </div>
+
+      <!-- Step 5 Card -->
+      <div class="glass p-4 rounded-xl border border-cyan/40 flex flex-col justify-between">
+        <div class="space-y-2">
+          <div class="text-[11px] font-mono text-cyan font-bold">LANGKAH 5</div>
+          <div class="text-sm font-bold text-white">Interaksi Debrief IPC</div>
+          <p class="text-[11px] text-slate-300">Interview langsung agen OASIS via IPC &amp; tanya-jawab interaktif ReportAgent.</p>
+        </div>
+        <div class="mt-4 pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-400">
+          Human-in-the-Loop
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: State Machine Lifecycle -->
+  <section class="space-y-6">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div class="flex items-center space-x-3">
+        <span class="text-cyan font-mono font-bold">03 /</span>
+        <h2 class="text-xl md:text-2xl font-bold text-white">Mesin Status Transaksional (State Machine Lifecycle)</h2>
+      </div>
+      <span class="text-xs font-mono text-slate-400">Sesuai wiki/arsitektur.md §4</span>
+    </div>
+
+    <div class="glass p-6 rounded-2xl space-y-4">
+      <div class="flex flex-wrap items-center gap-3 font-mono text-xs">
+        <div class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">CREATED</div>
+        <span class="text-cyan">➔</span>
+        <div class="px-3 py-1.5 rounded-lg bg-cyan/10 border border-cyan/30 text-cyan">RESEARCH_COMPLETED</div>
+        <span class="text-cyan">➔</span>
+        <div class="px-3 py-1.5 rounded-lg bg-purple/10 border border-purple/30 text-purple">ONTOLOGY_GENERATED</div>
+        <span class="text-cyan">➔</span>
+        <div class="px-3 py-1.5 rounded-lg bg-purple/20 border border-purple/40 text-purple">GRAPH_BUILDING</div>
+        <span class="text-cyan">➔</span>
+        <div class="px-3 py-1.5 rounded-lg bg-emerald/10 border border-emerald/30 text-emerald">GRAPH_COMPLETED</div>
+        <span class="text-cyan">➔</span>
+        <div class="px-3 py-1.5 rounded-lg bg-emerald/20 border border-emerald/40 text-emerald">SIM_PREPARING</div>
+        <span class="text-cyan">➔</span>
+        <div class="px-3 py-1.5 rounded-lg bg-emerald/30 border border-emerald/50 text-emerald">SIM_READY</div>
+        <span class="text-cyan">➔</span>
+        <div class="px-3 py-1.5 rounded-lg bg-cyan/20 border border-cyan/40 text-cyan animate-pulse">SIM_RUNNING</div>
+        <span class="text-cyan">➔</span>
+        <div class="px-3 py-1.5 rounded-lg bg-amber/10 border border-amber/30 text-amber">REPORT_PLANNING</div>
+        <span class="text-cyan">➔</span>
+        <div class="px-3 py-1.5 rounded-lg bg-emerald/20 border border-emerald/40 text-emerald font-bold">REPORT_COMPLETED</div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-800 text-xs text-slate-400">
+        <div class="p-3 rounded-lg bg-surface/80 border border-slate-800">
+          <span class="text-amber font-semibold block mb-1">State Failure &amp; Recovery:</span>
+          Jika crash terdeteksi saat <code class="text-slate-300">SIM_RUNNING</code>, status beralih ke <code class="text-red-400">CRASHED</code> ➔ <code class="text-amber">RECOVERING</code> ➔ resume ke ronde terakhir via hash SHA-256.
+        </div>
+        <div class="p-3 rounded-lg bg-surface/80 border border-slate-800">
+          <span class="text-cyan font-semibold block mb-1">Concurreny Protection:</span>
+          Penguncian siklus hidup graf <code class="text-cyan">graph_lifecycle_lock</code> mencegah modifikasi skema ontologi saat simulasi aktif.
+        </div>
+        <div class="p-3 rounded-lg bg-surface/80 border border-slate-800">
+          <span class="text-purple font-semibold block mb-1">Audit Trail WAL:</span>
+          Setiap perpindahan status dicatat secara atomik ke basis data SQLite WAL / PostgreSQL untuk audit transaksional.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: 7 Social Platforms Matrix -->
+  <section class="space-y-6">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div class="flex items-center space-x-3">
+        <span class="text-cyan font-mono font-bold">04 /</span>
+        <h2 class="text-xl md:text-2xl font-bold text-white">Lanskap &amp; Karakteristik 7 Platform OASIS</h2>
+      </div>
+      <span class="text-xs font-mono text-slate-400">Sesuai wiki/ekspansi-multi-platform.md</span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+      <div class="glass p-4 rounded-xl border border-sky-500/30 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-sky-400 text-sm">1. Twitter</span>
+          <span class="font-mono text-[10px] bg-sky-500/10 text-sky-400 px-1.5 py-0.5 rounded">Mikro-Teks</span>
+        </div>
+        <p class="text-slate-300">Kronologis &amp; Viral. Tindakan: Tweet, Retweet, Quote, Reply, Like.</p>
+        <div class="text-[11px] font-mono text-slate-400">Cascade: Cepat (Menit)</div>
+      </div>
+      <div class="glass p-4 rounded-xl border border-slate-600 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-white text-sm">2. X</span>
+          <span class="font-mono text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">For You Feed</span>
+        </div>
+        <p class="text-slate-300">Teks panjang, For You Algorithmic, Polarisasi Ekstrem &amp; Monetisasi.</p>
+        <div class="text-[11px] font-mono text-slate-400">Cascade: Sangat Tinggi</div>
+      </div>
+      <div class="glass p-4 rounded-xl border border-orange-500/30 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-orange-400 text-sm">3. Reddit</span>
+          <span class="font-mono text-[10px] bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded">Subreddit</span>
+        </div>
+        <p class="text-slate-300">Thread bertingkat, Karma &amp; Komunitas. Tindakan: Post, Upvote, Downvote.</p>
+        <div class="text-[11px] font-mono text-slate-400">Cascade: Diskusi Mendalam</div>
+      </div>
+      <div class="glass p-4 rounded-xl border border-pink-500/30 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-pink-400 text-sm">4. TikTok</span>
+          <span class="font-mono text-[10px] bg-pink-500/10 text-pink-400 px-1.5 py-0.5 rounded">Video Mikro</span>
+        </div>
+        <p class="text-slate-300">Minat Murni &amp; Algoritma Loop. Tindakan: Duet, Stitch, Sound Contagion.</p>
+        <div class="text-[11px] font-mono text-slate-400">Cascade: Replikasi Viral</div>
+      </div>
+      <div class="glass p-4 rounded-xl border border-purple-500/30 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-purple-400 text-sm">5. Instagram</span>
+          <span class="font-mono text-[10px] bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded">Visual Estetika</span>
+        </div>
+        <p class="text-slate-300">Jaringan Afinitas &amp; Citra Diri. Tindakan: Story, Like, Save, Share, DM.</p>
+        <div class="text-[11px] font-mono text-slate-400">Cascade: Echo Kelompok</div>
+      </div>
+      <div class="glass p-4 rounded-xl border border-blue-600/30 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-blue-400 text-sm">6. Facebook</span>
+          <span class="font-mono text-[10px] bg-blue-600/10 text-blue-400 px-1.5 py-0.5 rounded">Grup &amp; Klan</span>
+        </div>
+        <p class="text-slate-300">Ikatan Keluarga &amp; Komunitas Lokal. Tindakan: Share, Emot Reaction, Group Post.</p>
+        <div class="text-[11px] font-mono text-slate-400">Cascade: Echo Chamber Kuat</div>
+      </div>
+      <div class="glass p-4 rounded-xl border border-emerald-500/30 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-emerald-400 text-sm">7. Threads</span>
+          <span class="font-mono text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded">Percakapan Santai</span>
+        </div>
+        <p class="text-slate-300">Diskusi teks ringan terkoneksi ke akun IG/Fediverse. Tindakan: Repost, Mentions.</p>
+        <div class="text-[11px] font-mono text-slate-400">Cascade: Percakapan Santai</div>
+      </div>
+      <div class="glass p-4 rounded-xl border border-cyan/40 space-y-2 bg-cyan/5">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-cyan text-sm">Cross-Platform Sync</span>
+          <span class="font-mono text-[10px] bg-cyan/15 text-cyan px-1.5 py-0.5 rounded">Cascade Matrix</span>
+        </div>
+        <p class="text-slate-300">Sinkronisasi sentimen antar-platform secara simultan tanpa race conditions.</p>
+        <div class="text-[11px] font-mono text-cyan">Unified Timeline Worker Pool</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5: Data Partitioning Storage Tree -->
+  <section class="space-y-6">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div class="flex items-center space-x-3">
+        <span class="text-cyan font-mono font-bold">05 /</span>
+        <h2 class="text-xl md:text-2xl font-bold text-white">Hierarki Pemartisian Data Fisik (Physical Data Partitioning)</h2>
+      </div>
+      <span class="text-xs font-mono text-slate-400">Sesuai wiki/arsitektur.md §3</span>
+    </div>
+
+    <div class="glass p-6 rounded-2xl font-mono text-xs text-slate-300 overflow-x-auto">
+      <pre class="leading-relaxed">
+backend/app/uploads/
+├── <span class="text-cyan font-bold">projects/&lt;project_id&gt;/</span>              <span class="text-slate-500"># Partisi Per-Proyek Dokumen &amp; Riset</span>
+│   ├── raw_files/                     <span class="text-slate-500"># Berkas dokumen asli (PDF, MD, TXT)</span>
+│   ├── parsed_text.txt                 <span class="text-slate-500"># Teks hasil ekstraksi &amp; normalisasi</span>
+│   ├── project_state.json              <span class="text-slate-500"># Metadata &amp; status proyek (legacy compat)</span>
+│   └── research_cache/                 <span class="text-slate-500"># Hasil riset Langkah 0 SearXNG</span>
+│       ├── query_results.json          <span class="text-slate-500"># Respon mentah JSON SearXNG</span>
+│       └── sanitized_facts.json        <span class="text-slate-500"># Fakta terverifikasi anti-injeksi</span>
+│
+├── <span class="text-emerald font-bold">simulations/&lt;simulation_id&gt;/</span>       <span class="text-slate-500"># Partisi Eksekusi Swarm 7-Platform</span>
+│   ├── simulation_config.json          <span class="text-slate-500"># Konfigurasi parameter 7 platform &amp; agen</span>
+│   ├── agent_profiles.json             <span class="text-slate-500"># Profil kepribadian OCEAN seluruh agen</span>
+│   ├── run_state.json                  <span class="text-slate-500"># Status eksekusi aktif &amp; metrik per ronde</span>
+│   ├── platforms/                      <span class="text-slate-500"># Partisi log per platform</span>
+│   │   ├── twitter/actions.jsonl  ├── x/actions.jsonl  ├── reddit/actions.jsonl
+│   │   ├── tiktok/actions.jsonl   ├── instagram/actions.jsonl 
+│   │   ├── facebook/actions.jsonl └── threads/actions.jsonl
+│   ├── checkpoints/                    <span class="text-slate-500"># Snapshot integritas ronde &amp; SHA-256</span>
+│   │   ├── round_001.snap  ├── round_001.sha256  └── round_N.snap
+│   └── ipc/                            <span class="text-slate-500"># Kanal komunikasi Human-in-the-Loop</span>
+│       ├── commands/                   <span class="text-slate-500"># Perintah masuk (interview, pause, inject)</span>
+│       └── responses/                  <span class="text-slate-500"># Tanggapan agen atas wawancara</span>
+│
+└── <span class="text-amber font-bold">reports/&lt;report_id&gt;/</span>                <span class="text-slate-500"># Partisi Hasil Analisis ReACT</span>
+    ├── agent_log.jsonl                 <span class="text-slate-500"># Jejak audit ReACT (Thought, Action, Obs)</span>
+    ├── sections/                       <span class="text-slate-500"># Draf teks bab (section_01.md .. section_N.md)</span>
+    └── final_report.md                 <span class="text-slate-500"># Laporan prediksi komprehensif final</span>
+      </pre>
+    </div>
+  </section>
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+{
+  "board": {
+    "board_id": "project-mirofish-epistemic-mitigation",
+    "type": "PROJECT",
+    "parent": "",
+    "phase_ref": "",
+    "owner_agent": "HERMES",
+    "status": "CLOSED",
+    "cards": [
+      {
+        "card_id": "c-project-mirofish-epistemic-mitigation-01",
+        "title": "Guardrails CLAUDE.md dan Hooks Deterministik (.claude/hooks, .claude/settings.json)",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "HERMES",
+        "notes": "PR #2 verified. CLAUDE.md, 3 hook scripts, and settings.json created."
+      },
+      {
+        "card_id": "c-project-mirofish-epistemic-mitigation-02",
+        "title": "Update 11 Agent Claude Code (.claude/agents/*.md) dengan Protokol Epistemik",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "HERMES",
+        "notes": "PR #2 verified. All 11 agents in .claude/agents/*.md updated with Epistemic Protocol and 3-level return status."
+      },
+      {
+        "card_id": "c-project-mirofish-epistemic-mitigation-03",
+        "title": "Gerbang Epistemik & Safe Abstention pada ReportAgent (backend/app/services/report_agent.py)",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "HERMES",
+        "notes": "PR #2 verified. ReportAgent updated with anti-speculation graceful degradation and verified graph citations."
+      },
+      {
+        "card_id": "c-project-mirofish-epistemic-mitigation-04",
+        "title": "Pelabelan Status Epistemik Ground-Truth pada Web Research (backend/app/services/web_research_service.py)",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "HERMES",
+        "notes": "PR #2 verified. WebResearchService updated with [VERIFIED]/[UNVERIFIED] credibility labeling."
+      },
+      {
+        "card_id": "c-project-mirofish-epistemic-mitigation-05",
+        "title": "Isolasi & Pengecualian Swarm Simulator Step 3 (Non-interference Guarantee)",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "HERMES",
+        "notes": "PR #2 verified. Non-interference guarantee strictly honored, zero modifications to simulation runner/swarm."
+      }
+    ],
+    "coordination": [],
+    "created_at": "2026-10-14T17:43:54.844083+00:00",
+    "updated_at": "2026-10-14T18:39:45.720444+00:00"
+  }
+}

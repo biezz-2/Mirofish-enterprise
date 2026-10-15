@@ -1,0 +1,72 @@
+[
+  {
+    "num": 1,
+    "key": "home",
+    "title": "Landing & Reality Seed Ingestion Hub",
+    "route": "/",
+    "screen_id": "6f660fc98f754002894945778fd6db08",
+    "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1Vvtz-B3NW475sNHY55k12bd_L51txY40jaRiK2Z413-8poRui-EAM3a6qFZJhOtcZnWfSNdKSasBsfHVTUDIZWZFUXv5kMA2fnrmPXGID8v0s8jUJa_9Ygu03aN2pOy84wkXa9GF4AG-3MedUgqdRd3BSd3A-KYrMVWh58Fi44E-PLToMMKp-UUkhrMMHYAamj_g8JWYKF7-5W3soWcmapP_1IESeIIBa5wmgUEOsJewOOo_mdrtHQ1Q",
+    "html_url": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2JmZTgzZWM4NTk5ODRmNTM5ZGNiZjg1NGMzM2FlMWQzEgsSBxDJ6ZOdiBIYAZIBIwoKcHJvamVjdF9pZBIVQhM0NTM3NDM0NDQ3MDcwMjA3NDg2&filename=&opi=96797242",
+    "local_file": "1_home.html"
+  },
+  {
+    "num": 2,
+    "key": "dashboard",
+    "title": "Cluster Infrastructure & Operations Dashboard",
+    "route": "/dashboard",
+    "screen_id": "0c3cdf85e46a4220a8e762ba1ed565eb",
+    "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1VI047t6FjkN4ZDqId-wIubCMQoas2g0AkY_GkTJjieh7Ha6U2QEIzH-ektmjI4EqfgBma_pKIZl-b2h6V391bvb7KZ8pFNPbNjCuQMjzcf0XDXdwl-usLssSeZJYfTHwqb9TqOlI960seaujvNh5liXxPKHjJumLqVgRBYG-bKaHgWpzKf63FJACHEjU0OMAE6x9oACO6Akqxy65G7uhlrNKRtRiZMq8ovPoOUxu0dQQ_Hr8I3mJmQ278",
+    "html_url": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzU2MGM4YzJkOTc5MzQwMGViMDQ3Njg5Y2E5YTUzMzJhEgsSBxDJ6ZOdiBIYAZIBIwoKcHJvamVjdF9pZBIVQhM0NTM3NDM0NDQ3MDcwMjA3NDg2&filename=&opi=96797242",
+    "local_file": "2_dashboard.html"
+  },
+  {
+    "num": 3,
+    "key": "graph_research",
+    "title": "Deep Research & Knowledge Graph Visualizer",
+    "route": "/process/:id (Step 0 & 1)",
+    "screen_id": "b16a2148f1c1445b812c6e40ec67b29f",
+    "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1WBe_Vrzo_4MnjOC68XfnBBVGUNlbnVTWW-y9aDz19vX485Idv__q2QVRy6_YPS2LSsrzXVQc2Sxp1kmJHW9BWE1clgA4ljit3RWw10C1yklDcmo_hlSSD5hAaNX6w4H6G-03VYQ_MA5F3xT3vR80ONuDyDjHJMQgbzQrPSfdQrz15c0E7J0x6ZibAlq8kd9McX8MJPr6Sn2qelLydENQzJWa9bhg3hg_KteeGAPhN-W84QAUjfIvv7dg",
+    "html_url": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzFhMmU3YmYwYTM2NTRjZjZhYTYxNzhkM2Q5NGJhYjk5EgsSBxDJ6ZOdiBIYAZIBIwoKcHJvamVjdF9pZBIVQhM0NTM3NDM0NDQ3MDcwMjA3NDg2&filename=&opi=96797242",
+    "local_file": "3_graph_research.html"
+  },
+  {
+    "num": 4,
+    "key": "env_setup",
+    "title": "Multi-Agent Swarm Arena & Timeline Orchestrator",
+    "route": "/process/:id (Step 2 & 3)",
+    "screen_id": "b8457c54bba0426c944011a556fc19dc",
+    "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1V-BLoF5ELzs-mRC5sX0nBUrbI1pj5q601wRcT4n9gNkCYzDrxDCLarv4h4bVtv_snocvUQacTWcAWLR6aUSGH81d07t-ErqpHJb4cE-2TX8f3ZU3CbxMni5oLPlmWK-AbcUzzPHDY3sSAgCCQ3y3aF9O5VWmQTqaIW7eiwsWcXUotuS30CX_CXYE-ymkvCOmndBztq6FiFl_ygeSDQKA_ZKVFsMb493fkOYmgFUbK7H8XbwLFtDMj4LqI",
+    "html_url": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzU4NDNkMjViYzBhYTRlMTdhMTFlYWQ4NmI2Y2E3MDU1EgsSBxDJ6ZOdiBIYAZIBIwoKcHJvamVjdF9pZBIVQhM0NTM3NDM0NDQ3MDcwMjA3NDg2&filename=&opi=96797242",
+    "local_file": "4_env_setup.html"
+  },
+  {
+    "num": 5,
+    "key": "simulation_run",
+    "title": "Simulation Live Node Cockpit & Event Injector",
+    "route": "/process/:id (Step 4)",
+    "screen_id": "cfc7be00bbad45e0bcd29f684f1ec5f1",
+    "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1UFNFv9d0yMeUIPNMm4v9Y0EnvyUR7-O8g2mGY8-g0UXXuh9-qsNnyAD42xfydRPRT2Mozt_X6M9vW2rZxzTx0pTYKjPBKaPqIRaDVJ6VUnvRQReGevsXZkjBWgI8gZtX_XtuSXlEgZyr3q_g_rX_cqMDfSyyLw2zx1-EQfmhDM5Wg0P5qZ6XMugDGkQU9NvwZ8vlcg8KDCgx6p9ymCcoh9CYXsJZEx175ellBjohjzR7LbLSTnO6_tdyM",
+    "html_url": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sX2M5NmFkMTVjOTc0NDQzYmZhYTFjZDY3NjI5MjQ4NDNkEgsSBxDJ6ZOdiBIYAZIBIwoKcHJvamVjdF9pZBIVQhM0NTM3NDM0NDQ3MDcwMjA3NDg2&filename=&opi=96797242",
+    "local_file": "5_simulation_run.html"
+  },
+  {
+    "num": 6,
+    "key": "report",
+    "title": "Strategic Intelligence & Causal Analysis Report",
+    "route": "/report/:reportId",
+    "screen_id": "6291ef5f03da41e5933872a70f07f6e2",
+    "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1UbVM8Y2-X-5dWn9Mz-pIu7RJb9pxF3NQplh_UVBvS2s_0SX9eRCfsa21bLxyl7oPhHR5kdE6qlJpUVDB1F3Irp38o48gqfGNjAZ9m66T0DPsA8JT7MZ9duD9HusQHxjh2dtCC-MxTAF_sYCT0fANUIqcs-qoD9-HLUE1C0Nyoa4vO6yKcoyPtSvqjynbE6gE4kfynQ3DbrOoiFymbfLwDQNH867vuCBq_i1jF8lBJlwUBH5qwXKyve6F4",
+    "html_url": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzNhYjI4ZGU5YmVmMDQzOTk5MzA0YTMwYTRkZWE4YWJhEgsSBxDJ6ZOdiBIYAZIBIwoKcHJvamVjdF9pZBIVQhM0NTM3NDM0NDQ3MDcwMjA3NDg2&filename=&opi=96797242",
+    "local_file": "6_report.html"
+  },
+  {
+    "num": 7,
+    "key": "interaction",
+    "title": "Agent Debrief & Counterfactual Probe Terminal",
+    "route": "/interaction/:reportId (Step 5)",
+    "screen_id": "7df6e6e03b4b46a6a4e4d6ca14489200",
+    "screenshot_url": "https://lh3.googleusercontent.com/aida/AEtjO1VH7JftFuNEmHBvSH7XrmetLCTWWkAgDB-0otwLRhJ7c3YUgCwLfujU7nUjlYe1LNiP7WahqSlOSnyGGMvpqg1Pd0q4iYn_oq0fYjsjFYXXbNqNgcSRgEDDr3GaNgTvZXX6v6SZhJmijzRa0yRjFWUJ-K8FnKlGBa34es6wp0qf3GyHQWLvYRADubO09Kv_lqljKs-gZEkvfz_WGRDhIf2k0UZMUTZUQmClmIi8Bqjhit6KsAZCzycHeG4",
+    "html_url": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzNmZDJjOTJkMTg2MTRiZWNiNGQ5MDQ5M2Q2NTI2ZDEyEgsSBxDJ6ZOdiBIYAZIBIwoKcHJvamVjdF9pZBIVQhM0NTM3NDM0NDQ3MDcwMjA3NDg2&filename=&opi=96797242",
+    "local_file": "7_interaction.html"
+  }
+]

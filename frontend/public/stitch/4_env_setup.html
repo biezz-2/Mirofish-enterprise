@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mirofish Enterprise - Swarm Environment &amp; Multi-Agent Persona Setup</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary-fixed-dim": "#ddb7ff",
+            "on-secondary-fixed-variant": "#6900b3",
+            "surface-variant": "#313540",
+            "surface-container-highest": "#313540",
+            "on-error-container": "#ffdad6",
+            "inverse-surface": "#dfe2f1",
+            "primary": "#e0fdff",
+            "surface": "#0f131d",
+            "primary-fixed": "#6ff6ff",
+            "secondary": "#ddb7ff",
+            "surface-bright": "#353944",
+            "primary-fixed-dim": "#00dce6",
+            "primary-container": "#00f2fe",
+            "on-secondary-fixed": "#2c0051",
+            "tertiary-fixed-dim": "#4edea3",
+            "surface-tint": "#00dce6",
+            "on-surface-variant": "#b9cacb",
+            "on-secondary-container": "#d6a9ff",
+            "secondary-fixed": "#f0dbff",
+            "tertiary-fixed": "#6ffbbe",
+            "on-primary": "#00373a",
+            "surface-container-lowest": "#0a0e18",
+            "on-tertiary": "#003824",
+            "error": "#ffb4ab",
+            "surface-container-high": "#262a35",
+            "outline": "#849495",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-primary-fixed-variant": "#004f53",
+            "inverse-on-surface": "#2c303b",
+            "on-tertiary-fixed": "#002113",
+            "on-surface": "#dfe2f1",
+            "on-background": "#dfe2f1",
+            "secondary-container": "#6f00be",
+            "surface-container": "#1c1f2a",
+            "outline-variant": "#3a494b",
+            "surface-dim": "#0f131d",
+            "tertiary-container": "#67f4b7",
+            "on-error": "#690005",
+            "tertiary": "#e1ffec",
+            "surface-container-low": "#171b26",
+            "background": "#0f131d",
+            "on-tertiary-container": "#006e4b",
+            "on-primary-fixed": "#002022",
+            "on-secondary": "#490080",
+            "error-container": "#93000a",
+            "inverse-primary": "#00696f",
+            "on-primary-container": "#006a70"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "2rem",
+            "space-lg": "1.5rem",
+            "gutter": "1.25rem",
+            "gutter-mobile": "0.75rem",
+            "space-xl": "2.5rem",
+            "margin-mobile": "1rem",
+            "space-xs": "0.25rem",
+            "space-md": "1rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "label-code-sm": ["JetBrains Mono"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-md": ["Inter"],
+            "label-code-md": ["JetBrains Mono"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "display-xl-mobile": ["Plus Jakarta Sans"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "label-code-lg": ["JetBrains Mono"],
+            "display-xl": ["Plus Jakarta Sans"],
+            "body-lg": ["Inter"]
+          },
+          "fontSize": {
+            "label-code-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-code-md": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "display-xl-mobile": ["38px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "800" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "label-code-lg": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "display-xl": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #0f131d;
+      color: #dfe2f1;
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom scrollbar for cyber aesthetic */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0e18;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3a494b;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00dce6;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-background min-h-screen flex flex-col antialiased selection:bg-primary-container selection:text-on-primary">
+<!-- TOP NAV BAR (Shared Component) -->
+<header class="sticky top-0 z-50 bg-surface/80 backdrop-blur-md shadow-sm">
+<div class="flex justify-between items-center w-full px-space-lg py-space-sm max-w-full">
+<div class="flex items-center gap-space-md">
+<div class="text-headline-sm font-headline-sm font-bold text-primary tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">hub</span>
+          MIROFISH ENTERPRISE
+        </div>
+<div class="hidden md:flex items-center gap-space-lg ml-space-xl">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label-code-md" href="#">Simulations</a>
+<a class="text-primary-fixed-dim border-b-2 border-primary-fixed-dim pb-1 font-semibold font-label-code-md" href="#">Agent Swarms</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label-code-md" href="#">Reality Seeds</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label-code-md" href="#">Model Graph</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label-code-md" href="#">Docs</a>
+</div>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="hidden lg:flex items-center bg-surface-container px-space-md py-1.5 rounded-lg border border-outline-variant/30 text-label-code-md font-label-code-md text-primary-fixed-dim">
+          Token Budget: 4.8M
+        </div>
+<button class="hidden md:flex items-center gap-1.5 px-space-md py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-lg text-label-code-md font-label-code-md transition-all">
+<span class="material-symbols-outlined text-sm">terminal</span>
+          terminal
+        </button>
+<button class="hidden md:flex items-center gap-1.5 px-space-md py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-lg text-label-code-md font-label-code-md transition-all">
+<span class="material-symbols-outlined text-sm">notifications</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-container to-primary-fixed text-on-primary rounded-lg font-headline-sm text-sm font-bold shadow-[0_0_16px_rgba(0,242,254,0.35)] active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-sm">bolt</span>
+          Deploy Swarm
+        </button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant/50 overflow-hidden flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="User operator profile avatar showcasing a professional synthetic intelligence researcher in a sleek cyber-fintech command center setting with cool blue lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_Q_a6xMP3UH3zXmYFNfOpBVurEftuh5j1iBRs6qWna7Qw1w3Cs_X97ZYT-n4apkAd6Krlgh8LXKyD8_0cc-jgLaxOr2pcrRVjkOZ970yp0ZNLXfX2fT_lc1EIS28t2fYIfT6Le6phd9oSHI9arslKYN906aH1TKyi2fVQe8iX3BAqqbcuAnI-8L947gFrEoHqlOi0FYNMPl2-u5-r1vZ3ND-RU3CAuBGP3HW7ZeV96RcDFRsXahHwf-fb017e9c8DqJ0L5U8vArk"/>
+</div>
+</div>
+</div>
+</header>
+<!-- MAIN APP CONTAINER -->
+<div class="flex flex-1 w-full overflow-hidden">
+<!-- SIDE NAV BAR (Shared Component Desktop Drawer) -->
+<aside class="hidden lg:flex flex-col justify-between h-[calc(100vh-61px)] w-64 bg-surface-container-low/70 backdrop-blur-xl border-r border-outline-variant/20 p-space-md sticky top-[61px]">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center gap-3 p-space-sm bg-surface-container-high/50 rounded-lg mb-space-sm border border-outline-variant/20">
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed-dim animate-pulse"></div>
+<div>
+<div class="text-headline-sm font-headline-sm text-primary text-xs">CLUSTER NODE 01</div>
+<div class="text-label-code-sm text-on-surface-variant">Neo4j • Redis • Celery Ready</div>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors font-label-code-md" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+            Engine Vitals
+          </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg bg-surface-container-high text-primary-fixed-dim font-medium border-l-2 border-primary-fixed-dim font-label-code-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+            Agent Swarms
+          </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors font-label-code-md" href="#">
+<span class="material-symbols-outlined">dataset</span>
+            Reality Seeds
+          </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors font-label-code-md" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+            Graph Telemetry
+          </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors font-label-code-md" href="#">
+<span class="material-symbols-outlined">psychology</span>
+            Consensus Matrix
+          </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors font-label-code-md" href="#">
+<span class="material-symbols-outlined">terminal</span>
+            Simulation Logs
+          </a>
+</nav>
+</div>
+<div class="flex flex-col gap-space-sm">
+<button class="w-full py-2.5 px-space-md bg-surface-container-high hover:bg-surface-container-highest border border-primary-fixed-dim/30 text-primary-fixed-dim rounded-lg font-label-code-md flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-sm">bolt</span>
+          Initiate Swarm
+        </button>
+<div class="pt-space-sm border-t border-outline-variant/20 flex flex-col gap-1">
+<a class="flex items-center gap-space-sm px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface text-xs font-label-code-md" href="#">
+<span class="material-symbols-outlined text-sm">help</span>
+            Documentation
+          </a>
+<a class="flex items-center gap-space-sm px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface text-xs font-label-code-md" href="#">
+<span class="material-symbols-outlined text-sm">settings</span>
+            Settings
+          </a>
+</div>
+</div>
+</aside>
+<!-- CONTENT CANVAS -->
+<main class="flex-1 flex flex-col h-[calc(100vh-61px)] overflow-y-auto p-space-lg lg:p-space-xl gap-space-lg bg-[radial-gradient(circle_at_top_right,rgba(121,40,202,0.06),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(0,242,254,0.04),transparent_50%)]">
+<!-- BREADCRUMB & STEP HEADER -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md pb-space-md border-b border-outline-variant/20">
+<div>
+<div class="text-label-code-sm text-primary-fixed-dim font-label-code-md tracking-wider mb-1">MIROFISH WORKSPACE / PROJECT #MF-8821</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface">Langkah 2: Penyiapan Lingkungan Simulasi &amp; Agen OASIS (7 Platform + OCEAN Matrix)</h1>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant/40 text-label-code-sm text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim animate-pulse"></span>
+            Node Cluster Active
+          </span>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-primary-container/10 border border-primary-container/30 text-label-code-sm text-primary-fixed-dim">
+            Engine v4.2-RC
+          </span>
+</div>
+</div>
+<!-- 1. TOP SUMMARY BANNER -->
+<section class="bg-surface-container/60 backdrop-blur-md rounded-xl p-space-lg border border-outline-variant/20 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary-container to-transparent opacity-60"></div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-lg divide-y md:divide-y-0 md:divide-x divide-outline-variant/20">
+<div class="flex flex-col gap-1 md:pr-space-lg">
+<span class="text-label-code-sm text-on-surface-variant uppercase font-label-code-md">Configured Agent Population</span>
+<div class="flex items-baseline gap-2">
+<span class="text-headline-lg font-headline-lg text-primary">2,500</span>
+<span class="text-label-code-md text-primary-fixed-dim font-label-code-md">Synthetic Agents</span>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-1">Distributed across multi-platform node meshes with asynchronous concurrency.</p>
+</div>
+<div class="flex flex-col gap-1 md:px-space-lg pt-space-md md:pt-0">
+<span class="text-label-code-sm text-on-surface-variant uppercase font-label-code-md">Target Simulation Horizon</span>
+<div class="flex items-baseline gap-2">
+<span class="text-headline-lg font-headline-lg text-secondary">14 Days</span>
+<span class="text-label-code-md text-secondary-fixed-dim font-label-code-md">/ 28 Rounds</span>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-1">Macro-forecasting duration with automated checkpointing enabled.</p>
+</div>
+<div class="flex flex-col gap-1 md:pl-space-lg pt-space-md md:pt-0">
+<span class="text-label-code-sm text-on-surface-variant uppercase font-label-code-md">Interaction Frequency</span>
+<div class="flex items-baseline gap-2">
+<span class="text-headline-lg font-headline-lg text-tertiary-fixed-dim">15 min</span>
+<span class="text-label-code-md text-tertiary-fixed-dim font-label-code-md">/ round</span>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-1">High-frequency sentiment feedback loop interval.</p>
+</div>
+</div>
+</section>
+<!-- 2-COLUMN MAIN LAYOUT -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+<!-- LEFT COLUMN - Platform & Channel Matrix (5 Cols) -->
+<div class="lg:col-span-5 flex flex-col gap-space-lg">
+<div class="bg-surface-container/60 backdrop-blur-md rounded-xl p-space-lg border border-outline-variant/20 flex flex-col gap-space-lg">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Platform &amp; Channel Matrix</h2>
+<p class="text-body-sm text-on-surface-variant">Configure environment routing and agent allocation per ecosystem.</p>
+</div>
+<span class="material-symbols-outlined text-primary-fixed-dim">hub</span>
+</div>
+
+<!-- OASIS 7-PLATFORM ECOSYSTEM MATRIX (System Design v3.1) -->
+<div class="space-y-3">
+  <!-- Platform 1: Twitter -->
+  <div class="p-3.5 rounded-xl bg-surface-container-lowest/80 border border-cyan-500/30 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-xs">TW</span>
+        <div>
+          <div class="text-xs font-bold text-white font-mono">1. Twitter (Legacy)</div>
+          <div class="text-[10px] text-slate-400">Mikro-teks cepat, viral cascade, retweet cascades</div>
+        </div>
+      </div>
+      <span class="text-xs font-mono font-bold text-cyan-400">18 Agen</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <input type="range" min="1" max="50" value="18" class="w-full accent-cyan-400">
+    </div>
+  </div>
+
+  <!-- Platform 2: X (For You) -->
+  <div class="p-3.5 rounded-xl bg-surface-container-lowest/80 border border-slate-700/60 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-7 h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center font-bold text-xs">X</span>
+        <div>
+          <div class="text-xs font-bold text-white font-mono">2. X (Algoritma For You)</div>
+          <div class="text-[10px] text-slate-400">Feed berbasis rekomendasi, teks panjang, polarisasi opini</div>
+        </div>
+      </div>
+      <span class="text-xs font-mono font-bold text-cyan-400">12 Agen</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <input type="range" min="1" max="50" value="12" class="w-full accent-cyan-400">
+    </div>
+  </div>
+
+  <!-- Platform 3: Reddit -->
+  <div class="p-3.5 rounded-xl bg-surface-container-lowest/80 border border-orange-500/30 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-xs">RD</span>
+        <div>
+          <div class="text-xs font-bold text-white font-mono">3. Reddit</div>
+          <div class="text-[10px] text-slate-400">Subreddit, thread bertingkat, upvote/downvote karma</div>
+        </div>
+      </div>
+      <span class="text-xs font-mono font-bold text-orange-400">8 Agen</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <input type="range" min="1" max="50" value="8" class="w-full accent-orange-400">
+    </div>
+  </div>
+
+  <!-- Platform 4: TikTok -->
+  <div class="p-3.5 rounded-xl bg-surface-container-lowest/80 border border-pink-500/30 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-7 h-7 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center font-bold text-xs">TK</span>
+        <div>
+          <div class="text-xs font-bold text-white font-mono">4. TikTok</div>
+          <div class="text-[10px] text-slate-400">Video mikro, sound contagion, FYP echo loop</div>
+        </div>
+      </div>
+      <span class="text-xs font-mono font-bold text-pink-400">6 Agen</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <input type="range" min="1" max="50" value="6" class="w-full accent-pink-400">
+    </div>
+  </div>
+
+  <!-- Platform 5: Instagram -->
+  <div class="p-3.5 rounded-xl bg-surface-container-lowest/80 border border-purple-500/30 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs">IG</span>
+        <div>
+          <div class="text-xs font-bold text-white font-mono">5. Instagram</div>
+          <div class="text-[10px] text-slate-400">Visual estetika, affinity network, DM &amp; share</div>
+        </div>
+      </div>
+      <span class="text-xs font-mono font-bold text-purple-400">4 Agen</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <input type="range" min="1" max="50" value="4" class="w-full accent-purple-400">
+    </div>
+  </div>
+
+  <!-- Platform 6: Facebook -->
+  <div class="p-3.5 rounded-xl bg-surface-container-lowest/80 border border-blue-500/30 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs">FB</span>
+        <div>
+          <div class="text-xs font-bold text-white font-mono">6. Facebook</div>
+          <div class="text-[10px] text-slate-400">Grup &amp; komunitas tertutup, echo chamber keluarga</div>
+        </div>
+      </div>
+      <span class="text-xs font-mono font-bold text-blue-400">4 Agen</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <input type="range" min="1" max="50" value="4" class="w-full accent-blue-400">
+    </div>
+  </div>
+
+  <!-- Platform 7: Threads -->
+  <div class="p-3.5 rounded-xl bg-surface-container-lowest/80 border border-emerald-500/30 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">TH</span>
+        <div>
+          <div class="text-xs font-bold text-white font-mono">7. Threads</div>
+          <div class="text-[10px] text-slate-400">Percakapan santai, umpan balik cepat, minim friksi</div>
+        </div>
+      </div>
+      <span class="text-xs font-mono font-bold text-emerald-400">3 Agen</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <input type="range" min="1" max="50" value="3" class="w-full accent-emerald-400">
+    </div>
+  </div>
+</div>
+
+<!-- Network Topology Preview Box -->
+<div class="p-space-md bg-surface-container-lowest rounded-xl border border-outline-variant/20 flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="text-label-code-md font-label-code-md text-primary-fixed-dim">Topology Latency Matrix</span>
+<span class="text-label-code-sm text-on-surface-variant">0.42ms sync</span>
+</div>
+<div class="w-full h-24 bg-surface-dim rounded border border-outline-variant/10 relative overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 opacity-20 bg-[radial-gradient(#00dce6_1px,transparent_1px)] [background-size:12px_12px]"></div>
+<div class="text-xs text-on-surface-variant font-label-code-sm z-10 text-center px-4">
+                  Cross-Platform Graph Mesh Synchronized &amp; Ready for Node Injection
+                </div>
+</div>
+</div>
+</div>
+</div>
+<!-- CENTER-RIGHT COLUMN - Persona Spectrum & Psychographic Profiling (7 Cols) -->
+<div class="lg:col-span-7 flex flex-col gap-space-lg">
+<!-- Psychographic Sliders Control Card -->
+
+<!-- OCEAN PSYCHOMETRICS & LINGUISTIC SPECTRUM (System Design v3.1) -->
+<div class="p-4 rounded-xl bg-surface-container-lowest/90 border border-purple-500/40 mb-4">
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center space-x-2">
+      <span class="material-symbols-outlined text-purple-400">psychology</span>
+      <h3 class="text-xs font-bold text-white font-mono tracking-wider uppercase">Dimensi Psikometrik OCEAN &amp; Gaya Bahasa PUEBI</h3>
+    </div>
+    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-900/40 text-purple-300">5-Faktor Baku</span>
+  </div>
+  <div class="grid grid-cols-5 gap-2 text-center font-mono text-[11px] mb-3">
+    <div class="p-2 rounded bg-surface-container/60 border border-outline-variant/20">
+      <div class="text-slate-400 text-[10px]">O - Openness</div>
+      <div class="text-cyan-300 font-bold mt-1">0.72</div>
+    </div>
+    <div class="p-2 rounded bg-surface-container/60 border border-outline-variant/20">
+      <div class="text-slate-400 text-[10px]">C - Conscient</div>
+      <div class="text-purple-300 font-bold mt-1">0.65</div>
+    </div>
+    <div class="p-2 rounded bg-surface-container/60 border border-outline-variant/20">
+      <div class="text-slate-400 text-[10px]">E - Extravert</div>
+      <div class="text-emerald-300 font-bold mt-1">0.58</div>
+    </div>
+    <div class="p-2 rounded bg-surface-container/60 border border-outline-variant/20">
+      <div class="text-slate-400 text-[10px]">A - Agreeable</div>
+      <div class="text-amber-300 font-bold mt-1">0.45</div>
+    </div>
+    <div class="p-2 rounded bg-surface-container/60 border border-outline-variant/20">
+      <div class="text-slate-400 text-[10px]">N - Neurotic</div>
+      <div class="text-rose-300 font-bold mt-1">0.60</div>
+    </div>
+  </div>
+  <div class="p-2.5 rounded bg-surface-container/40 border border-slate-700/50 flex items-center justify-between text-xs font-mono text-slate-300">
+    <span>Gaya Bahasa Agen:</span>
+    <div class="flex items-center space-x-2">
+      <span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/30 font-semibold">Formal PUEBI (35%)</span>
+      <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-500/30 font-semibold">Santai Jakarta (45%)</span>
+      <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold">Semi-Formal (20%)</span>
+    </div>
+  </div>
+</div>
+
+<div class="bg-surface-container/60 backdrop-blur-md rounded-xl p-space-lg border border-outline-variant/20 flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Persona Spectrum &amp; Psychographic Profiling</h2>
+<p class="text-body-sm text-on-surface-variant">Adjust macro distribution parameters for agent cognitive architectures.</p>
+</div>
+<span class="material-symbols-outlined text-secondary-fixed-dim">psychology</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md pt-2">
+<!-- Bipolarity Slider -->
+<div class="bg-surface-container-high/50 p-space-md rounded-xl border border-outline-variant/20 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-xs text-on-surface">Bipolarity Index</span>
+<span class="font-label-code-md text-secondary-fixed-dim text-xs">68%</span>
+</div>
+<input class="w-full accent-[#ddb7ff] bg-surface-container h-1.5 rounded-lg cursor-pointer" max="100" min="0" type="range" value="68"/>
+<span class="text-label-code-sm text-on-surface-variant">High ideological polarization</span>
+</div>
+<!-- Risk Appetite -->
+<div class="bg-surface-container-high/50 p-space-md rounded-xl border border-outline-variant/20 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-xs text-on-surface">Risk Appetite</span>
+<span class="font-label-code-md text-primary-fixed-dim text-xs">82%</span>
+</div>
+<input class="w-full accent-[#00dce6] bg-surface-container h-1.5 rounded-lg cursor-pointer" max="100" min="0" type="range" value="82"/>
+<span class="text-label-code-sm text-on-surface-variant">Aggressive leverage bias</span>
+</div>
+<!-- Cognitive Inertia -->
+<div class="bg-surface-container-high/50 p-space-md rounded-xl border border-outline-variant/20 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-xs text-on-surface">Cognitive Inertia</span>
+<span class="font-label-code-md text-tertiary-fixed-dim text-xs">45%</span>
+</div>
+<input class="w-full accent-[#4edea3] bg-surface-container h-1.5 rounded-lg cursor-pointer" max="100" min="0" type="range" value="45"/>
+<span class="text-label-code-sm text-on-surface-variant">Moderate narrative stickiness</span>
+</div>
+</div>
+</div>
+<!-- Sample Agent Persona Cards Section -->
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Sample Agent Persona Templates</h3>
+<span class="text-label-code-md text-primary-fixed-dim font-label-code-md">3 Active Templates Loaded</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Persona 1: Institutional Quant Analyst -->
+<div class="bg-surface-container/60 backdrop-blur-md border border-outline-variant/20 rounded-xl p-space-md flex flex-col justify-between gap-4 hover:border-primary-fixed-dim/50 transition-all">
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="text-label-code-sm text-primary-fixed-dim bg-primary-container/10 px-2 py-0.5 rounded font-label-code-md">NODE #081</span>
+<span class="material-symbols-outlined text-sm text-primary-fixed-dim">analytics</span>
+</div>
+<h4 class="font-headline-sm text-on-surface text-sm font-bold">Institutional Quant Analyst</h4>
+<p class="text-body-sm text-on-surface-variant text-xs">Driven by multi-factor regression models, liquidity depth, and risk-adjusted yield spreads.</p>
+</div>
+<div class="flex flex-col gap-2 pt-2 border-t border-outline-variant/20">
+<div class="text-xs text-on-surface-variant font-label-code-sm">Traits: <span class="text-on-surface">Low emotional variance, high data reliance</span></div>
+<div class="text-xs text-on-surface-variant font-label-code-sm">Priors: <span class="text-primary-fixed-dim">Macro liquidity regimes</span></div>
+</div>
+</div>
+<!-- Persona 2: Retail Momentum Trader -->
+<div class="bg-surface-container/60 backdrop-blur-md border border-outline-variant/20 rounded-xl p-space-md flex flex-col justify-between gap-4 hover:border-secondary-fixed-dim/50 transition-all">
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="text-label-code-sm text-secondary-fixed-dim bg-secondary-container/20 px-2 py-0.5 rounded font-label-code-md">NODE #412</span>
+<span class="material-symbols-outlined text-sm text-secondary-fixed-dim">trending_up</span>
+</div>
+<h4 class="font-headline-sm text-on-surface text-sm font-bold">Retail Momentum Trader</h4>
+<p class="text-body-sm text-on-surface-variant text-xs">Reacts rapidly to order book imbalances, social volume spikes, and short-term volatility surges.</p>
+</div>
+<div class="flex flex-col gap-2 pt-2 border-t border-outline-variant/20">
+<div class="text-xs text-on-surface-variant font-label-code-sm">Traits: <span class="text-on-surface">High FOMO sensitivity, trend-following</span></div>
+<div class="text-xs text-on-surface-variant font-label-code-sm">Priors: <span class="text-secondary-fixed-dim">Order book momentum</span></div>
+</div>
+</div>
+<!-- Persona 3: Policy Skeptic Influencer -->
+<div class="bg-surface-container/60 backdrop-blur-md border border-outline-variant/20 rounded-xl p-space-md flex flex-col justify-between gap-4 hover:border-tertiary-fixed-dim/50 transition-all">
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="text-label-code-sm text-tertiary-fixed-dim bg-tertiary-container/10 px-2 py-0.5 rounded font-label-code-md">NODE #929</span>
+<span class="material-symbols-outlined text-sm text-tertiary-fixed-dim">gavel</span>
+</div>
+<h4 class="font-headline-sm text-on-surface text-sm font-bold">Policy Skeptic Influencer</h4>
+<p class="text-body-sm text-on-surface-variant text-xs">Amplifies regulatory friction, compliance risks, and macroeconomic systemic vulnerabilities.</p>
+</div>
+<div class="flex flex-col gap-2 pt-2 border-t border-outline-variant/20">
+<div class="text-xs text-on-surface-variant font-label-code-sm">Traits: <span class="text-on-surface">Skepticism bias, high network reach</span></div>
+<div class="text-xs text-on-surface-variant font-label-code-sm">Priors: <span class="text-tertiary-fixed-dim">Regulatory shift catalysts</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- BOTTOM ACTION BAR -->
+<div class="sticky bottom-0 z-40 bg-surface-container-low/90 backdrop-blur-xl border-t border-outline-variant/20 p-space-md flex flex-col sm:flex-row items-center justify-between gap-space-md mt-auto rounded-xl">
+<div class="flex items-center gap-3">
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed-dim animate-pulse"></div>
+<span class="text-label-code-md text-on-surface-variant font-label-code-md">Status: All 2,500 Swarm nodes compiled &amp; verified. Ready for deployment.</span>
+</div>
+<div class="flex items-center gap-space-sm w-full sm:w-auto">
+<button class="flex-1 sm:flex-none px-space-md py-2.5 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/40 text-on-surface rounded-lg font-label-code-md text-xs transition-all">
+            Export Swarm Blueprint
+          </button>
+<button class="flex-1 sm:flex-none px-space-md py-2.5 bg-surface-container-high hover:bg-surface-container-highest border border-primary-fixed-dim/40 text-primary-fixed-dim rounded-lg font-label-code-md text-xs transition-all flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-sm">science</span>
+            Test Run (5-Agent Pilot)
+          </button>
+<button class="flex-1 sm:flex-none px-space-xl py-2.5 bg-gradient-to-r from-primary-container to-primary-fixed text-on-primary rounded-lg font-headline-sm text-sm font-bold shadow-[0_0_16px_rgba(0,242,254,0.35)] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">rocket_launch</span>
+            Deploy Swarm &amp; Launch Simulation
+          </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,48 @@
+{
+  "boards": {
+    "task-board-mirofish-i18n-jules": {
+      "board_id": "task-board-mirofish-i18n-jules",
+      "type": "TASK",
+      "parent": "mirofish-enterprise",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [
+        {
+          "edge": "DEPENDS_ON",
+          "board_id": "mirofish-enterprise"
+        }
+      ],
+      "path": "/home/biezz/.state/boards/task-board-mirofish-i18n-jules.json",
+      "updated_at": "2026-10-14T18:47:26.226187+00:00"
+    },
+    "audit-board-mirofish-i18n-cron": {
+      "board_id": "audit-board-mirofish-i18n-cron",
+      "type": "AUDIT",
+      "parent": "task-board-mirofish-i18n-jules",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [
+        {
+          "edge": "VALIDATES",
+          "board_id": "task-board-mirofish-i18n-jules"
+        },
+        {
+          "edge": "DEPENDS_ON",
+          "board_id": "mirofish-enterprise"
+        }
+      ],
+      "path": "/home/biezz/.state/boards/audit-board-mirofish-i18n-cron.json",
+      "updated_at": "2026-10-15T03:06:26.348966+00:00"
+    },
+    "project-mirofish-epistemic-mitigation": {
+      "board_id": "project-mirofish-epistemic-mitigation",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "CLOSED",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-mirofish-epistemic-mitigation.json",
+      "updated_at": "2026-10-14T18:39:45.720444+00:00"
+    }
+  }
+}

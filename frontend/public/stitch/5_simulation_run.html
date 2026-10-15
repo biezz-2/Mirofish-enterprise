@@ -1,0 +1,498 @@
+<html><head><meta charset="utf-8"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "on-primary": "#00373a",
+          "on-tertiary-fixed": "#002113",
+          "outline": "#849495",
+          "background": "#0f131d",
+          "error-container": "#93000a",
+          "outline-variant": "#3a494b",
+          "on-surface-variant": "#b9cacb",
+          "primary": "#e0fdff",
+          "on-tertiary-container": "#006e4b",
+          "on-secondary": "#490080",
+          "inverse-primary": "#00696f",
+          "secondary-fixed": "#f0dbff",
+          "on-surface": "#dfe2f1",
+          "on-primary-fixed": "#002022",
+          "primary-fixed-dim": "#00dce6",
+          "on-primary-container": "#006a70",
+          "surface-container-high": "#262a35",
+          "surface-container": "#1c1f2a",
+          "on-tertiary-fixed-variant": "#005236",
+          "on-error-container": "#ffdad6",
+          "surface": "#0f131d",
+          "tertiary-container": "#67f4b7",
+          "primary-fixed": "#6ff6ff",
+          "on-secondary-container": "#d6a9ff",
+          "tertiary-fixed": "#6ffbbe",
+          "tertiary": "#e1ffec",
+          "inverse-on-surface": "#2c303b",
+          "primary-container": "#00f2fe",
+          "secondary-container": "#6f00be",
+          "surface-container-lowest": "#0a0e18",
+          "error": "#ffb4ab",
+          "surface-tint": "#00dce6",
+          "surface-container-low": "#171b26",
+          "on-tertiary": "#003824",
+          "secondary-fixed-dim": "#ddb7ff",
+          "inverse-surface": "#dfe2f1",
+          "surface-bright": "#353944",
+          "on-error": "#690005",
+          "surface-dim": "#0f131d",
+          "on-secondary-fixed": "#2c0051",
+          "tertiary-fixed-dim": "#4edea3",
+          "surface-container-highest": "#313540",
+          "on-secondary-fixed-variant": "#6900b3",
+          "on-background": "#dfe2f1",
+          "surface-variant": "#313540",
+          "on-primary-fixed-variant": "#004f53",
+          "secondary": "#ddb7ff"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "margin-mobile": "1rem",
+          "margin": "2rem",
+          "space-xs": "0.25rem",
+          "space-sm": "0.5rem",
+          "space-md": "1rem",
+          "space-xl": "2.5rem",
+          "gutter-mobile": "0.75rem",
+          "space-lg": "1.5rem",
+          "gutter": "1.25rem"
+        },
+        "fontFamily": {
+          "body-sm": ["Inter"],
+          "headline-lg-mobile": ["Plus Jakarta Sans"],
+          "headline-sm": ["Plus Jakarta Sans"],
+          "display-xl-mobile": ["Plus Jakarta Sans"],
+          "label-code-lg": ["JetBrains Mono"],
+          "display-xl": ["Plus Jakarta Sans"],
+          "headline-lg": ["Plus Jakarta Sans"],
+          "headline-md": ["Plus Jakarta Sans"],
+          "label-code-sm": ["JetBrains Mono"],
+          "body-md": ["Inter"],
+          "label-code-md": ["JetBrains Mono"],
+          "body-lg": ["Inter"]
+        },
+        "fontSize": {
+          "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+          "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+          "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+          "display-xl-mobile": ["38px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "800" }],
+          "label-code-lg": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+          "display-xl": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+          "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+          "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+          "label-code-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+          "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+          "label-code-md": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+          "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "400" }]
+        }
+      }
+    }
+  }
+</script>
+</head><body class="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container dark" style="background-color: #0b0f19;">
+<!-- TopNavBar -->
+<header class="bg-surface/80 dark:bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 dark:border-outline-variant/30 shadow-sm backdrop-blur-xl sticky top-0 z-50 w-full">
+<div class="flex justify-between items-center w-full px-space-lg py-space-sm max-w-full">
+<div class="flex items-center gap-space-md">
+<div class="text-headline-sm font-headline-sm font-bold text-primary dark:text-primary tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">hub</span>
+        MIROFISH ENTERPRISE
+      </div>
+<div class="hidden lg:flex items-center gap-space-md ml-space-lg">
+<a class="text-primary-fixed-dim dark:text-primary-fixed-dim border-b-2 border-primary-fixed-dim pb-1 font-semibold text-label-code-md font-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high hover:text-primary transition-all duration-150 px-space-sm py-space-xs rounded" href="#">Simulations</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface transition-colors text-label-code-md font-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high px-space-sm py-space-xs rounded" href="#">Agent Swarms</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface transition-colors text-label-code-md font-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high px-space-sm py-space-xs rounded" href="#">Reality Seeds</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface transition-colors text-label-code-md font-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high px-space-sm py-space-xs rounded" href="#">Model Graph</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface transition-colors text-label-code-md font-label-code-md hover:bg-surface-container-high dark:hover:bg-surface-container-high px-space-sm py-space-xs rounded" href="#">Docs</a>
+</div>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="hidden md:flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded-lg border border-outline-variant/30 text-label-code-sm font-label-code-sm text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-primary-fixed-dim animate-pulse"></span>
+        Token Budget: 4.8M
+      </div>
+<div class="flex items-center gap-space-xs">
+<button class="p-space-xs rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined text-sm">hub</span>
+</button>
+<button class="p-space-xs rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined text-sm">terminal</span>
+</button>
+<button class="p-space-xs rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-all relative">
+<span class="material-symbols-outlined text-sm">notifications</span>
+<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-primary-fixed-dim rounded-full"></span>
+</button>
+</div>
+<button class="bg-gradient-to-r from-primary-container to-[#38bdf8] text-[#030712] font-semibold px-space-md py-space-xs rounded-lg text-label-code-md font-label-code-md shadow-[0_0_16px_rgba(0,242,254,0.35)] active:scale-[0.98] transition-all flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">bolt</span>
+        Deploy Swarm
+      </button>
+<img class="w-8 h-8 rounded-full border border-primary-fixed-dim/50 object-cover" data-alt="User operator profile avatar featuring a high-tech minimalist digital portrait with glowing cyan highlights against a dark obsidian background, maintaining a professional cyber-fintech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpTA3quCz_ud-Q_gOADRV1TkmP4-TNN538nQ-Gua5xjvZPI8_9d0q5LkAMkKa59sa8XNTKPcs5v6QUAAhzRlOAG_Lh6hQw1VYyE2arc2Yr7BuNE1obUYIWKxEMRRm20CvDzs8-HGHue2QB9lSVc4Exw-sSbgo1ogWeGZ5GCxKvMHWm08oZW7E2TakFmOTwnFLon2SWyA4w28LLjEld3GMc5mepz8mFZh813C5jjQ-ZiUi5mxeOeXlrPCT5SdyqQSOZzL1TyAnpZeU"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="hidden lg:flex flex-col justify-between h-[calc(100vh-4rem)] p-space-md w-64 bg-surface-container-low/70 dark:bg-surface-container-low/70 backdrop-blur-xl border-r border-outline-variant/20 dark:border-outline-variant/20 shadow-md sticky top-16">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center gap-space-sm px-space-xs py-space-xs border-b border-outline-variant/20">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed animate-ping"></span>
+<div>
+<div class="text-label-code-md font-label-code-md text-primary font-bold">CLUSTER NODE 01</div>
+<div class="text-label-code-sm text-on-surface-variant">Neo4j • Redis • Celery Ready</div>
+</div>
+</div>
+<nav class="flex flex-col gap-space-xs">
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg bg-surface-container-high dark:bg-surface-container-high text-primary-fixed-dim dark:text-primary-fixed-dim font-medium border-l-2 border-primary-fixed-dim text-label-code-md font-label-code-md" href="#">
+<span class="material-symbols-outlined text-base">monitoring</span>
+          Engine Vitals
+        </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors text-label-code-md font-label-code-md" href="#">
+<span class="material-symbols-outlined text-base">smart_toy</span>
+          Agent Swarms
+        </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors text-label-code-md font-label-code-md" href="#">
+<span class="material-symbols-outlined text-base">dataset</span>
+          Reality Seeds
+        </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors text-label-code-md font-label-code-md" href="#">
+<span class="material-symbols-outlined text-base">account_tree</span>
+          Graph Telemetry
+        </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors text-label-code-md font-label-code-md" href="#">
+<span class="material-symbols-outlined text-base">psychology</span>
+          Consensus Matrix
+        </a>
+<a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors text-label-code-md font-label-code-md" href="#">
+<span class="material-symbols-outlined text-base">terminal</span>
+          Simulation Logs
+        </a>
+</nav>
+</div>
+<div class="flex flex-col gap-space-sm">
+<button class="w-full bg-surface-container-high hover:bg-primary-container/20 text-primary border border-primary-fixed-dim/30 py-space-sm px-space-md rounded-lg text-label-code-md font-label-code-md font-semibold transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">bolt</span>
+        Initiate Swarm
+      </button>
+<div class="flex flex-col gap-space-xs pt-space-sm border-t border-outline-variant/20">
+<a class="flex items-center gap-space-sm px-space-sm py-space-xs text-on-surface-variant hover:text-on-surface text-label-code-sm font-label-code-sm" href="#">
+<span class="material-symbols-outlined text-sm">help</span> Documentation
+        </a>
+<a class="flex items-center gap-space-sm px-space-sm py-space-xs text-on-surface-variant hover:text-on-surface text-label-code-sm font-label-code-sm" href="#">
+<span class="material-symbols-outlined text-sm">settings</span> Settings
+        </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto p-space-lg flex flex-col gap-space-lg">
+<!-- Header Banner -->
+<section class="bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 rounded-xl p-space-md flex flex-col md:flex-row justify-between items-start md:items-center gap-space-md shadow-lg relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary-container to-secondary"></div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-sm">
+<span class="text-label-code-sm px-space-xs py-0.5 bg-primary-container/20 text-primary-fixed-dim rounded border border-primary-container/30 font-bold">ROUND 8 / 24 [ACTIVE]</span>
+<span class="text-label-code-sm text-on-surface-variant">•</span>
+<span class="text-label-code-sm text-tertiary-fixed flex items-center gap-1 font-mono">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed animate-ping"></span> Elapsed: 01:42:15
+          </span>
+</div>
+<h1 class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">LANGKAH 3: LIVE COCKPIT 7-PLATFORM OASIS - RUN #SIM-904</h1>
+</div>
+<div class="flex items-center gap-space-md bg-surface-container-lowest px-space-md py-space-sm rounded-lg border border-outline-variant/30">
+<div class="flex flex-col text-right">
+<span class="text-label-code-sm text-on-surface-variant font-mono">AGENTS ONLINE</span>
+<span class="font-mono text-primary font-bold text-sm">2,500 / 2,500</span>
+</div>
+<div class="w-px h-8 bg-outline-variant/30"></div>
+<div class="flex flex-col text-right">
+<span class="text-label-code-sm text-on-surface-variant font-mono">CONVERGENCE</span>
+<span class="font-mono text-tertiary-fixed font-bold text-sm">94.2%</span>
+</div>
+</div>
+</section>
+<!-- Cockpit Controls Bar -->
+<section class="bg-surface-container/80 backdrop-blur-xl border border-outline-variant/30 rounded-xl p-space-md flex flex-col gap-space-md shadow-md">
+<!-- Timeline Scrubber -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center text-label-code-sm font-mono text-on-surface-variant">
+<span>T+00:00:00</span>
+<span class="text-primary-fixed-dim">CURRENT TICK: R8-T412 (01:42:15)</span>
+<span>T+06:00:00</span>
+</div>
+<div class="relative w-full h-3 bg-surface-container-lowest rounded-full cursor-pointer group">
+<div class="absolute top-0 left-0 h-full w-[34%] bg-gradient-to-r from-primary-fixed-dim/40 to-primary-container rounded-full"></div>
+<!-- Event Markers -->
+<div class="absolute top-0 left-[18%] -translate-x-1/2 w-3 h-3 bg-tertiary-fixed rounded-full shadow-[0_0_8px_rgba(78,222,163,0.8)] border-2 border-surface cursor-pointer group/m" title="Green: Injected Event">
+<div class="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover/m:block bg-surface-container-highest px-2 py-1 rounded text-label-code-sm text-tertiary-fixed whitespace-nowrap border border-tertiary-fixed/30 z-20">Injected Event: Macro Shock</div>
+</div>
+<div class="absolute top-0 left-[34%] -translate-x-1/2 w-3 h-3 bg-primary-container rounded-full shadow-[0_0_8px_rgba(0,242,254,0.8)] border-2 border-surface cursor-pointer group/m" title="Blue: Viral Consensus Spike">
+<div class="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover/m:block bg-surface-container-highest px-2 py-1 rounded text-label-code-sm text-primary-container whitespace-nowrap border border-primary-container/30 z-20">Viral Consensus Spike</div>
+</div>
+<div class="absolute top-0 left-[75%] -translate-x-1/2 w-3 h-3 bg-error rounded-full shadow-[0_0_8px_rgba(255,180,171,0.8)] border-2 border-surface cursor-pointer group/m" title="Red: Market Crash Divergence">
+<div class="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover/m:block bg-surface-container-highest px-2 py-1 rounded text-label-code-sm text-error whitespace-nowrap border border-error/30 z-20">Market Crash Divergence</div>
+</div>
+<!-- Scrubber Thumb -->
+<div class="absolute top-1/2 -translate-y-1/2 left-[34%] -translate-x-1/2 w-4 h-4 bg-primary rounded-full border-2 border-surface shadow-[0_0_12px_rgba(0,242,254,1)]"></div>
+</div>
+</div>
+<!-- Control Buttons -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs border-t border-outline-variant/20">
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="bg-surface-container-high hover:bg-error/10 hover:border-error/40 text-on-surface border border-outline-variant/30 px-space-md py-space-xs rounded-lg text-label-code-md font-label-code-md flex items-center gap-1.5 transition-all">
+<span class="material-symbols-outlined text-sm text-error">pause</span>
+            Pause Simulation
+          </button>
+<div class="flex items-center bg-surface-container-lowest rounded-lg border border-outline-variant/30 p-0.5">
+<button class="px-space-sm py-1 rounded bg-surface-container-high text-primary-fixed-dim text-label-code-sm font-mono">1x</button>
+<button class="px-space-sm py-1 rounded text-on-surface-variant hover:text-on-surface text-label-code-sm font-mono transition-colors">2x</button>
+<button class="px-space-sm py-1 rounded text-on-surface-variant hover:text-on-surface text-label-code-sm font-mono transition-colors">5x</button>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="bg-surface-container-high hover:bg-primary-container/20 text-on-surface border border-primary-fixed-dim/30 px-space-md py-space-xs rounded-lg text-label-code-md font-label-code-md flex items-center gap-1.5 transition-all">
+<span class="material-symbols-outlined text-sm text-tertiary-fixed">bolt</span>
+            Inject Shock Event
+          </button>
+<button class="bg-surface-container-high hover:bg-primary-container/20 text-on-surface border border-outline-variant/30 px-space-md py-space-xs rounded-lg text-label-code-md font-label-code-md flex items-center gap-1.5 transition-all">
+<span class="material-symbols-outlined text-sm text-secondary">account_tree</span>
+            Fork New Timeline Branch
+          </button>
+<button class="bg-surface-container-high hover:bg-primary-container/20 text-on-surface border border-outline-variant/30 px-space-md py-space-xs rounded-lg text-label-code-md font-label-code-md flex items-center gap-1.5 transition-all">
+<span class="material-symbols-outlined text-sm text-primary-fixed-dim">compare</span>
+            A/B Branch Compare
+          </button>
+</div>
+</div>
+</section>
+<!-- Split Workspace (Desktop Grid) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg">
+<!-- Left Half: Dynamic Real-time Knowledge Graph & Consensus Clustering -->
+
+<!-- DYNAMIC GRAPH INGESTION & SHA-256 CHECKPOINT STRIP (System Design v3.1) -->
+<div class="p-3 rounded-xl bg-surface-container-lowest/80 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+  <div class="flex items-center space-x-2">
+    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+    <span class="text-slate-300 font-bold">Dynamic Graph Memory:</span>
+    <span class="text-cyan-300">+28 Relasi Baru Terinjeksi</span>
+    <span class="text-slate-500">|</span>
+    <span class="text-slate-400">Target: Graphiti / FalkorDB</span>
+  </div>
+  <div class="flex items-center space-x-2">
+    <span class="material-symbols-outlined text-sm text-purple-400">verified</span>
+    <span class="text-slate-300 font-bold">SHA-256 Checkpoint:</span>
+    <span class="text-purple-300 font-mono">round_04.json.sha256 (&check; Valid)</span>
+    <span class="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 font-bold border border-emerald-500/30">Crash Guard 0-Loss</span>
+  </div>
+</div>
+
+<section class="bg-surface-container/70 backdrop-blur-xl border border-outline-variant/30 rounded-xl p-space-md flex flex-col gap-space-md min-h-[500px] lg:min-h-[600px] relative shadow-lg">
+<div class="flex justify-between items-center z-10">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary-fixed-dim">hub</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Knowledge Graph &amp; Consensus Clustering</h2>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="text-label-code-sm font-mono text-tertiary-fixed px-2 py-0.5 bg-tertiary-fixed/10 rounded border border-tertiary-fixed/25">Live Propagation</span>
+<button class="p-1 rounded hover:bg-surface-container-high text-on-surface-variant"><span class="material-symbols-outlined text-sm">fullscreen</span></button>
+</div>
+</div>
+<!-- Simulated Force Graph Canvas Area -->
+<div class="flex-1 w-full bg-surface-container-lowest/80 rounded-lg border border-outline-variant/20 relative overflow-hidden flex items-center justify-center p-space-md">
+<!-- Ambient Glows -->
+<div class="absolute top-1/4 left-1/4 w-32 h-32 bg-primary-container/10 rounded-full blur-2xl"></div>
+<div class="absolute bottom-1/3 right-1/4 w-40 h-40 bg-secondary/10 rounded-full blur-2xl"></div>
+<!-- SVG Network Graph Representation -->
+<svg class="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+<g stroke="rgba(132, 148, 149, 0.2)" stroke-width="1">
+<line x1="120" x2="280" y1="150" y2="220"></line>
+<line x1="280" x2="420" y1="220" y2="140"></line>
+<line x1="280" x2="350" y1="220" y2="380"></line>
+<line x1="350" x2="180" y1="380" y2="420"></line>
+<line x1="120" x2="210" y1="150" y2="300"></line>
+<line x1="420" x2="520" y1="140" y2="280"></line>
+<line x1="350" x2="520" y1="380" y2="280"></line>
+<line x1="210" x2="350" y1="300" y2="380"></line>
+</g>
+<!-- Nodes -->
+<!-- Cyan Node (Bullish) -->
+<g class="cursor-pointer group" transform="translate(120, 150)">
+<circle class="shadow-[0_0_15px_rgba(0,242,254,0.6)]" fill="rgba(15, 23, 42, 0.9)" r="18" stroke="#00f2fe" stroke-width="2"></circle>
+<circle class="animate-pulse" fill="#00f2fe" r="6"></circle>
+<text class="font-mono text-[10px]" fill="#dfe2f1" x="24" y="4">#089 [Retail Lead]</text>
+</g>
+<!-- Green Node (Consensus) -->
+<g class="cursor-pointer group" transform="translate(280, 220)">
+<circle fill="rgba(15, 23, 42, 0.9)" r="26" stroke="#4edea3" stroke-width="3"></circle>
+<circle class="animate-pulse" fill="#4edea3" r="10"></circle>
+<text class="font-mono text-[11px] font-bold" fill="#dfe2f1" x="32" y="4">#Hub-Core [Consensus Anchor]</text>
+</g>
+<!-- Amber Node (Volatility) -->
+<g class="cursor-pointer group" transform="translate(420, 140)">
+<circle fill="rgba(15, 23, 42, 0.9)" r="16" stroke="#f59e0b" stroke-width="2"></circle>
+<circle fill="#f59e0b" r="5"></circle>
+<text class="font-mono text-[10px]" fill="#dfe2f1" x="22" y="4">#312 [Macro Bear]</text>
+</g>
+<!-- Red Node (Divergence/Shock) -->
+<g class="cursor-pointer group" transform="translate(350, 380)">
+<circle fill="rgba(15, 23, 42, 0.9)" r="22" stroke="#ffb4ab" stroke-width="2.5"></circle>
+<circle class="animate-ping" fill="#ffb4ab" r="8"></circle>
+<text class="font-mono text-[10px] font-bold" fill="#ffb4ab" x="28" y="4">#412 [Liquidity Shock]</text>
+</g>
+<!-- Additional Small Nodes -->
+<circle cx="180" cy="420" fill="rgba(15, 23, 42, 0.9)" r="8" stroke="#00f2fe" stroke-width="1.5"></circle>
+<circle cx="210" cy="300" fill="rgba(15, 23, 42, 0.9)" r="10" stroke="#ddb7ff" stroke-width="1.5"></circle>
+<circle cx="520" cy="280" fill="rgba(15, 23, 42, 0.9)" r="14" stroke="#4edea3" stroke-width="2"></circle>
+</svg>
+<!-- Graph Overlay Legend -->
+<div class="absolute bottom-3 left-3 bg-surface/90 backdrop-blur-md p-2 rounded-lg border border-outline-variant/30 flex items-center gap-3 text-label-code-sm font-mono">
+<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span> Bullish</div>
+<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed"></span> Consensus</div>
+<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Volatile</div>
+<div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-error"></span> Divergence</div>
+</div>
+</div>
+</section>
+<!-- Right Half: Live Multi-Agent Stream & Progress Ledger -->
+<section class="bg-surface-container/70 backdrop-blur-xl border border-outline-variant/30 rounded-xl p-space-md flex flex-col gap-space-md min-h-[500px] lg:min-h-[600px] shadow-lg">
+<!-- Tabs -->
+<div class="flex items-center justify-between border-b border-outline-variant/20 pb-space-xs">
+<div class="flex items-center gap-space-md">
+<button class="text-label-code-md font-label-code-md font-semibold text-primary-fixed-dim border-b-2 border-primary-fixed-dim pb-2">Live Stream Feed</button>
+<button class="text-label-code-md font-label-code-md text-on-surface-variant hover:text-on-surface pb-2 transition-colors">Agent Thought Traces (ReAct)</button>
+<button class="text-label-code-md font-label-code-md text-on-surface-variant hover:text-on-surface pb-2 transition-colors">Consensus Telemetry</button>
+</div>
+<span class="text-label-code-sm font-mono text-tertiary-fixed px-2 py-0.5 bg-tertiary-fixed/10 rounded">248 msg/s</span>
+</div>
+
+<!-- 7-PLATFORM OASIS MULTI-FEED SELECTOR (System Design v3.1) -->
+<div class="flex items-center gap-1.5 py-1.5 overflow-x-auto text-[11px] font-mono border-b border-outline-variant/15">
+  <button class="px-2 py-0.5 rounded bg-cyan-400 text-slate-950 font-bold shrink-0">Semua (50)</button>
+  <button class="px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-high text-sky-400 shrink-0 border border-sky-500/30">1. Twitter (18)</button>
+  <button class="px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-high text-slate-200 shrink-0 border border-slate-600">2. For You (12)</button>
+  <button class="px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-high text-orange-400 shrink-0 border border-orange-500/30">3. Reddit (8)</button>
+  <button class="px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-high text-pink-400 shrink-0 border border-pink-500/30">4. TikTok (6)</button>
+  <button class="px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-high text-purple-400 shrink-0 border border-purple-500/30">5. Instagram (4)</button>
+  <button class="px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-high text-blue-400 shrink-0 border border-blue-500/30">6. Facebook (4)</button>
+  <button class="px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-high text-emerald-400 shrink-0 border border-emerald-500/30">7. Threads (3)</button>
+</div>
+
+<!-- Stream Feed Container -->
+<div class="flex-1 overflow-y-auto flex flex-col gap-space-sm pr-1">
+<!-- Stream Card 1 -->
+<div class="bg-surface-container-high/60 backdrop-blur-md border border-outline-variant/30 rounded-lg p-space-md flex flex-col gap-space-xs hover:border-primary-fixed-dim/40 transition-all">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-space-sm">
+<img class="w-7 h-7 rounded-full border border-primary-fixed-dim object-cover" data-alt="Cyberpunk stylized avatar of agent #412 with teal neon visor in high contrast obsidian setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5SXKq0DvYE0Oc1GfMCudRRshKwXNU9Kd_gPXl4zyUHFXs0qEEhnsmmHOM7mNExXzulcWfgbGpgjv8NBy4kzcGd_8pc_mp8W3VgT77hXArbgn7vGgztGqo1KVemash3hITCQHPEA6Iz0S87uP3jrgtAUtYnQ0GX9a9StCrtKEPioxLuWJgTPQX8HT_nPp11mK2v3dJujAm3BDpitnIr3oCmdvRCFJtjkOgtO3JUrgtqsQP1JtOGuRHECf2bB9BP63dNuHNFHufnmE"/>
+<div>
+<span class="text-label-code-md font-label-code-md text-primary font-bold">Agent #412 [Retail Momentum]</span>
+<span class="text-label-code-sm text-on-surface-variant ml-2 font-mono">T+01:42:10</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-label-code-sm px-2 py-0.5 rounded bg-primary-container/20 text-primary-fixed-dim font-mono">X (Twitter)</span>
+<span class="text-label-code-sm px-2 py-0.5 rounded bg-error/20 text-error font-mono">Bearish (-0.82)</span>
+</div>
+</div>
+<p class="text-body-sm text-on-surface font-body-sm pl-9">
+              Inflation report surprised high -&gt; Liquidity shock expected -&gt; Emitting bearish signal across sentiment clusters. Reallocating portfolio weights to defensive positions.
+            </p>
+<!-- Collapsible Thought Trace -->
+<details class="mt-2 pl-9 group">
+<summary class="text-label-code-sm font-mono text-primary-fixed-dim cursor-pointer hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">psychology</span> View ReAct Thought Trace
+              </summary>
+<div class="mt-2 p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/30 text-label-code-sm font-mono text-on-surface-variant flex flex-col gap-1">
+<span class="text-tertiary-fixed">[Thought]: Scanning incoming macro feeds for CPI deviation.</span>
+<span class="text-primary-fixed-dim">[Action]: Query vector DB for historical correlation with rate hikes.</span>
+<span>[Observation]: 89% historical probability of short-term liquidity contraction.</span>
+</div>
+</details>
+</div>
+<!-- Stream Card 2 -->
+<div class="bg-surface-container-high/60 backdrop-blur-md border border-outline-variant/30 rounded-lg p-space-md flex flex-col gap-space-xs hover:border-primary-fixed-dim/40 transition-all">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-space-sm">
+<img class="w-7 h-7 rounded-full border border-tertiary-fixed/50 object-cover" data-alt="Futuristic glowing avatar of agent #108 with algorithmic neon patterns against a dark cyber background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDue06MS1crSw7aWDh8zEdxodKgFBZAumIMJg_0LUC453cV8noDrhl5Nfk8lG7KS-uld0Va3ZdTervz1o4tN_uiAaKW1rNGSuNXXJlL8wCRLWde_pRavYTmY0wlJU6EA41LMuXwEmIghdZ9DfNs5T33soRMoX5IxaMv4AndbL3IrSRnQhHx0NaxZBYDr1jQc4Djdi4mfzNpr89le7LbucDbsk27cj2vnMj1lINwg0iAus__dDdfaBa2riLl1dXuqeBg3N6JzqV8TPQ"/>
+<div>
+<span class="text-label-code-md font-label-code-md text-primary font-bold">Agent #108 [Macro Arbiter]</span>
+<span class="text-label-code-sm text-on-surface-variant ml-2 font-mono">T+01:42:12</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-label-code-sm px-2 py-0.5 rounded bg-secondary-container/30 text-secondary-fixed font-mono">Reddit</span>
+<span class="text-label-code-sm px-2 py-0.5 rounded bg-tertiary-fixed/20 text-tertiary-fixed font-mono">Neutral (+0.14)</span>
+</div>
+</div>
+<p class="text-body-sm text-on-surface font-body-sm pl-9">
+              Consensus holding steady above 94%. Volatility clusters are absorbing retail sell-off pressure without triggering cascading liquidations.
+            </p>
+</div>
+<!-- Stream Card 3 -->
+<div class="bg-surface-container-high/60 backdrop-blur-md border border-outline-variant/30 rounded-lg p-space-md flex flex-col gap-space-xs hover:border-primary-fixed-dim/40 transition-all">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-space-sm">
+<img class="w-7 h-7 rounded-full border border-amber-500/50 object-cover" data-alt="Abstract algorithmic avatar with glowing amber geometric vectors representing high-frequency trading bot #089." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrfUMyUwT728lIPxp2sO_9zzIaNJ5niQ1nWczX7nniy3_l-WhjCKcNtIsO0ZKD1tiqqCFkNK_mRenXT--z7Zy6z14uhH5P80prDFcUpqBQLKbxPBGBE2ZPr-KM20Fph5Xw_RyvbJyLXKxmLhR-Rbol__-EDw13pEUk-aqcaeqbd6mWDjboZN34x4lR-34gCZ-739PHxeTewcu8STTXMu_XTZjT9iss5kCAyJOJXWcuCIsUVkpfcDZC3K0G0OmoN6EexxxYiZWet4c"/>
+<div>
+<span class="text-label-code-md font-label-code-md text-primary font-bold">Agent #089 [HFT Scalper]</span>
+<span class="text-label-code-sm text-on-surface-variant ml-2 font-mono">T+01:42:14</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-label-code-sm px-2 py-0.5 rounded bg-primary-container/20 text-primary-fixed-dim font-mono">X (Twitter)</span>
+<span class="text-label-code-sm px-2 py-0.5 rounded bg-primary-container/20 text-primary-fixed-dim font-mono">Bullish (+0.65)</span>
+</div>
+</div>
+<p class="text-body-sm text-on-surface font-body-sm pl-9">
+              Dip buyers stepping in at support level 4,200. Executing automated liquidity injection on secondary cluster nodes.
+            </p>
+</div>
+</div>
+</section>
+</div>
+<!-- Bottom Bar: Emergency Steer & Intervention Console -->
+<section class="bg-surface-container/90 backdrop-blur-xl border border-primary-fixed-dim/30 rounded-xl p-space-md flex flex-col gap-space-sm shadow-[0_0_24px_rgba(0,242,254,0.15)]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary-fixed-dim">terminal</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Emergency Steer &amp; Intervention Console</span>
+</div>
+<span class="text-label-code-sm font-mono text-tertiary-fixed flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed animate-pulse"></span> Human-in-the-Loop Active
+        </span>
+</div>
+<div class="flex flex-col md:flex-row gap-space-md items-center">
+<div class="relative flex-1 w-full">
+<input class="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-lg px-space-md py-space-sm text-body-md text-on-surface font-mono placeholder:text-on-surface-variant focus:border-primary-fixed-dim focus:ring-1 focus:ring-primary-fixed-dim transition-all" placeholder="Inject Global Headline or Macro Shock (e.g., 'Federal Reserve announces emergency 50bps rate cut')..." type="text"/>
+</div>
+<div class="flex items-center gap-space-sm w-full md:w-auto justify-end">
+<button class="bg-surface-container-high hover:bg-surface-container text-on-surface-variant hover:text-on-surface border border-outline-variant/30 px-space-md py-space-sm rounded-lg text-label-code-md font-label-code-md transition-all">
+            Preview Impact
+          </button>
+<button class="bg-gradient-to-r from-primary-container to-[#38bdf8] text-[#030712] font-semibold px-space-lg py-space-sm rounded-lg text-label-code-md font-label-code-md shadow-[0_0_16px_rgba(0,242,254,0.35)] active:scale-[0.98] transition-all flex items-center gap-1.5 whitespace-nowrap">
+<span class="material-symbols-outlined text-sm">bolt</span>
+            Broadcast Intervention
+          </button>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>

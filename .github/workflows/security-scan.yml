@@ -1,0 +1,94 @@
+name: "Security & Vulnerability Audit"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 8 * * *' # Daily at 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  python-security:
+    name: "Python Vulnerability & SAST Audit"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Bandit & Pip-Audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit pip-audit
+
+      - name: Run Bandit AST Security Scan
+        run: |
+          # Scan backend code for common security flaws (OWASP, injection, unsafe calls)
+          bandit -r backend/app -ll -ii || true
+
+      - name: Audit Python Dependencies
+        run: |
+          cd backend
+          pip-audit -r pyproject.toml || true
+
+  npm-security:
+    name: "Node.js Dependency Vulnerability Audit"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Audit Frontend Dependencies
+        run: |
+          cd frontend
+          npm audit --audit-level=critical
+
+      - name: Audit Root Dependencies
+        run: |
+          npm audit --audit-level=critical
+
+  secret-scan:
+    name: "Secret & Credential Leak Detection"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+  trivy-fs-scan:
+    name: "Trivy Vulnerability Scanner (FS & Config)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in fs mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          format: 'table'
+          exit-code: '0'

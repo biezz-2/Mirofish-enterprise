@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MiroFish v3.1 Enterprise — Interactive Prototype Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            obsidian: "#080c14",
+            surface: "#0f172a",
+            "surface-card": "#131e36",
+            "surface-light": "#1e293b",
+            cyan: { DEFAULT: "#00f2fe", dim: "#009ba3", glow: "rgba(0, 242, 254, 0.35)" },
+            purple: { DEFAULT: "#a855f7", dim: "#7e22ce", glow: "rgba(168, 85, 247, 0.35)" },
+            emerald: { DEFAULT: "#10b981", dim: "#047857" },
+            amber: { DEFAULT: "#f59e0b", dim: "#b45309" }
+          },
+          fontFamily: {
+            sans: ["Plus Jakarta Sans", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #080c14; color: #f1f5f9; }
+    .glass {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-active {
+      background: rgba(0, 242, 254, 0.08);
+      border-color: rgba(0, 242, 254, 0.5);
+      box-shadow: 0 0 20px -5px rgba(0, 242, 254, 0.25);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 20px -3px rgba(0, 242, 254, 0.35);
+    }
+    iframe { border: none; width: 100%; height: 100%; }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden font-sans">
+
+  <!-- Header -->
+  <header class="glass px-6 py-3 flex items-center justify-between border-b border-slate-800 shrink-0 z-20">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan to-purple p-0.5 glow-cyan flex items-center justify-center">
+        <div class="w-full h-full bg-obsidian rounded-[10px] flex items-center justify-center">
+          <span class="material-symbols-outlined text-cyan text-lg">bubble_chart</span>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-extrabold tracking-wider text-white text-base">MIROFISH <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan to-purple">ENTERPRISE v3.1</span></span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan/15 text-cyan border border-cyan/30 uppercase font-semibold">System Design Aligned</span>
+        </div>
+        <p class="text-[11px] text-slate-400">8 Layar Purwarupa Lengkap Sesuai Dokumen Arsitektur wiki/arsitektur.md</p>
+      </div>
+    </div>
+    
+    <!-- Viewport Switcher -->
+    <div class="hidden lg:flex items-center space-x-1.5 bg-surface-card p-1 rounded-xl border border-slate-700/60 font-mono text-xs">
+      <button onclick="setViewport('desktop')" id="btn-desktop" class="px-3 py-1 rounded-lg bg-cyan/15 text-cyan border border-cyan/30 flex items-center space-x-1 transition-all">
+        <span class="material-symbols-outlined text-sm">desktop_windows</span>
+        <span>Desktop</span>
+      </button>
+      <button onclick="setViewport('tablet')" id="btn-tablet" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1 transition-all">
+        <span class="material-symbols-outlined text-sm">tablet_mac</span>
+        <span>Tablet</span>
+      </button>
+      <button onclick="setViewport('mobile')" id="btn-mobile" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white flex items-center space-x-1 transition-all">
+        <span class="material-symbols-outlined text-sm">phone_iphone</span>
+        <span>Mobile</span>
+      </button>
+    </div>
+
+    <!-- Right Actions -->
+    <div class="flex items-center space-x-3 text-xs font-mono">
+      <a id="btn-full-window" href="0_architecture.html" target="_blank" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cyan text-slate-950 font-bold hover:bg-cyan/90 transition shadow-lg glow-cyan">
+        <span class="material-symbols-outlined text-sm">open_in_new</span>
+        <span>Buka Layar Penuh</span>
+      </a>
+      <a href="https://stitch.withgoogle.com/project/4537434447070207486" target="_blank" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-surface-card hover:bg-surface-light border border-slate-700 text-slate-300 hover:text-white transition">
+        <span class="material-symbols-outlined text-sm text-purple">palette</span>
+        <span>Google Stitch Canvas</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Left Navigation Sidebar -->
+    <aside class="w-80 md:w-96 glass flex flex-col shrink-0 border-r border-slate-800/80 overflow-y-auto p-3 space-y-2">
+      <div class="px-2 py-1 text-[11px] font-mono tracking-wider text-slate-400 uppercase flex items-center justify-between">
+        <span>Arsitektur &amp; Alur 5-Langkah</span>
+        <span class="text-cyan font-bold">8 LAYAR</span>
+      </div>
+
+      <!-- Item 0: Master System Design -->
+      <button onclick="selectScreen(0)" id="nav-item-0" class="w-full text-left p-3 rounded-xl transition duration-150 glass-active flex flex-col space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-cyan/20 text-cyan border border-cyan/40">LAYAR 0</span>
+          <span class="text-[10px] font-mono bg-purple/20 text-purple px-1.5 py-0.5 rounded font-semibold">ARSITEKTUR</span>
+        </div>
+        <div class="text-sm font-bold text-white">Master System Design &amp; Topology</div>
+        <div class="text-[11px] text-slate-400">Topologi Multi-Tier, 5-Langkah Pipeline, FSM &amp; Partisi Data</div>
+      </button>
+
+      <!-- Item 1: Home Ingestion -->
+      <button onclick="selectScreen(1)" id="nav-item-1" class="w-full text-left p-3 rounded-xl transition duration-150 border border-transparent hover:border-slate-700 hover:bg-slate-800/50 flex flex-col space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-cyan border border-cyan/20">LANGKAH 0</span>
+          <span class="text-[10px] font-mono text-slate-400">/</span>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">Landing &amp; Reality Seed Ingestion Hub</div>
+        <div class="text-[11px] text-slate-400">SearXNG Fact Grounding, Anti-Injection &amp; Korpus Gabungan</div>
+      </button>
+
+      <!-- Item 2: Dashboard -->
+      <button onclick="selectScreen(2)" id="nav-item-2" class="w-full text-left p-3 rounded-xl transition duration-150 border border-transparent hover:border-slate-700 hover:bg-slate-800/50 flex flex-col space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-cyan border border-cyan/20">OPS &amp; INFRA</span>
+          <span class="text-[10px] font-mono text-slate-400">/dashboard</span>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">Cluster Infrastructure &amp; Operations Dashboard</div>
+        <div class="text-[11px] text-slate-400">State Machine FSM, 9Router Gateway, SHA-256 Recovery</div>
+      </button>
+
+      <!-- Item 3: Graph Research -->
+      <button onclick="selectScreen(3)" id="nav-item-3" class="w-full text-left p-3 rounded-xl transition duration-150 border border-transparent hover:border-slate-700 hover:bg-slate-800/50 flex flex-col space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-purple border border-purple/30">LANGKAH 1</span>
+          <span class="text-[10px] font-mono text-slate-400">/process/:id</span>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">Deep Research &amp; Knowledge Graph Visualizer</div>
+        <div class="text-[11px] text-slate-400">Graphiti / FalkorDB, Ontologi PascalCase, Degree Filter</div>
+      </button>
+
+      <!-- Item 4: Environment Setup -->
+      <button onclick="selectScreen(4)" id="nav-item-4" class="w-full text-left p-3 rounded-xl transition duration-150 border border-transparent hover:border-slate-700 hover:bg-slate-800/50 flex flex-col space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-emerald border border-emerald/30">LANGKAH 2</span>
+          <span class="text-[10px] font-mono text-slate-400">/arena</span>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">7-Platform Swarm Setup &amp; OCEAN Matrix</div>
+        <div class="text-[11px] text-slate-400">Twitter, X, Reddit, TikTok, IG, FB, Threads + PUEBI Persona</div>
+      </button>
+
+      <!-- Item 5: Simulation Run -->
+      <button onclick="selectScreen(5)" id="nav-item-5" class="w-full text-left p-3 rounded-xl transition duration-150 border border-transparent hover:border-slate-700 hover:bg-slate-800/50 flex flex-col space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-cyan/15 text-cyan border border-cyan/30 animate-pulse">LANGKAH 3</span>
+          <span class="text-[10px] font-mono text-cyan">LIVE FEED</span>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">Simulation Live Cockpit &amp; Event Bus</div>
+        <div class="text-[11px] text-slate-400">Memory Injeksi Graf, SHA-256 Checkpoint &amp; Shock Injector</div>
+      </button>
+
+      <!-- Item 6: Report Studio -->
+      <button onclick="selectScreen(6)" id="nav-item-6" class="w-full text-left p-3 rounded-xl transition duration-150 border border-transparent hover:border-slate-700 hover:bg-slate-800/50 flex flex-col space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-amber border border-amber/30">LANGKAH 4</span>
+          <span class="text-[10px] font-mono text-slate-400">/report/:id</span>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">Predictive Report &amp; ReACT Log Studio</div>
+        <div class="text-[11px] text-slate-400">Thought-Action Trace, ZepTools &amp; InsightForge Synthesis</div>
+      </button>
+
+      <!-- Item 7: Interaction Console -->
+      <button onclick="selectScreen(7)" id="nav-item-7" class="w-full text-left p-3 rounded-xl transition duration-150 border border-transparent hover:border-slate-700 hover:bg-slate-800/50 flex flex-col space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-cyan border border-cyan/20">LANGKAH 5</span>
+          <span class="text-[10px] font-mono text-slate-400">/interaction</span>
+        </div>
+        <div class="text-sm font-semibold text-slate-200">Agent Debriefing &amp; IPC Console</div>
+        <div class="text-[11px] text-slate-400">Human-in-the-Loop Interrogation &amp; Memory Inspector</div>
+      </button>
+
+      <!-- Info Card -->
+      <div class="mt-auto p-3 rounded-xl bg-surface-card border border-slate-800 text-xs font-mono space-y-1.5">
+        <div class="flex items-center justify-between text-slate-400">
+          <span>RUNTIME SERVER:</span>
+          <span class="text-emerald font-semibold">Port 3001 (PM2)</span>
+        </div>
+        <div class="flex items-center justify-between text-slate-400">
+          <span>STITCH PROJECT:</span>
+          <span class="text-cyan font-semibold">4537434447070207486</span>
+        </div>
+        <div class="flex items-center justify-between text-slate-400">
+          <span>SPEC ALIGNMENT:</span>
+          <span class="text-purple font-semibold">wiki/arsitektur.md 100%</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Live Preview Stage -->
+    <main class="flex-1 bg-obsidian flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <!-- Ambient Backdrops -->
+      <div class="absolute -top-32 -left-32 w-96 h-96 bg-cyan/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-purple/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+      <!-- Device Container Frame -->
+      <div id="device-frame" class="w-full h-full max-w-full transition-all duration-300 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-surface relative flex flex-col">
+        <div id="viewport-bar" class="px-4 py-2 bg-surface-card border-b border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400 select-none">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500/80 inline-block"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block"></span>
+            <span id="active-screen-title" class="ml-2 text-slate-200 font-semibold">Master System Design &amp; Topology</span>
+          </div>
+          <div id="active-screen-path" class="text-cyan">/stitch/0_architecture.html</div>
+        </div>
+        <div class="flex-1 relative bg-surface">
+          <iframe id="preview-frame" src="0_architecture.html"></iframe>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const screens = [
+      { num: 0, file: "0_architecture.html", title: "Layar 0: Master System Design & Topology" },
+      { num: 1, file: "1_home.html", title: "Langkah 0: Landing & Reality Seed Ingestion Hub" },
+      { num: 2, file: "2_dashboard.html", title: "Ops & Infra: Cluster Infrastructure & Operations Dashboard" },
+      { num: 3, file: "3_graph_research.html", title: "Langkah 1: Deep Research & Knowledge Graph Visualizer" },
+      { num: 4, file: "4_env_setup.html", title: "Langkah 2: 7-Platform Swarm Setup & OCEAN Matrix" },
+      { num: 5, file: "5_simulation_run.html", title: "Langkah 3: Simulation Live Cockpit & Event Bus" },
+      { num: 6, file: "6_report.html", title: "Langkah 4: Predictive Report & ReACT Log Studio" },
+      { num: 7, file: "7_interaction.html", title: "Langkah 5: Agent Debriefing & IPC Console" }
+    ];
+
+    function selectScreen(num) {
+      const screen = screens.find(s => s.num === num);
+      if (!screen) return;
+
+      document.getElementById("preview-frame").src = screen.file;
+      document.getElementById("btn-full-window").href = screen.file;
+      document.getElementById("active-screen-title").textContent = screen.title;
+      document.getElementById("active-screen-path").textContent = "/stitch/" + screen.file;
+
+      screens.forEach(s => {
+        const el = document.getElementById("nav-item-" + s.num);
+        if (el) {
+          if (s.num === num) {
+            el.className = "w-full text-left p-3 rounded-xl transition duration-150 glass-active flex flex-col space-y-1.5";
+          } else {
+            el.className = "w-full text-left p-3 rounded-xl transition duration-150 border border-transparent hover:border-slate-700 hover:bg-slate-800/50 flex flex-col space-y-1.5";
+          }
+        }
+      });
+    }
+
+    function setViewport(mode) {
+      const frame = document.getElementById("device-frame");
+      const btnDesk = document.getElementById("btn-desktop");
+      const btnTab = document.getElementById("btn-tablet");
+      const btnMob = document.getElementById("btn-mobile");
+
+      [btnDesk, btnTab, btnMob].forEach(b => {
+        b.classList.remove("bg-cyan/15", "text-cyan", "border", "border-cyan/30");
+        b.classList.add("text-slate-400");
+      });
+
+      if (mode === "desktop") {
+        frame.style.maxWidth = "100%";
+        btnDesk.classList.add("bg-cyan/15", "text-cyan", "border", "border-cyan/30");
+        btnDesk.classList.remove("text-slate-400");
+      } else if (mode === "tablet") {
+        frame.style.maxWidth = "840px";
+        btnTab.classList.add("bg-cyan/15", "text-cyan", "border", "border-cyan/30");
+        btnTab.classList.remove("text-slate-400");
+      } else if (mode === "mobile") {
+        frame.style.maxWidth = "420px";
+        btnMob.classList.add("bg-cyan/15", "text-cyan", "border", "border-cyan/30");
+        btnMob.classList.remove("text-slate-400");
+      }
+    }
+
+    // Default to screen 0 (Architecture)
+    selectScreen(0);
+  </script>
+</body>
+</html>

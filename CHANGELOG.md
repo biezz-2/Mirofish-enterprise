@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.4.0-enterprise] - 2026-10-15
+
+### Added
+- **Epistemic Protocol & Anti-Hallucination Guardrails**:
+  - Implemented epistemic pre-tool and post-tool audit hooks (`.claude/hooks/block-blind-installs.sh`, `epistemic-audit.sh`, `verify-after-edit.sh`) to prevent hallucinated packages, unsanctioned tool invocations, and blind writes.
+  - Hardened subagent prompts across all swarms with explicit evidence-grounding constraints, anti-hallucination verification, and strict citation rules.
+  - Enforced domain whitelist validation and anti-hallucination source verification in web research service (`backend/app/services/web_research_service.py`).
+  - Added hallucination mitigation checks in report generation agent (`backend/app/agents/report_agent.py`).
+- **Interactive Stitch UI Prototypes Suite (`stitch-prototypes/`, `frontend/public/stitch/`)**:
+  - Created high-fidelity enterprise UI prototypes hub via Google Stitch with full interactive previews.
+  - Included 10 comprehensive workflow screens: Step 0 (SearXNG Deep Grounding), Step 1 (FalkorDB / Graphiti Knowledge Graph), Step 2 (Graph-Driven Persona Generation), Step 3 (Simulation Orchestrator & Live Feed), Step 4 (Multi-Agent Swarm Interviews), Step 5 (Epistemic Decision Report), Epistemic Audit Dashboard, Swarm Topology Visualizer, Historical Graph Temporal Explorer, and System Health Monitor.
+- **Automated GitHub Security & Vulnerability Scanning**:
+  - **GitHub CodeQL SAST (`.github/workflows/codeql.yml`)**: Semantic static application security testing for Python and JavaScript/TypeScript on pushes, pull requests, and weekly schedules.
+  - **GitHub Dependabot (`.github/dependabot.yml`)**: Continuous automated vulnerability monitoring and automated security PRs across Python (`backend`), Node.js (`frontend` and root), and GitHub Actions.
+  - **Security & Vulnerability Audit CI (`.github/workflows/security-scan.yml`)**: Automated CI pipeline featuring `pip-audit`, `npm audit`, Bandit AST security analysis, Gitleaks secret leak detection, and Trivy filesystem/container vulnerability scanner.
+  - **Security Policy (`SECURITY.md`)**: Formal security reporting guidelines, supported version matrix, and private vulnerability reporting workflow.
+
+### Fixed
+- Fixed critical command injection vulnerability in `shell-quote` root dependency.
+- Fixed 6 frontend npm package vulnerabilities via `npm audit fix`.
+- Fixed MCP server test suite assertion robustness against existing database state in `backend/tests/test_v31_core.py`.
+
+---
+
 ## [3.3.0-enterprise] - 2026-10-15
 
 ### Added
