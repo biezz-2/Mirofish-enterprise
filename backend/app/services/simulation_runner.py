@@ -442,23 +442,17 @@ class SimulationRunner:
             if not graph_id:
                 raise ValueError("启用图谱记忆更新时必须提供 graph_id")
             
-            try:
-                ZepGraphMemoryManager.create_updater(simulation_id, graph_id)
-                cls._graph_memory_enabled[simulation_id] = True
-                logger.info(f"已启用图谱记忆更新: simulation_id={simulation_id}, graph_id={graph_id}")
-            except Exception as e:
-                logger.error(f"创建图谱记忆更新器失败: {e}")
+            if not getattr(Config, "ZEP_API_KEY", None):
+                logger.warning(f"ZEP_API_KEY未配置，跳过动态图谱更新: simulation_id={simulation_id}")
                 cls._graph_memory_enabled[simulation_id] = False
-                state.runner_status = RunnerStatus.FAILED
-                state.error = f"Zep图谱更新器初始化失败: {e}"
-                with cls._finalization_lock(simulation_id):
-                    cls._save_run_state(state)
-                    cls._sync_simulation_status(
-                        simulation_id,
-                        RunnerStatus.FAILED,
-                        state.error,
-                    )
-                raise RuntimeError(state.error) from e
+            else:
+                try:
+                    ZepGraphMemoryManager.create_updater(simulation_id, graph_id)
+                    cls._graph_memory_enabled[simulation_id] = True
+                    logger.info(f"已启用图谱记忆更新: simulation_id={simulation_id}, graph_id={graph_id}")
+                except Exception as e:
+                    logger.warning(f"创建图谱记忆更新器失败，降级不启用: {e}")
+                    cls._graph_memory_enabled[simulation_id] = False
         else:
             cls._graph_memory_enabled[simulation_id] = False
         

@@ -1,0 +1,26 @@
+{
+  "contract": "02-step1-graphrag",
+  "version": "1.0.0",
+  "producer": "A07-Zep-NLI-Barrier",
+  "consumers": [
+    "C-division-agents"
+  ],
+  "created_at": "2026-10-15T17:49:24.779136+00:00",
+  "schema_version": "mirofish-contract/1.0",
+  "payload": {
+    "graph_status": "READY",
+    "nli_min_score": 0.85,
+    "entities_verified_count": 48,
+    "subgraph_ids": [
+      "sg_policy_01",
+      "sg_tech_02"
+    ],
+    "zep_batch_ids": [
+      "batch_zep_101"
+    ]
+  },
+  "integrity": {
+    "sha256": "58bef7fadb156d68f2a9146503d83ec7ecc46d485b934cfbef3a467cd8a89e9d",
+    "previous_contract": "01-step0-research.json"
+  }
+}

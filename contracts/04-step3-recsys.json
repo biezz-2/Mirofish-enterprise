@@ -1,0 +1,29 @@
+{
+  "contract": "04-step3-recsys",
+  "version": "1.0.0",
+  "producer": "A12-Platform-Calibration-Specialist",
+  "consumers": [
+    "A14-BSP-Runner"
+  ],
+  "created_at": "2026-10-15T17:49:24.779467+00:00",
+  "schema_version": "mirofish-contract/1.0",
+  "payload": {
+    "platform_count": 7,
+    "platforms": [
+      "X",
+      "Reddit",
+      "TikTok",
+      "Instagram",
+      "YouTube",
+      "LinkedIn",
+      "Threads"
+    ],
+    "recsys_stages": 3,
+    "echo_chamber_damping": 0.6,
+    "epsilon_exploration": 0.05
+  },
+  "integrity": {
+    "sha256": "b4c60074d4f00997e3c385ad7d822bb090180bfea036850b794f8c1c66a50cbd",
+    "previous_contract": "03-step2-agents.json"
+  }
+}

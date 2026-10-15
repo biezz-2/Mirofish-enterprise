@@ -1,0 +1,21 @@
+{
+  "contract": "03-step2-agents",
+  "version": "1.0.0",
+  "producer": "A10-Nested-Logit-Engineer",
+  "consumers": [
+    "D-division-agents"
+  ],
+  "created_at": "2026-10-15T17:49:24.779335+00:00",
+  "schema_version": "mirofish-contract/1.0",
+  "payload": {
+    "agent_profiles_count": 100,
+    "psychometrics_model": "WholeTrait-CyberneticBigFive",
+    "needs_ode_decay_lambda": 0.05,
+    "decision_hierarchy": "NestedLogit-Train",
+    "pareto_lurker_ratio": 0.9
+  },
+  "integrity": {
+    "sha256": "634343565a1cfcc7a8353619f815b62bfb0a21ffa334b9a566e2cdf47c472910",
+    "previous_contract": "02-step1-graphrag.json"
+  }
+}

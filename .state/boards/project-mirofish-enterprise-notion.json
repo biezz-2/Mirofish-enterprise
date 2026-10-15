@@ -1,0 +1,200 @@
+{
+  "board": {
+    "board_id": "project-mirofish-enterprise-notion",
+    "type": "PROJECT",
+    "parent": "",
+    "phase_ref": "",
+    "owner_agent": "HERMES",
+    "status": "VALIDATED",
+    "cards": [
+      {
+        "card_id": "c-mirofish-div-a-01",
+        "title": "Subagent 01: Lead Orchestrator & Swarm Dispatcher (Master Workflow & Contracts)",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 01",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-a-02",
+        "title": "Subagent 02: SearXNG Private Search & Metasearch Ingestion Specialist",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 02",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-a-03",
+        "title": "Subagent 03: CaMeL 3-Layer Prompt Shield & Content Sanitizer Guard",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 03",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-a-04",
+        "title": "Subagent 04: Domain Credibility Scorer & Epistemic Grounding Validator",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 04",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-b-05",
+        "title": "Subagent 05: GraphRAG Ontology & Adaptive Text Chunking Specialist",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 05",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-b-06",
+        "title": "Subagent 06: Graphiti & FalkorDB/Neo4j Control Plane Engineer",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 06",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-b-07",
+        "title": "Subagent 07: Zep Cloud & NLI Verification Barrier Specialist",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 07",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-c-08",
+        "title": "Subagent 08: Whole Trait Theory & Cybernetic Big Five Personality Modeler",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 08",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-c-09",
+        "title": "Subagent 09: Humanoid ODE Basic Needs & Ekman Affective State Engine",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 09",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-c-10",
+        "title": "Subagent 10: Nested Logit & DDM / Prospect Theory Self-Censorship Engineer",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 10",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-d-11",
+        "title": "Subagent 11: 3-Stage RecSys Funnel Engineer (Candidate, Rank, Re-Rank)",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 11",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-d-12",
+        "title": "Subagent 12: 7-Platform Algorithm Calibration Matrix Specialist",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 12",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-d-13",
+        "title": "Subagent 13: Hawkes Process & Rescorla-Wagner Viral Cascade Modeler",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 13",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-d-14",
+        "title": "Subagent 14: BSP Parallel Swarm Runner & SHA-256 Crash Recovery Specialist",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 14",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-e-15",
+        "title": "Subagent 15: ReACT ReportAgent Multi-Turn Investigation & Deduction Analyst",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 15",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-e-16",
+        "title": "Subagent 16: BettaFish Analytics & Sentiment Model Integration Engineer",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 16",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-f-17",
+        "title": "Subagent 17: Canonical Model Context Protocol (MCP) Server Architect",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 17",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-f-18",
+        "title": "Subagent 18: OpenAPI 3.1 RESTful API & Distributed Webhook Engine Architect",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 18",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-f-19",
+        "title": "Subagent 19: Vue 3 Enterprise 7-Panel Control Dashboard Frontend Developer",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 19",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      },
+      {
+        "card_id": "c-mirofish-div-f-20",
+        "title": "Subagent 20: DevOps, AES-256-GCM Vault & QA Phase-Gate Verification Guard",
+        "status": "VALIDATED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Subagent 20",
+        "notes": "Passed automated test suite V1-V8 and verified in contracts/ and discord threads."
+      }
+    ],
+    "coordination": [
+      {
+        "edge": "DEPENDS_ON",
+        "board_id": "project-mirofish-epistemic-mitigation"
+      }
+    ],
+    "created_at": "2026-10-15T16:30:00Z",
+    "updated_at": "2026-10-15T17:54:53.429908+00:00"
+  }
+}
