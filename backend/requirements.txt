@@ -42,7 +42,7 @@ cryptography>=41.0.0
 aiohttp>=3.9.0
 
 # ============= 安全更新 (Hardening) =============
-pillow==10.3.0
+pillow==12.3.0
 sentence-transformers>=3.0.0
 unstructured>=0.13.7
 transformers>=4.40.0
