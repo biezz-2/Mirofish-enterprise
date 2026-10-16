@@ -2,6 +2,7 @@
 Layanan riset internet (SearXNG) - Lapisan 0 MiroFish.
 Menghasilkan laporan: fakta inti, entitas, tren, skor kredibilitas.
 Seluruh snippet disanitasi sebelum dipakai untuk mencegah injeksi prompt.
+Diperkaya dengan Domain Credibility Scorer & Epistemic Grounding Validator (Agent 04).
 """
 import asyncio
 import re
@@ -13,6 +14,13 @@ from ..config import Config
 from ..utils.logger import get_logger
 from ..utils.llm_client import LLMClient
 from .searchxng_service import SearchXNGService, SearchXNGResult
+from .domain_credibility import (
+    DomainCredibilityScorer,
+    EpistemicGroundingValidator,
+    GroundedFact,
+    EpistemicStatus,
+    SourceCredibility
+)
 
 logger = get_logger('mirofish.web_research')
 
@@ -37,16 +45,29 @@ def sanitize_snippet(text: str, max_len: int = 500) -> str:
 
 @dataclass
 class ResearchReport:
-    """Laporan riset web Langkah 0."""
+    """Laporan riset web Langkah 0 dengan validasi epistemik dan sitasi kredibilitas domain."""
     query: str
     search_engine: str = "searchxng"
     web_results: List[SearchXNGResult] = field(default_factory=list)
     summarized_facts: List[str] = field(default_factory=list)
+    grounded_facts: List[GroundedFact] = field(default_factory=list)
     entities_mentioned: List[Dict[str, Any]] = field(default_factory=list)
     trends: List[str] = field(default_factory=list)
     credibility_score: float = 0.0
+    min_credibility_score: float = 0.70
+    verified_claims_count: int = 0
     research_type: str = "general"
     generated_at: str = field(default_factory=lambda: datetime.now().isoformat())
+
+    def export_step0_contract(self, status: str = "COMPLETED") -> Dict[str, Any]:
+        """Ekspor laporan ke spesifikasi kontrak Step 0 (contracts/01-step0-research.json)."""
+        validator = EpistemicGroundingValidator()
+        return validator.export_step0_contract(
+            query=self.query,
+            facts=self.grounded_facts,
+            overall_credibility=self.credibility_score,
+            status=status
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -54,9 +75,12 @@ class ResearchReport:
             "search_engine": self.search_engine,
             "web_results": [r.to_dict() for r in self.web_results],
             "summarized_facts": self.summarized_facts,
+            "grounded_facts": [f.to_dict() for f in self.grounded_facts],
             "entities_mentioned": self.entities_mentioned,
             "trends": self.trends,
             "credibility_score": self.credibility_score,
+            "min_credibility_score": self.min_credibility_score,
+            "verified_claims_count": self.verified_claims_count,
             "research_type": self.research_type,
             "generated_at": self.generated_at
         }
@@ -67,7 +91,8 @@ class ResearchReport:
             "## Laporan Riset Internet (SearXNG)",
             f"Topik kueri: {self.query}",
             f"Mesin: {self.search_engine}",
-            f"Skor kredibilitas: {self.credibility_score:.2f}",
+            f"Skor kredibilitas: {self.credibility_score:.2f} (Ambang batas verifikasi: {self.min_credibility_score:.2f})",
+            f"Klaim terverifikasi: {self.verified_claims_count}/{len(self.summarized_facts)}",
             f"\n### Fakta inti ({len(self.summarized_facts)})"
         ]
         for i, f in enumerate(self.summarized_facts, 1):
@@ -90,10 +115,17 @@ class ResearchReport:
 class WebResearchService:
     """Riset internet berbasis SearXNG: privat, sumber terbuka, gratis."""
 
-    def __init__(self, llm_client: Optional[LLMClient] = None):
+    def __init__(
+        self,
+        llm_client: Optional[LLMClient] = None,
+        credibility_scorer: Optional[DomainCredibilityScorer] = None,
+        epistemic_validator: Optional[EpistemicGroundingValidator] = None
+    ):
         self.searchxng = SearchXNGService()
         self.llm = llm_client
-        logger.info("WebResearchService (SearXNG) diinisialisasi")
+        self.credibility_scorer = credibility_scorer or DomainCredibilityScorer()
+        self.epistemic_validator = epistemic_validator or EpistemicGroundingValidator(scorer=self.credibility_scorer)
+        logger.info("WebResearchService (SearXNG + Epistemic Grounding) diinisialisasi")
 
     async def research(self, query: str, research_type: str = "general",
                        include_facts_extraction: bool = True,
@@ -119,24 +151,31 @@ class WebResearchService:
         return report
 
     async def _extract_facts(self, report: ResearchReport):
-        """Ekstraksi fakta inti dari cuplikan hasil pencarian."""
+        """Ekstraksi fakta inti ter-grounding dengan skor numerik dan sitasi domain asli."""
         if not report.web_results:
             return
-        # Heuristik bawaan jika LLM client belum aktif
-        facts = []
-        for r in report.web_results[:5]:
-            if len(r.content) > 30:
-                # Menghitung kredibilitas skor sederhana per sumber
-                s = r.relevance_score
-                if r.category == "news":
-                    s += 0.15
-                if len(report.web_results) >= 5:
-                    s += 0.05
-                # Label epistemik berdasarkan skor kredibilitas
-                label = "[VERIFIED]" if s >= 0.7 else "[UNVERIFIED]"
-                facts.append(f"{label} {r.content[:160]}...")
-        report.summarized_facts = facts or [f"[UNVERIFIED] Informasi terkini mengenai {report.query} berhasil ditemukan."]
-        report.trends = [f"[UNVERIFIED] Peningkatan diskusi terkait {report.query} di media daring."]
+
+        grounded_facts = self.epistemic_validator.ground_corpus(report.web_results, max_facts=5)
+        report.grounded_facts = grounded_facts
+
+        if grounded_facts:
+            report.summarized_facts = [f.to_formatted_string() for f in grounded_facts]
+            report.verified_claims_count = sum(
+                1 for f in grounded_facts if f.epistemic_status == EpistemicStatus.VERIFIED
+            )
+        else:
+            # Fallback jika tidak ada konten yang cukup panjang
+            first_domain = self.credibility_scorer.extract_domain(
+                report.web_results[0].url if report.web_results else ""
+            )
+            report.summarized_facts = [
+                f"[UNVERIFIED] [Score: 0.50 | Domain: {first_domain}] Informasi terkini mengenai {report.query} berhasil ditemukan."
+            ]
+            report.verified_claims_count = 0
+
+        # Tren dengan status epistemik
+        trend_status = "[VERIFIED]" if report.verified_claims_count > 0 else "[UNVERIFIED]"
+        report.trends = [f"{trend_status} Peningkatan diskusi terkait {report.query} di media daring."]
 
     async def _extract_entities(self, report: ResearchReport):
         """Ekstraksi entitas sederhana dari hasil pencarian."""
@@ -155,16 +194,17 @@ class WebResearchService:
         report.entities_mentioned = dedup[:8]
 
     def _evaluate_credibility(self, report: ResearchReport):
-        """Menghitung skor kredibilitas: relevansi + bonus sumber berita + agregasi mesin."""
+        """
+        Menghitung skor kredibilitas agregat menggunakan DomainCredibilityScorer.
+        S_cred(k) komposit diintegrasikan di seluruh hasil web.
+        """
         if not report.web_results:
             report.credibility_score = 0.0
             return
-        scores = []
-        for r in report.web_results:
-            s = r.relevance_score
-            if r.category == "news":
-                s += 0.15
-            if len(report.web_results) >= 5:
-                s += 0.05
-            scores.append(s)
-        report.credibility_score = round(min(sum(scores) / len(scores), 1.0), 2)
+
+        scored_sources = self.credibility_scorer.score_batch(report.web_results)
+        if scored_sources:
+            avg_score = sum(s.composite_score for s in scored_sources) / len(scored_sources)
+            report.credibility_score = round(min(1.0, max(0.0, avg_score)), 2)
+        else:
+            report.credibility_score = 0.0

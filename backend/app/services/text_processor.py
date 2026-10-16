@@ -1,9 +1,12 @@
 """
 文本处理服务
+Mendukung pemotongan teks adaptif semantik berbasis kohesi topikal dan pemisahan batas paragraf.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from ..utils.file_parser import FileParser, split_text_into_chunks
+from .adaptive_chunker import AdaptiveSemanticChunker
+from ..models.graphrag_ontology import SemanticChunk
 
 
 class TextProcessor:
@@ -18,7 +21,8 @@ class TextProcessor:
     def split_text(
         text: str,
         chunk_size: int = 500,
-        overlap: int = 50
+        overlap: int = 50,
+        adaptive: bool = False
     ) -> List[str]:
         """
         分割文本
@@ -27,11 +31,43 @@ class TextProcessor:
             text: 原始文本
             chunk_size: 块大小
             overlap: 重叠大小
+            adaptive: 是否使用自适应语义切分
             
         Returns:
             文本块列表
         """
+        if adaptive:
+            chunker = AdaptiveSemanticChunker(
+                target_chunk_size=chunk_size,
+                max_chunk_size=chunk_size + overlap
+            )
+            return chunker.get_chunks_as_strings(text)
         return split_text_into_chunks(text, chunk_size, overlap)
+
+    @staticmethod
+    def split_text_adaptive(
+        text: str,
+        target_chunk_size: int = 800,
+        min_chunk_size: int = 200,
+        max_chunk_size: int = 1500,
+        cohesion_threshold: float = 0.15,
+        preserve_headers: bool = True,
+        source_doc: Optional[str] = None
+    ) -> List[SemanticChunk]:
+        """
+        Adaptive Semantic Text Chunking based on paragraph boundaries and topical cohesion.
+        
+        Returns:
+            List of structured SemanticChunk objects with chunk_id, offsets, and metadata.
+        """
+        chunker = AdaptiveSemanticChunker(
+            target_chunk_size=target_chunk_size,
+            min_chunk_size=min_chunk_size,
+            max_chunk_size=max_chunk_size,
+            cohesion_threshold=cohesion_threshold,
+            preserve_headers=preserve_headers
+        )
+        return chunker.chunk_document(text, source_doc=source_doc)
     
     @staticmethod
     def preprocess_text(text: str) -> str:
@@ -68,4 +104,3 @@ class TextProcessor:
             "total_lines": text.count('\n') + 1,
             "total_words": len(text.split()),
         }
-

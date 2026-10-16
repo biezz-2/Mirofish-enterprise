@@ -14,16 +14,16 @@
         "severity": null,
         "finding_ref": null,
         "assignee": "HERMES",
-        "notes": "Jules session 3767768341149407718 status: stable (agentMessaged @ 2026-10-15T11:04:39.788410Z). Terhenti setelah error syntax/regex pada batch refactoring, menunggu arahan pengguna."
+        "notes": "Jules session 3767768341149407718 status: stable (awaitingUserFeedback, agentMessaged @ 2026-10-15T11:04:39.788410Z). Terhenti akibat syntax error pada batch refactor, menunggu izin pengguna untuk modifikasi bertahap per-file. Tidak ada code diff/PR baru (0 files changed)."
       },
       {
         "card_id": "c-mirofish-cron-02",
         "title": "Phase-Gate Validation V1\u2013V8 hasil lokalisasi i18n Mirofish Enterprise",
-        "status": "VALIDATED",
+        "status": "IN_PROGRESS",
         "severity": "MAJOR",
         "finding_ref": null,
         "assignee": "critic-subagent",
-        "notes": "Verdict: CONDITIONAL @ 2026-10-15T22:28:49+07:00. Paritas kamus 100% (859/859 leaf keys), build Vite 11.21s OK. Temuan: [F-001] MAJOR (308 baris teks Mandarin hardcoded di 15 file frontend), [F-002] MAJOR (Jules session stable: batch refactor terhenti karena syntax error, menunggu arahan pengguna)."
+        "notes": "Verdict: CONDITIONAL @ 2026-10-16 16:20 WIB (09:20 UTC). Paritas kamus 100% (859/859 leaf keys), build Vite OK. Temuan aktif: [F-001] MAJOR (188 baris string Mandarin non-komentar di 13 file frontend), [F-002] MAJOR (Jules session stable tanpa PR/diff baru, menunggu konfirmasi pengguna)."
       },
       {
         "card_id": "c-mirofish-cron-03",
@@ -32,7 +32,7 @@
         "severity": null,
         "finding_ref": null,
         "assignee": "HERMES",
-        "notes": "Laporan audit diperbarui di .state/validation/audit-board-mirofish-i18n-cron/p01-audit.md dan disiarkan ke Discord @ 2026-10-15T22:28:49+07:00."
+        "notes": "Laporan audit diperbarui di .state/validation/audit-board-mirofish-i18n-cron/p01-audit.md dan disiarkan ke Discord @ 2026-10-16 16:20 WIB (09:20 UTC)."
       }
     ],
     "coordination": [
@@ -46,6 +46,6 @@
       }
     ],
     "created_at": "2026-10-14T17:36:24.304732+00:00",
-    "updated_at": "2026-10-15T17:51:00Z"
+    "updated_at": "2026-10-16T09:19:30.474606+00:00"
   }
 }

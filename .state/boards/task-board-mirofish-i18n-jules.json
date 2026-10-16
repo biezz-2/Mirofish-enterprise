@@ -1,0 +1,29 @@
+{
+  "board": {
+    "board_id": "task-board-mirofish-i18n-jules",
+    "type": "TASK",
+    "parent": "mirofish-enterprise",
+    "phase_ref": "p01",
+    "owner_agent": "HERMES",
+    "status": "ACTIVE",
+    "cards": [
+      {
+        "card_id": "c-mirofish-i18n-01",
+        "title": "Delegasikan analisis i18n dan lokalisasi 3 bahasa (zh, en, id) UI Mirofish Enterprise ke Jules",
+        "status": "IN_PROGRESS",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "Jules",
+        "notes": "Jules session 3767768341149407718 status: stable (agentMessaged @ 2026-10-15T11:04:39.788410Z). Terhenti setelah syntax error pada batch refactor, menunggu izin strategi per-file. Tidak ada commit/PR baru."
+      }
+    ],
+    "coordination": [
+      {
+        "edge": "DEPENDS_ON",
+        "board_id": "mirofish-enterprise"
+      }
+    ],
+    "created_at": "2026-10-15T00:26:00Z",
+    "updated_at": "2026-10-15T19:06:58.937574+00:00"
+  }
+}

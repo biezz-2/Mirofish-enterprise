@@ -1023,15 +1023,15 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "camel-ai", specifier = "==0.2.78" },
-    { name = "camel-oasis", specifier = ">=0.2.5" },
+    { name = "camel-oasis", specifier = "==0.2.5" },
     { name = "chardet", specifier = ">=5.0.0" },
     { name = "charset-normalizer", specifier = ">=3.0.0" },
     { name = "flask", specifier = ">=3.0.0" },
     { name = "flask-cors", specifier = ">=6.0.0" },
     { name = "httpx", specifier = ">=0.27.0" },
-    { name = "nltk", specifier = ">=3.10.0" },
+    { name = "nltk", specifier = ">=3.9" },
     { name = "openai", specifier = ">=1.0.0" },
-    { name = "pillow", specifier = ">=10.3.0" },
+    { name = "pillow", specifier = "==10.3.0" },
     { name = "pipreqs", marker = "extra == 'dev'", specifier = ">=0.5.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pymupdf", specifier = ">=1.24.0" },
@@ -1039,7 +1039,7 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "sentence-transformers", specifier = ">=3.0.0" },
-    { name = "transformers", specifier = ">=4.57.3" },
+    { name = "transformers", specifier = ">=4.40.0" },
     { name = "unstructured", specifier = ">=0.13.7" },
     { name = "zep-cloud", specifier = "==3.25.0" },
 ]

@@ -105,3 +105,13 @@ class OrchestratorStateMachine:
             )
             return {"success": True, "current_step": self.current_step, "step_info": step_meta}
         return {"success": False, "message": "Seluruh alur 6 langkah telah selesai (Step 5 reached)."}
+
+    def get_status(self) -> Dict[str, Any]:
+        step_meta = STEP_DEFINITIONS[self.current_step]
+        return {
+            "current_step": self.current_step,
+            "step_name": step_meta["name"],
+            "division": step_meta["division"],
+            "agents": step_meta["agents"],
+            "active_agents_count": sum(1 for h in self.heartbeats.values() if h.status == 'ACTIVE')
+        }

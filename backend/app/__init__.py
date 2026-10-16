@@ -71,10 +71,11 @@ def create_app(config_class=Config):
         return response
     
     # 注册蓝图
-    from .api import graph_bp, simulation_bp, report_bp, research_bp
+    from .api import graph_bp, simulation_bp, report_bp, research_bp, enterprise_bp
     app.register_blueprint(graph_bp, url_prefix='/api/graph')
     app.register_blueprint(simulation_bp, url_prefix='/api/simulation')
     app.register_blueprint(report_bp, url_prefix='/api/report')
+    app.register_blueprint(enterprise_bp, url_prefix='/api/enterprise')
     app.register_blueprint(research_bp)
 
     # Inisialisasi Database Relasional & Pemindaian Pemulihan Pasca-Crash
@@ -130,10 +131,20 @@ def create_app(config_class=Config):
         db_label = f"supabase ({db_type})" if "postgresql" in db_type else db_type
         return {
             'status': 'healthy',
-            'service': 'MiroFish Enterprise Backend (v3.1)',
+            'service': 'MiroFish Enterprise Backend (v3.2)',
+            'version': '3.2.0',
+            'subagents_count': 20,
+            'divisions_count': 6,
             'database': db_label,
             'multi_platform': True,
-            'searxng': True
+            'searxng': True,
+            'ports': {
+                'searxng': 8888,
+                'graphiti': 8090,
+                'mcp_server': 8091,
+                'backend_api': 5001,
+                'frontend_vue': 3001
+            }
         }
     
     if should_log_startup:

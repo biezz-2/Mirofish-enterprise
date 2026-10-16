@@ -36,9 +36,48 @@ from .simulation_ipc import (
     CommandType,
     CommandStatus
 )
+from .domain_credibility import (
+    DomainCredibilityScorer,
+    EpistemicGroundingValidator,
+    GroundedFact,
+    SourceCredibility,
+    EpistemicStatus,
+    DOMAIN_AUTHORITY_TIERS
+)
+from .web_research_service import WebResearchService, ResearchReport
+from .zep_adapter import (
+    ZepAdapter,
+    NLIEvaluationResult,
+    NLIVerificationReport,
+    GraphReadinessStatus,
+    ZepEpisodePayload,
+    ZepBatchSubmission,
+    Step1ContractPayload
+)
+from .adaptive_chunker import AdaptiveSemanticChunker
+from .local_graph_service import LocalGraphService
+from .graphiti_service import (
+    GraphitiService,
+    BiTemporalEdge,
+    GraphitiNode,
+    SubgraphQueryResult
+)
+from .graphiti_control_plane import (
+    create_control_plane_app,
+    create_fastmcp_server
+)
 
 __all__ = [
-    'OntologyGenerator', 
+    'GraphitiService',
+    'BiTemporalEdge',
+    'GraphitiNode',
+    'SubgraphQueryResult',
+    'create_control_plane_app',
+    'create_fastmcp_server',
+    'OntologyGenerator',
+    'OntologyGeneratorService',
+    'AdaptiveSemanticChunker',
+    'LocalGraphService', 
     'GraphBuilderService', 
     'TextProcessor',
     'ZepEntityReader',
@@ -69,5 +108,20 @@ __all__ = [
     'IPCResponse',
     'CommandType',
     'CommandStatus',
+    'DomainCredibilityScorer',
+    'EpistemicGroundingValidator',
+    'GroundedFact',
+    'SourceCredibility',
+    'EpistemicStatus',
+    'DOMAIN_AUTHORITY_TIERS',
+    'WebResearchService',
+    'ResearchReport',
+    'ZepAdapter',
+    'NLIEvaluationResult',
+    'NLIVerificationReport',
+    'GraphReadinessStatus',
+    'ZepEpisodePayload',
+    'ZepBatchSubmission',
+    'Step1ContractPayload',
 ]
 

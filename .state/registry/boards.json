@@ -13,7 +13,7 @@
         }
       ],
       "path": "/home/biezz/.state/boards/task-board-mirofish-i18n-jules.json",
-      "updated_at": "2026-10-14T18:47:26.226187+00:00"
+      "updated_at": "2026-10-15T19:06:58.937574+00:00"
     },
     "audit-board-mirofish-i18n-cron": {
       "board_id": "audit-board-mirofish-i18n-cron",
@@ -32,7 +32,7 @@
         }
       ],
       "path": "/home/biezz/.state/boards/audit-board-mirofish-i18n-cron.json",
-      "updated_at": "2026-10-15T03:06:26.348966+00:00"
+      "updated_at": "2026-10-16T07:53:04.382392+00:00"
     },
     "project-mirofish-epistemic-mitigation": {
       "board_id": "project-mirofish-epistemic-mitigation",
@@ -43,6 +43,36 @@
       "coordination": [],
       "path": "/home/biezz/.state/boards/project-mirofish-epistemic-mitigation.json",
       "updated_at": "2026-10-14T18:39:45.720444+00:00"
+    },
+    "project-mirofish-supabase-migration": {
+      "board_id": "project-mirofish-supabase-migration",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-mirofish-supabase-migration.json",
+      "updated_at": "2026-10-15T06:55:55.164179+00:00"
+    },
+    "project-mirofish-security-audit": {
+      "board_id": "project-mirofish-security-audit",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-mirofish-security-audit.json",
+      "updated_at": "2026-10-15T13:32:20.973271+00:00"
+    },
+    "project-web-ide-collab": {
+      "board_id": "project-web-ide-collab",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-web-ide-collab.json",
+      "updated_at": "2026-10-15T15:20:00Z"
     }
   }
 }

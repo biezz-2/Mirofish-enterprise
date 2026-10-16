@@ -143,7 +143,7 @@ class GraphBuilderService:
             
             # Validate the complete ingestion payload before the first Cloud
             # mutation, including this legacy service entry point.
-            chunks = TextProcessor.split_text(text, chunk_size, chunk_overlap)
+            chunks = TextProcessor.split_text(text, chunk_size, chunk_overlap, adaptive=True)
             self.validate_batch_chunks(chunks, batch_size=batch_size)
             total_chunks = len(chunks)
 
@@ -385,11 +385,13 @@ class GraphBuilderService:
             if attr_name.lower() in RESERVED_ONTOLOGY_ATTRIBUTE_NAMES:
                 return f"entity_{attr_name}"
             return attr_name
+
+        from ..models.graphrag_ontology import to_pascal_case, to_screaming_snake_case
         
-        # 动态创建实体类型
+        # 动态创建实体类型 (PascalCase)
         entity_types = {}
         for entity_def in ontology.get("entity_types", [])[:MAX_ONTOLOGY_TYPES]:
-            name = entity_def["name"]
+            name = to_pascal_case(entity_def["name"])
             description = entity_def.get("description", f"A {name} entity.")
             
             # 创建属性字典和类型注解（Pydantic v2 需要）
@@ -412,10 +414,10 @@ class GraphBuilderService:
             entity_class.__doc__ = description
             entity_types[name] = entity_class
         
-        # 动态创建边类型
+        # 动态创建边类型 (SCREAMING_SNAKE_CASE)
         edge_definitions = {}
         for edge_def in ontology.get("edge_types", [])[:MAX_ONTOLOGY_TYPES]:
-            name = edge_def["name"]
+            name = to_screaming_snake_case(edge_def["name"])
             description = edge_def.get("description", f"A {name} relationship.")
             
             # 创建属性字典和类型注解
@@ -434,7 +436,7 @@ class GraphBuilderService:
             attrs["__annotations__"] = annotations
             
             # 动态创建类
-            class_name = ''.join(word.capitalize() for word in name.split('_'))
+            class_name = to_pascal_case(name)
             edge_class = type(class_name, (EdgeModel,), attrs)
             edge_class.__doc__ = description
             
@@ -445,8 +447,8 @@ class GraphBuilderService:
             ):
                 source_targets.append(
                     EntityEdgeSourceTarget(
-                        source=st.get("source", "Entity"),
-                        target=st.get("target", "Entity")
+                        source=to_pascal_case(st.get("source", "Entity")),
+                        target=to_pascal_case(st.get("target", "Entity"))
                     )
                 )
             

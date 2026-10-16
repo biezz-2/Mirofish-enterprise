@@ -36,12 +36,14 @@ class Config:
     # Zep配置
     ZEP_API_KEY = os.environ.get('ZEP_API_KEY')
     
-    # Graph Memory Backend (Graphiti Platform + FalkorDB)
+    # Graph Memory Backend (Graphiti Platform + FalkorDB + Neo4j)
     GRAPH_BACKEND = os.environ.get('GRAPH_BACKEND', 'graphiti').lower()
     GRAPHITI_CONTROL_PLANE_URL = os.environ.get('GRAPHITI_CONTROL_PLANE_URL', 'http://127.0.0.1:8080')
+    GRAPHITI_CONTROL_PLANE_PORT = int(os.environ.get('GRAPHITI_CONTROL_PLANE_PORT', '8090'))
     FALKORDB_HOST = os.environ.get('FALKORDB_HOST', '127.0.0.1')
     FALKORDB_PORT = int(os.environ.get('FALKORDB_PORT', '6379'))
     FALKORDB_URI = os.environ.get('FALKORDB_URI', 'redis://127.0.0.1:6379')
+    NEO4J_URI = os.environ.get('NEO4J_URI', 'bolt://127.0.0.1:7687')
     GRAPHITI_GROUP_ID = os.environ.get('GRAPHITI_GROUP_ID', 'main')
 
     # SearXNG Metasearch

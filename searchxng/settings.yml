@@ -1,7 +1,11 @@
 use_default_settings: true
+
 general:
   debug: false
-  instance_name: "MiroFish SearXNG Engine"
+  instance_name: "MiroFish Enterprise SearXNG"
+  donation_url: false
+  contact_url: false
+
 search:
   safe_search: 0
   autocomplete: ""
@@ -9,13 +13,58 @@ search:
   formats:
     - html
     - json
+
 server:
   port: 8080
   bind_address: "0.0.0.0"
   secret_key: "mirofish_searxng_ultra_secure_secret_key"
   limiter: false
   image_proxy: true
+  method: "POST"
+
 ui:
   static_use_hash: true
   default_locale: "id"
-  query_in_title: true
+  query_in_title: false
+  center_alignment: true
+
+outgoing:
+  request_timeout: 4.0
+  max_request_timeout: 8.0
+  pool_connections: 100
+  pool_maxsize: 25
+  enable_http2: true
+  useragent_suffix: "MiroFishEnterprise/3.2"
+
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+    use_ipv6: false
+    timeout: 3.5
+    disabled: false
+
+  - name: bing
+    engine: bing
+    shortcut: b
+    timeout: 3.0
+    disabled: false
+
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    timeout: 3.0
+    disabled: false
+
+  - name: brave
+    engine: brave
+    shortcut: br
+    timeout: 3.5
+    disabled: false
+
+  - name: arxiv
+    engine: arxiv
+    shortcut: arx
+    timeout: 4.0
+    disabled: false
+    categories: [general, science]
