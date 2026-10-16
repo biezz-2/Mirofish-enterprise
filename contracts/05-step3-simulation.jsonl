@@ -1,3 +1,15 @@
-{"round": 1, "superstep": "BSP_BARRIER_1", "active_agents": 10, "events_generated": 35, "status": "COMMITTED"}
-{"round": 2, "superstep": "BSP_BARRIER_2", "active_agents": 12, "events_generated": 42, "status": "COMMITTED"}
-{"round": 3, "superstep": "BSP_BARRIER_3", "active_agents": 15, "events_generated": 58, "status": "COMMITTED"}
+{"round": 1, "superstep": "BSP_BARRIER_1", "active_agents": 400, "events_generated": 265, "status": "COMMITTED", "sha256": "791dedee1d8e56ce07a0fc4a53fb9278039babd1214814c952ab937273b2deab"}
+{"round": 2, "superstep": "BSP_BARRIER_2", "active_agents": 400, "events_generated": 280, "status": "COMMITTED", "sha256": "0479ea41169a2128cb165f4b51542b69247b7082d07b7b4583cdf53704bfc831"}
+{"round": 3, "superstep": "BSP_BARRIER_3", "active_agents": 400, "events_generated": 295, "status": "COMMITTED", "sha256": "aed8faca35f93f06f0c85ec6df119dd70c53780f2fbf48515c7633212e9c037c"}
+{"round": 4, "superstep": "BSP_BARRIER_4", "active_agents": 400, "events_generated": 310, "status": "COMMITTED", "sha256": "b34530829d405cc4c03e4e0fe016bd4ba23c547071852d9d068426572f478d94"}
+{"round": 5, "superstep": "BSP_BARRIER_5", "active_agents": 400, "events_generated": 325, "status": "COMMITTED", "sha256": "fb334023be6e04b978bd02f4c3c3a6650a3ad91c94e7b879314aff282f6cc5c3"}
+{"round": 6, "superstep": "BSP_BARRIER_6", "active_agents": 400, "events_generated": 340, "status": "COMMITTED", "sha256": "580592f2d69a7b88efe6d032df4cd082fc75c7e25a8ffdd9a12fa6e8443a9cf1"}
+{"round": 7, "superstep": "BSP_BARRIER_7", "active_agents": 400, "events_generated": 355, "status": "COMMITTED", "sha256": "28fece8bf72eccb8919d563e36bc759f79f47108a691e028e01c414f7495daa4"}
+{"round": 8, "superstep": "BSP_BARRIER_8", "active_agents": 400, "events_generated": 370, "status": "COMMITTED", "sha256": "eed1856f02a85d3eae0b93193f8f1d4c6d8ad5d51de9d6225a55d7514d731c7d"}
+{"round": 9, "superstep": "BSP_BARRIER_9", "active_agents": 400, "events_generated": 385, "status": "COMMITTED", "sha256": "a762c685a5b349e7700a07af3839ce659bc23a15cf224b9cf8b7d2ffd2f3138b"}
+{"round": 10, "superstep": "BSP_BARRIER_10", "active_agents": 400, "events_generated": 400, "status": "COMMITTED", "sha256": "b4eda41000b35ad2da5475c24652ff264024883f1df5022f98bfded79ef22a39"}
+{"round": 11, "superstep": "BSP_BARRIER_11", "active_agents": 400, "events_generated": 415, "status": "COMMITTED", "sha256": "3687ce15aaf7f8fd31ced308b790dc2cfd7ac9fab8c968eb18640443975e9015"}
+{"round": 12, "superstep": "BSP_BARRIER_12", "active_agents": 400, "events_generated": 430, "status": "COMMITTED", "sha256": "dcef8a1d32457dd5238cf3765b1f152e63b36bc6679104130f2af3110190fba9"}
+{"round": 13, "superstep": "BSP_BARRIER_13", "active_agents": 400, "events_generated": 445, "status": "COMMITTED", "sha256": "b725cab48680b2b62716e952a92afeb82716b1a7d9744652212ac340a60df2f1"}
+{"round": 14, "superstep": "BSP_BARRIER_14", "active_agents": 400, "events_generated": 460, "status": "COMMITTED", "sha256": "70b52ee2b23fbcb0473bd0ea4248aa7cc4c0689b880abf1c550ec4cf245135e5"}
+{"round": 15, "superstep": "BSP_BARRIER_15", "active_agents": 400, "events_generated": 475, "status": "COMMITTED", "sha256": "24b6a34ec7727750853aa11fedcf3385a6ccd7c17c2952844e97add567324b08"}

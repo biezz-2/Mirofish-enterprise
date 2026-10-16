@@ -67,5 +67,8 @@ data/
 *.sqlite3
 backend/mirofish.db
 backend/checkpoints/
+snapshots/
+backend/snapshots/
+backend/backend/
 *.pkl
 *.sha256

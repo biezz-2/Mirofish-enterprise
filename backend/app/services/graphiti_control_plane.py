@@ -294,6 +294,22 @@ def create_fastmcp_server(service: Optional[GraphitiService] = None):
     return mcp
 
 
+def register_graphiti_canonical_tools(mcp_instance: Any, service: Optional[GraphitiService] = None):
+    """Mendaftarkan tool Graphiti ke instance FastMCP yang ada (Agent 17 Canonical FastMCP Server)."""
+    svc = service or GraphitiService()
+
+    @mcp_instance.tool(name="graphiti_query_subgraph", description="Kueri subgraf terisolasi per project_id dengan filter label dan temporal snapshot as_of.")
+    def query_subgraph(project_id: str, label_filter: Optional[str] = None, limit: int = 100, as_of: Optional[str] = None) -> str:
+        res = svc.query_subgraph(project_id, label_filter, limit, as_of)
+        return json.dumps(res.model_dump())
+
+    @mcp_instance.tool(name="graphiti_search_facts", description="Pencarian fakta semantik dan temporal Graphiti berkecepatan tinggi.")
+    def search_facts(project_id: str, query: str, limit: int = 10, as_of: Optional[str] = None) -> str:
+        facts = svc.search_temporal_facts(project_id, query, limit, as_of)
+        return json.dumps(facts)
+
+
+
 if __name__ == "__main__":
     import uvicorn
     listen_port = int(os.environ.get("GRAPHITI_CONTROL_PLANE_PORT", "8090"))

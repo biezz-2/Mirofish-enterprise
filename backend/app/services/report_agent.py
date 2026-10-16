@@ -30,21 +30,14 @@ from .zep_tools import (
     InterviewResult
 )
 
-from pydantic import BaseModel, Field
-
-class ClaimCitation(BaseModel):
-    claim_text: str
-    graph_node_id: str
-    nli_confidence: float = Field(ge=0.0, le=1.0)
-    is_verified: bool
-
-class StrategicReport(BaseModel):
-    title: str
-    executive_summary: str
-    key_findings: List[str]
-    citations: List[ClaimCitation]
-    abstained_questions: List[str] = Field(default_factory=list)
-    markdown_content: str
+from .react_deduction_analyst import (
+    ClaimCitation,
+    StrategicReport,
+    ReACTStep,
+    ReACTDeductionAnalyst,
+    HypothesisDeduction,
+    ProvenanceChainSummary
+)
 
 logger = get_logger('mirofish.report_agent')
 
@@ -935,64 +928,9 @@ class ReportAgent:
         
         # 工具定义
         self.tools = self._define_tools()
-
-    def generate_strategic_report(
-        self,
-        topic: str,
-        verified_nodes: List[Dict[str, Any]],
-        unverified_queries: Optional[List[str]] = None
-    ) -> StrategicReport:
-        citations = []
-        findings = []
-
-        for node in verified_nodes:
-            node_id = node.get('node_id', 'node_unknown')
-            node_content = node.get('content', '')
-            nli = float(node.get('nli_score', 0.90))
-
-            if nli >= self.nli_threshold:
-                citations.append(ClaimCitation(
-                    claim_text=node_content[:200],
-                    graph_node_id=node_id,
-                    nli_confidence=nli,
-                    is_verified=True
-                ))
-                findings.append(f"{node_content[:150]} (Ref: [{node_id}])")
-
-        abstained = []
-        if unverified_queries:
-            for q in unverified_queries:
-                abstained.append(f"Pertanyaan '{q}' diabstain karena tidak ditemukan simpul graf terverifikasi yang mendukung fakta ini.")
-
-        exec_summary = (
-            f"Laporan Analitik Strategis Mirofish Enterprise untuk topik: {topic}. "
-            f"Berdasarkan {len(citations)} simpul graf terverifikasi dengan rata-rata keyakinan NLI >= {self.nli_threshold}."
-        )
-
-        md_lines = [
-            f"# Laporan Strategis: {topic}",
-            "",
-            "## Ringkasan Eksekutif",
-            exec_summary,
-            "",
-            "## Temuan Utama & Sitasi"
-        ]
-        for f in findings:
-            md_lines.append(f"- {f}")
-
-        if abstained:
-            md_lines.extend(["", "## Klausul Safe Abstention (Bebas Fabrikasi)"])
-            for a in abstained:
-                md_lines.append(f"- {a}")
-
-        return StrategicReport(
-            title=f"Laporan Strategis: {topic}",
-            executive_summary=exec_summary,
-            key_findings=findings,
-            citations=citations,
-            abstained_questions=abstained,
-            markdown_content=chr(10).join(md_lines)
-        )
+        
+        # ReACT Deduction Analyst (Agent 15: Divisi E)
+        self.deduction_analyst = ReACTDeductionAnalyst(nli_threshold=self.nli_threshold)
         
         # 日志记录器（在 generate_report 中初始化）
         self.report_logger: Optional[ReportLogger] = None
@@ -1000,6 +938,26 @@ class ReportAgent:
         self.console_logger: Optional[ReportConsoleLogger] = None
         
         logger.info(t('report.agentInitDone', graphId=graph_id, simulationId=simulation_id))
+
+    def generate_strategic_report(
+        self,
+        topic: str,
+        verified_nodes: List[Dict[str, Any]],
+        unverified_queries: Optional[List[str]] = None,
+        upstream_bsp_handoff: Optional[Dict[str, Any]] = None,
+        hypotheses: Optional[List[str]] = None
+    ) -> StrategicReport:
+        """
+        Menghasilkan Laporan Strategis ReACT Enterprise dengan Safe Abstention
+        dan Sitasi Simpul Graf [VERIFIED].
+        """
+        return self.deduction_analyst.generate_strategic_report(
+            topic=topic,
+            verified_nodes=verified_nodes,
+            unverified_queries=unverified_queries,
+            upstream_bsp_handoff=upstream_bsp_handoff,
+            hypotheses=hypotheses
+        )
     
     def _define_tools(self) -> Dict[str, Dict[str, Any]]:
         """定义可用工具"""
@@ -1656,14 +1614,18 @@ class ReportAgent:
         self, 
         progress_callback: Any = None,
         report_id: Any = None,
-        unverified_queries: Optional[List[str]] = None
+        unverified_queries: Optional[List[str]] = None,
+        upstream_bsp_handoff: Optional[Dict[str, Any]] = None,
+        hypotheses: Optional[List[str]] = None
     ) -> Any:
         # Deteksi pemanggilan Enterprise Strategic Report
-        if isinstance(progress_callback, str) and (isinstance(report_id, list) or unverified_queries is not None):
+        if isinstance(progress_callback, str) and (isinstance(report_id, list) or unverified_queries is not None or upstream_bsp_handoff is not None):
             return self.generate_strategic_report(
                 topic=progress_callback,
                 verified_nodes=report_id or [],
-                unverified_queries=unverified_queries
+                unverified_queries=unverified_queries,
+                upstream_bsp_handoff=upstream_bsp_handoff,
+                hypotheses=hypotheses
             )
         """
         生成完整报告（分章节实时输出）

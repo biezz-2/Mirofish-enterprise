@@ -86,6 +86,27 @@ def test_v2_nested_logit_train():
     total_p = sum(probs.values())
     assert abs(total_p - 1.0) < 0.05
 
+def test_v2_hierarchical_nested_logit_3_tier():
+    engine = DecisionEngine(nest_mu_active=0.8, nest_mu_consume=0.7, nest_mu_produce=0.75)
+    u_consume = {"like": 0.8, "retweet": 0.5, "browse": 0.6}
+    u_produce = {"reply": 0.4, "quote": 0.3, "post": 0.2}
+    res = engine.evaluate_hierarchical_nested_logit(0.8, 0.5, u_consume, u_produce)
+    assert res.prob_active > 0.0
+    assert res.prob_lurker > 0.0
+    assert "like" in res.unconditional_actions
+    assert "post" in res.unconditional_actions
+    assert abs(sum(res.unconditional_actions.values()) - 1.0) < 1e-3
+
+def test_v2_ddm_analytical_and_prospect_value():
+    engine = DecisionEngine(loss_aversion_lambda=2.25)
+    p_up, mean_rt, var_rt = engine.analytical_ddm(drift_rate=0.3, threshold_a=1.0)
+    assert p_up > 0.5
+    assert mean_rt > 300.0
+
+    # Prospect theory value check
+    pv = engine.calculate_prospect_value(gain=1.0, loss=1.0)
+    assert pv < 0.0  # Loss aversion lambda=2.25 makes equal loss outweigh gain
+
 # --- DIVISI D: RecSys Funnel & Dinamika Viral (V2) ---
 def test_v2_recsys_damping_entropy():
     funnel = RecSysFunnel(damping_factor=0.60)
