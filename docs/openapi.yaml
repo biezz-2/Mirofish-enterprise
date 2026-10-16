@@ -1,56 +1,1014 @@
-openapi: 3.0.3
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 info:
-  title: MiroFish API Spesifikasi v3.1
-  description: API RESTful untuk Mesin Simulasi Prediksi Sosial MiroFish dengan Lokalisasi Bahasa Indonesia, Multi-Platform, dan Riset Web SearXNG.
-  version: 3.1.0
+  title: MiroFish Enterprise RESTful API
+  version: 3.2.0
+  description: Enterprise Multi-Agent Social Simulation Platform RESTful API conforming
+    to OpenAPI 3.1.0 and JSON Schema Draft 2020-12. Features 6 engineering divisions,
+    20 subagents, ReACT Strategic Report engine, BettaFish sentiment & risk analytics,
+    FastMCP canonical tool integration, and distributed HMAC-SHA256 webhooks with
+    DLQ.
+  contact:
+    name: MiroFish Enterprise Core Engineering
+    url: https://github.com/666ghj/MiroFish
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+- url: http://127.0.0.1:5001
+  description: Local Development Server
+- url: http://localhost:5001
+  description: Localhost Mirror
+tags:
+- name: System & Health
+  description: Status kesehatan peladen dan diagnosis
+- name: BettaFish Analytics
+  description: Analisis Sentimen Polar & Penilaian Risiko Korporat C-Level
+- name: Webhooks Engine
+  description: Dispatcher Webhook Terdistribusi HMAC-SHA256, Langganan & DLQ
+- name: FastMCP REST Proxy
+  description: Proxy RESTful ke 11 Perkakas Kanonikal FastMCP
+- name: Enterprise Swarm
+  description: BSP Swarm Runner, RecSys 7 Platform, dan ReACT Strategic Report
+- name: Memory & Foundations
+  description: Graphiti Knowledge Graph, Zep Adapter, dan CaMeL Prompt Shield
 paths:
   /health:
     get:
-      summary: Pemeriksaan kesehatan layanan
+      tags:
+      - System & Health
+      summary: Pemeriksaan kesehatan sistem MiroFish
       responses:
         '200':
-          description: Layanan aktif normal
-  /api/platforms:
+          description: Sistem beroperasi normal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/enterprise/status:
     get:
-      summary: Daftar 7 platform media sosial dan parameter perilakunya
+      tags:
+      - System & Health
+      summary: Status lengkap divisi dan modul enterprise MiroFish
       responses:
         '200':
-          description: Data karakteristik Twitter, X, Reddit, TikTok, Instagram, Facebook, Threads
-  /api/research/searchxng:
+          description: Metadata modul enterprise
+          content:
+            application/json:
+              schema:
+                type: object
+  /api/enterprise/bettafish/sentiment:
     post:
-      summary: Eksekusi riset internet Langkah 0 via SearXNG privat
+      tags:
+      - BettaFish Analytics
+      summary: Analisis sentimen polar teks dengan vektor emosi 5-dimensi
       requestBody:
         required: true
         content:
           application/json:
             schema:
+              $ref: '#/components/schemas/BettaFishSentimentRequest'
+      responses:
+        '200':
+          description: Hasil analisis sentimen polar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BettaFishSentimentResponse'
+        '422':
+          description: Payload tidak sesuai skema JSON Schema 2020-12
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/enterprise/bettafish/executive-report:
+    post:
+      tags:
+      - BettaFish Analytics
+      summary: Menghasilkan laporan eksekutif C-Level BettaFish & memancarkan webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BettaFishExecutiveReportRequest'
+      responses:
+        '200':
+          description: Laporan eksekutif berhasil di-generate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BettaFishExecutiveReportResponse'
+        '422':
+          description: Payload tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/enterprise/bettafish/risk-assessment:
+    post:
+      tags:
+      - BettaFish Analytics
+      summary: Penilaian risiko korporat polar dan peringatan dini krisis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BettaFishRiskAssessmentRequest'
+      responses:
+        '200':
+          description: Hasil evaluasi risiko korporat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BettaFishRiskAssessmentResponse'
+        '422':
+          description: Validasi JSON Schema gagal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/enterprise/bettafish/downstream-recommendations:
+    get:
+      tags:
+      - BettaFish Analytics
+      summary: Ambil target downstream rekomendasi Agent 16 ke Agent 17-20
+      responses:
+        '200':
+          description: Rekomendasi downstream aktif
+          content:
+            application/json:
+              schema:
+                type: object
+  /api/enterprise/webhooks/subscriptions:
+    post:
+      tags:
+      - Webhooks Engine
+      summary: Daftarkan langganan webhook baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookSubscriptionRequest'
+      responses:
+        '201':
+          description: Langganan webhook berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscriptionResponse'
+        '422':
+          description: Format URL atau payload salah
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+      - Webhooks Engine
+      summary: Daftar seluruh langganan webhook aktif
+      responses:
+        '200':
+          description: List langganan webhook
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  subscriptions:
+                    type: array
+                    items:
+                      type: object
+  /api/enterprise/webhooks/subscriptions/{subscription_id}:
+    get:
+      tags:
+      - Webhooks Engine
+      summary: Ambil detail langganan webhook berdasarkan ID
+      parameters:
+      - name: subscription_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Detail langganan
+        '404':
+          description: Langganan tidak ditemukan
+    delete:
+      tags:
+      - Webhooks Engine
+      summary: Hapus pendaftaran langganan webhook
+      parameters:
+      - name: subscription_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Langganan berhasil dihapus
+        '404':
+          description: Langganan tidak ditemukan
+  /api/enterprise/webhooks/dispatch:
+    post:
+      tags:
+      - Webhooks Engine
+      summary: Kirim event webhook langsung ke target URL atau broadcast
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookDispatchRequest'
+      responses:
+        '200':
+          description: Pengiriman webhook berhasil atau queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookDispatchResponse'
+        '422':
+          description: Payload tidak sesuai skema
+  /api/enterprise/webhooks/dlq:
+    get:
+      tags:
+      - Webhooks Engine
+      summary: Inspeksi daftar Dead-Letter Queue (DLQ) event yang gagal terkirim
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      - name: event_type
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Daftar event di DLQ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+                  dlq:
+                    type: array
+                    items:
+                      type: object
+    delete:
+      tags:
+      - Webhooks Engine
+      summary: Bersihkan seluruh isi Dead-Letter Queue (DLQ)
+      responses:
+        '200':
+          description: DLQ berhasil dibersihkan
+  /api/enterprise/webhooks/dlq/replay:
+    post:
+      tags:
+      - Webhooks Engine
+      summary: Kirim ulang (re-drive) event dari Dead-Letter Queue
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
               type: object
               properties:
-                query:
+                event_id:
                   type: string
-                research_type:
-                  type: string
-                  enum: [general, news, images]
-                max_results:
-                  type: integer
       responses:
         '200':
-          description: Laporan riset dan skor kredibilitas
-  /api/jobs:
-    get:
-      summary: Daftar pekerjaan simulasi aktif
-      responses:
-        '200':
-          description: Daftar job state-machine
-  /api/jobs/{job_id}/recover:
+          description: Hasil replay pengiriman DLQ
+  /api/enterprise/webhooks/verify:
     post:
-      summary: Pulihkan pekerjaan simulasi dari checkpoint terakhir
-      parameters:
-        - name: job_id
-          in: path
-          required: true
-          schema:
-            type: string
+      tags:
+      - Webhooks Engine
+      summary: Verifikasi tanda tangan HMAC-SHA256 & proteksi anti-replay
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookVerifyRequest'
       responses:
         '200':
-          description: Pekerjaan berhasil dipulihkan
+          description: Hasil verifikasi signature
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_valid:
+                    type: boolean
+                  error:
+                    type:
+                    - string
+                    - 'null'
+  /api/enterprise/webhooks/stats:
+    get:
+      tags:
+      - Webhooks Engine
+      summary: Ambil statistik metrik performa webhook & latensi P95
+      responses:
+        '200':
+          description: Statistik performa dispatcher
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_dispatched:
+                    type: integer
+                  total_delivered:
+                    type: integer
+                  total_failed:
+                    type: integer
+                  dlq_count:
+                    type: integer
+                  p95_latency_ms:
+                    type: number
+  /api/mcp/tools:
+    get:
+      tags:
+      - FastMCP REST Proxy
+      summary: Daftar 11 perkakas kanonikal FastMCP + perkakas BettaFish
+      responses:
+        '200':
+          description: Katalog metadata perkakas kanonikal MCP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tools:
+                    type: array
+                    items:
+                      type: object
+                  count:
+                    type: integer
+  /api/mcp/health:
+    get:
+      tags:
+      - FastMCP REST Proxy
+      summary: Pemeriksaan kesehatan peladen FastMCP
+      responses:
+        '200':
+          description: FastMCP operasional
+  /api/mcp/invoke:
+    post:
+      tags:
+      - FastMCP REST Proxy
+      summary: Eksekusi perkakas MCP via HTTP REST dan pancarkan webhook MCP_TOOL_INVOKED
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MCPToolInvokeRequest'
+      responses:
+        '200':
+          description: Hasil eksekusi perkakas MCP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MCPToolInvokeResponse'
+        '422':
+          description: Format input perkakas tidak valid
+  /api/openapi.json:
+    get:
+      tags:
+      - System & Health
+      summary: Dokumen spesifikasi OpenAPI 3.1.0 lengkap format JSON
+      responses:
+        '200':
+          description: OpenAPI 3.1.0 JSON Specification
+  /api/openapi.yaml:
+    get:
+      tags:
+      - System & Health
+      summary: Dokumen spesifikasi OpenAPI 3.1.0 lengkap format YAML
+      responses:
+        '200':
+          description: OpenAPI 3.1.0 YAML Specification
+  /api/docs:
+    get:
+      tags:
+      - System & Health
+      summary: Dokumentasi interaktif OpenAPI 3.1.0 (Swagger UI)
+      responses:
+        '200':
+          description: HTML Interactive API Docs
+webhooks:
+  BETTAFISH_EXECUTIVE_REPORT_GENERATED: &id001
+    post:
+      summary: Dipancarkan saat Laporan Eksekutif C-Level BettaFish selesai di-generate
+      description: Payload membawa ringkasan eksekutif SWOT, skor sentimen polar,
+        dan direktif strategis.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                event_id:
+                  type: string
+                event_type:
+                  type: string
+                  const: BETTAFISH_EXECUTIVE_REPORT_GENERATED
+                timestamp:
+                  type: string
+                payload:
+                  $ref: '#/components/schemas/BettaFishExecutiveReportResponse'
+              required:
+              - event_id
+              - event_type
+              - payload
+      responses:
+        '200':
+          description: Webhook diterima dengan sukses oleh subscriber
+  BETTAFISH_CRITICAL_RISK_ALERT: &id002
+    post:
+      summary: Dipancarkan saat skor risiko polar korporat mencapai level HIGH atau
+        CRITICAL
+      description: Memicu protokol peringatan dini dan mitigasi eskalasi krisis pada
+        downstream.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                event_id:
+                  type: string
+                event_type:
+                  type: string
+                  const: BETTAFISH_CRITICAL_RISK_ALERT
+                timestamp:
+                  type: string
+                payload:
+                  $ref: '#/components/schemas/BettaFishRiskAssessmentResponse'
+              required:
+              - event_id
+              - event_type
+              - payload
+      responses:
+        '200':
+          description: Peringatan risiko diterima
+  MCP_TOOL_INVOKED: &id003
+    post:
+      summary: Dipancarkan saat perkakas FastMCP dieksekusi melalui REST atau protokol
+        MCP
+      description: Membawa jejak audit nama perkakas, parameter, dan status eksekusi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                event_id:
+                  type: string
+                event_type:
+                  type: string
+                  const: MCP_TOOL_INVOKED
+                payload:
+                  $ref: '#/components/schemas/MCPToolInvokeResponse'
+              required:
+              - event_id
+              - event_type
+              - payload
+      responses:
+        '200':
+          description: Event eksekusi MCP tercatat
+  MCP_SIMULATION_STATE_CHANGED: &id004
+    post:
+      summary: Dipancarkan saat kondisi simulasi OASIS / BSP berubah via MCP
+      description: Memberikan pembaruan status transisi simulasi (running, paused,
+        completed).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                event_id:
+                  type: string
+                event_type:
+                  type: string
+                  const: MCP_SIMULATION_STATE_CHANGED
+                payload:
+                  type: object
+              required:
+              - event_id
+              - event_type
+              - payload
+      responses:
+        '200':
+          description: Event perubahan status diterima
+  SIMULATION_ROUND_COMPLETED: &id005
+    post:
+      summary: Dipancarkan saat satu ronde simulasi swarm BSP selesai diproses
+      description: Membawa ringkasan metrik ronde, konsensus agen, dan status barrier
+        sinkronisasi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                event_id:
+                  type: string
+                event_type:
+                  type: string
+                  const: SIMULATION_ROUND_COMPLETED
+                payload:
+                  type: object
+              required:
+              - event_id
+              - event_type
+              - payload
+      responses:
+        '200':
+          description: Ringkasan ronde diterima
+  SIMULATION_COMPLETED: &id006
+    post:
+      summary: Dipancarkan ketika seluruh siklus simulasi multi-platform selesai dieksekusi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                event_id:
+                  type: string
+                event_type:
+                  type: string
+                  const: SIMULATION_COMPLETED
+                payload:
+                  type: object
+              required:
+              - event_id
+              - event_type
+              - payload
+      responses:
+        '200':
+          description: Siklus selesai dikonfirmasi
+  SYSTEM_ALERT: &id007
+    post:
+      summary: Peringatan anomali sistem runtime, watchdog checkpoint, atau failover
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $schema: https://json-schema.org/draft/2020-12/schema
+              type: object
+              properties:
+                event_id:
+                  type: string
+                event_type:
+                  type: string
+                  const: SYSTEM_ALERT
+                payload:
+                  type: object
+              required:
+              - event_id
+              - event_type
+              - payload
+      responses:
+        '200':
+          description: Alert sistem diterima
+  bettafish_executive_report_generated: *id001
+  bettafish_critical_risk_alert: *id002
+  mcp_tool_invoked: *id003
+  mcp_simulation_state_changed: *id004
+  simulation_round_completed: *id005
+  simulation_completed: *id006
+  system_alert: *id007
+components:
+  schemas:
+    SimulationProjectRequest:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 3
+        target_audience:
+          type: string
+        initial_agents_count:
+          type: integer
+          minimum: 1
+          default: 20
+        platforms:
+          type: array
+          items:
+            type: string
+          default:
+          - twitter_x
+      required:
+      - title
+    WebhookSubscriptionRequest:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        target_url:
+          type: string
+          format: uri
+        secret_key:
+          type: string
+          minLength: 8
+        subscribed_events:
+          type: array
+          items:
+            type: string
+          default:
+          - '*'
+        description:
+          type: string
+          default: ''
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          default: {}
+      required:
+      - target_url
+    ErrorResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        success:
+          type: boolean
+          const: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type:
+              - array
+              - 'null'
+              items:
+                type: object
+          required:
+          - code
+          - message
+      required:
+      - success
+      - error
+    HealthResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - down
+        version:
+          type: string
+        timestamp:
+          type: string
+        services:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - status
+      - version
+    BettaFishSentimentRequest:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        text:
+          type: string
+          minLength: 1
+        domain:
+          type: string
+          default: general
+      required:
+      - text
+    BettaFishSentimentResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        success:
+          type: boolean
+        sentiment:
+          type: object
+          properties:
+            score:
+              type: number
+              minimum: -1.0
+              maximum: 1.0
+            label:
+              type: string
+              enum:
+              - POSITIVE
+              - NEUTRAL
+              - NEGATIVE
+              - EXTREME_NEGATIVE
+              - EXTREME_POSITIVE
+            confidence:
+              type: number
+              minimum: 0.0
+              maximum: 1.0
+            emotion_vector:
+              type: object
+              properties:
+                joy:
+                  type: number
+                anger:
+                  type: number
+                fear:
+                  type: number
+                sadness:
+                  type: number
+                surprise:
+                  type: number
+          required:
+          - score
+          - label
+          - confidence
+      required:
+      - success
+      - sentiment
+    BettaFishExecutiveReportRequest:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        topic:
+          type: string
+          minLength: 1
+        claims:
+          type: array
+          items:
+            type: string
+          default: []
+        broadcast_webhook:
+          type: boolean
+          default: true
+      required:
+      - topic
+    BettaFishExecutiveReportResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        success:
+          type: boolean
+        report:
+          type: object
+          properties:
+            report_id:
+              type: string
+            topic:
+              type: string
+            key_takeaways:
+              type: array
+              items:
+                type: string
+            strategic_recommendations:
+              type: array
+              items:
+                type: string
+            overall_sentiment_score:
+              type: number
+            swot_analysis:
+              type: object
+            c_level_directives:
+              type: object
+          required:
+          - report_id
+          - topic
+          - strategic_recommendations
+        webhook_dispatched:
+          type: boolean
+      required:
+      - success
+      - report
+    BettaFishRiskAssessmentRequest:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        polarity_score:
+          type: number
+          minimum: -1.0
+          maximum: 1.0
+        virality_potential:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+        topic:
+          type: string
+          default: general
+        broadcast_webhook:
+          type: boolean
+          default: true
+      required:
+      - polarity_score
+    BettaFishRiskAssessmentResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        success:
+          type: boolean
+        risk_assessment:
+          type: object
+          properties:
+            risk_level:
+              type: string
+              enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+            early_warning_active:
+              type: boolean
+            mitigation_playbook:
+              type: array
+              items:
+                type: string
+            composite_risk_score:
+              type: number
+          required:
+          - risk_level
+          - early_warning_active
+          - mitigation_playbook
+        alert_dispatched:
+          type: boolean
+      required:
+      - success
+      - risk_assessment
+    WebhookSubscriptionResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        success:
+          type: boolean
+        subscription:
+          type: object
+          properties:
+            subscription_id:
+              type: string
+            target_url:
+              type: string
+            subscribed_events:
+              type: array
+              items:
+                type: string
+            is_active:
+              type: boolean
+            created_at:
+              type: string
+          required:
+          - subscription_id
+          - target_url
+          - subscribed_events
+          - is_active
+      required:
+      - success
+      - subscription
+    WebhookDispatchRequest:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        event_type:
+          type: string
+          minLength: 1
+        payload:
+          type: object
+        target_url:
+          type:
+          - string
+          - 'null'
+          format: uri
+        secret_key:
+          type:
+          - string
+          - 'null'
+      required:
+      - event_type
+      - payload
+    WebhookDispatchResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        success:
+          type: boolean
+        delivery_id:
+          type: string
+        status_code:
+          type:
+          - integer
+          - 'null'
+        attempts:
+          type: integer
+        duration_ms:
+          type: number
+        error:
+          type:
+          - string
+          - 'null'
+      required:
+      - success
+      - delivery_id
+    WebhookVerifyRequest:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        payload:
+          type: object
+        secret_key:
+          type: string
+        signature:
+          type: string
+        timestamp:
+          type:
+          - string
+          - 'null'
+        tolerance_seconds:
+          type: integer
+          default: 300
+      required:
+      - payload
+      - secret_key
+      - signature
+    MCPToolInvokeRequest:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        tool_name:
+          type: string
+          minLength: 1
+        parameters:
+          type: object
+          default: {}
+        broadcast_webhook:
+          type: boolean
+          default: true
+      required:
+      - tool_name
+    MCPToolInvokeResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        success:
+          type: boolean
+        tool_name:
+          type: string
+        result:
+          type: object
+        webhook_dispatched:
+          type: boolean
+      required:
+      - success
+      - tool_name
+      - result
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Standard OAuth2 / JWT Bearer token authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Enterprise API Key
+    HmacSignature:
+      type: apiKey
+      in: header
+      name: X-Mirofish-Signature
+      description: HMAC-SHA256 signature for webhook transmission integrity

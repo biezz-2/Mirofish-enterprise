@@ -5,8 +5,10 @@ Exposes endpoints for the 20 Subagents and 6 Divisions.
 
 import os
 import json
+import time
+from datetime import datetime, timezone
 import logging
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 from pathlib import Path
 
 from ..services.orchestrator import OrchestratorStateMachine
@@ -23,9 +25,44 @@ from ..services.cascade_dynamics import CascadeDynamicsEngine, HawkesEvent
 from ..services.bsp_swarm_runner import BSPSwarmRunner, SQLiteWALCheckpointer
 from ..services.report_agent import ReportAgent
 from ..services.bettafish_adapter import BettaFishAdapter
-from ..services.webhook_service import WebhookDispatcher, WebhookEvent
+from ..services.webhook_service import (
+    WebhookDispatcher,
+    WebhookEvent,
+    WebhookSubscription,
+    WebhookDispatchResult,
+    WebhookDLQStats,
+    webhook_dispatcher,
+)
+from ..services.openapi_engine import (
+    OPENAPI_310_SPEC,
+    get_openapi_spec,
+    get_swagger_ui_html,
+    validate_request_schema,
+    validate_json_schema_2020_12,
+)
 from ..services.discord_reporter import DiscordReporter
 from ..utils.vault import VaultManager
+from mcp_server.tools import (
+    register_mcp_tools,
+    handle_create_simulation_project,
+    handle_trigger_web_research,
+    handle_build_knowledge_graph,
+    handle_generate_agent_profiles,
+    handle_calibrate_platform_algorithms,
+    handle_execute_parallel_simulation,
+    handle_fetch_simulation_stream,
+    handle_query_graph_insights,
+    handle_generate_executive_report,
+    handle_interview_simulation_agent,
+    handle_audit_system_diagnostics,
+    handle_bettafish_analyze_polar_sentiment,
+    handle_bettafish_generate_c_level_report,
+    handle_bettafish_assess_corporate_risk,
+    handle_list_projects,
+    handle_get_job_status,
+    handle_get_simulation_report,
+)
+import threading
 
 logger = logging.getLogger('mirofish.api.enterprise')
 
@@ -46,9 +83,12 @@ cascade_engine = CascadeDynamicsEngine()
 bsp_runner = BSPSwarmRunner()
 report_agent = ReportAgent()
 bettafish = BettaFishAdapter()
-webhook_dispatcher = WebhookDispatcher()
 vault_manager = VaultManager()
 discord_reporter = DiscordReporter()
+
+# Mock Receiver Store untuk Pengujian Webhook End-to-End
+_mock_webhooks_lock = threading.Lock()
+_mock_received_webhooks = []
 
 
 @enterprise_bp.route('/status', methods=['GET'])
@@ -761,9 +801,21 @@ def generate_bettafish_executive_report():
         simulation_events=simulation_events,
         custom_claims=custom_claims
     )
+    report_dict = report.model_dump()
+
+    # Agent 18: Pancarkan event webhook BETTAFISH_EXECUTIVE_REPORT_GENERATED
+    broadcast_webhook = data.get('broadcast_webhook', True)
+    if broadcast_webhook:
+        webhook_dispatcher.broadcast(
+            event_type='BETTAFISH_EXECUTIVE_REPORT_GENERATED',
+            payload=report_dict,
+            async_mode=True
+        )
+
     return jsonify({
         'success': True,
-        'report': report.model_dump()
+        'report': report_dict,
+        'webhook_dispatched': broadcast_webhook
     })
 
 
@@ -780,9 +832,24 @@ def assess_bettafish_corporate_risk():
         claim_polarities=claim_polarities,
         virality_potential=virality_potential
     )
+    assessment_dict = assessment.model_dump()
+
+    # Agent 18: Pancarkan webhook alert jika risiko HIGH/CRITICAL atau early warning aktif
+    broadcast_webhook = data.get('broadcast_webhook', True)
+    risk_level_str = assessment.overall_risk_level.value if hasattr(assessment.overall_risk_level, 'value') else str(assessment.overall_risk_level)
+    alert_dispatched = False
+    if broadcast_webhook and (risk_level_str in ('HIGH', 'CRITICAL') or assessment.early_warning_escalation):
+        webhook_dispatcher.broadcast(
+            event_type='BETTAFISH_CRITICAL_RISK_ALERT',
+            payload=assessment_dict,
+            async_mode=True
+        )
+        alert_dispatched = True
+
     return jsonify({
         'success': True,
-        'risk_assessment': assessment.model_dump()
+        'risk_assessment': assessment_dict,
+        'alert_dispatched': alert_dispatched
     })
 
 
@@ -798,16 +865,350 @@ def get_bettafish_downstream_recommendations():
     })
 
 
+# ---------------------------------------------------------------------------
+# Endpoint Manajemen Langganan Webhook & Dispatcher (Agent 18)
+# ---------------------------------------------------------------------------
+
+@enterprise_bp.route('/webhooks/subscriptions', methods=['POST'])
+def create_webhook_subscription():
+    """Daftarkan langganan webhook baru."""
+    data = request.get_json(silent=True) or {}
+    target_url = data.get('target_url')
+    if not target_url:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'INVALID_REQUEST', 'message': 'target_url is required'}
+        }), 422
+
+    sub = webhook_dispatcher.register_subscription(
+        target_url=target_url,
+        secret_key=data.get('secret_key'),
+        subscribed_events=data.get('subscribed_events'),
+        description=data.get('description', ''),
+        headers=data.get('headers')
+    )
+    return jsonify({
+        'success': True,
+        'subscription': sub.model_dump()
+    }), 201
+
+
+@enterprise_bp.route('/webhooks/subscriptions', methods=['GET'])
+def list_webhook_subscriptions():
+    """Daftar seluruh langganan webhook aktif."""
+    subs = webhook_dispatcher.list_subscriptions()
+    return jsonify({
+        'success': True,
+        'count': len(subs),
+        'subscriptions': [s.model_dump() for s in subs]
+    })
+
+
+@enterprise_bp.route('/webhooks/subscriptions/<subscription_id>', methods=['GET'])
+def get_webhook_subscription(subscription_id):
+    """Ambil detail langganan webhook berdasarkan ID."""
+    sub = webhook_dispatcher.get_subscription(subscription_id)
+    if not sub:
+        return jsonify({'success': False, 'error': {'code': 'NOT_FOUND', 'message': 'Subscription not found'}}), 404
+    return jsonify({'success': True, 'subscription': sub.model_dump()})
+
+
+@enterprise_bp.route('/webhooks/subscriptions/<subscription_id>', methods=['DELETE'])
+def delete_webhook_subscription(subscription_id):
+    """Hapus pendaftaran langganan webhook."""
+    deleted = webhook_dispatcher.delete_subscription(subscription_id)
+    if not deleted:
+        return jsonify({'success': False, 'error': {'code': 'NOT_FOUND', 'message': 'Subscription not found'}}), 404
+    return jsonify({'success': True, 'message': f'Subscription {subscription_id} deleted'})
+
+
 @enterprise_bp.route('/webhooks/dispatch', methods=['POST'])
 def dispatch_webhook():
-    """Kirim event webhook bertandatangan HMAC-SHA256."""
+    """Kirim event webhook bertandatangan HMAC-SHA256 (spesifik URL atau broadcast)."""
     data = request.get_json(silent=True) or {}
-    url = data.get('url', 'http://127.0.0.1:5001/api/webhooks/mock')
+    target_url = data.get('target_url') or data.get('url')
     event_type = data.get('event_type', 'SIMULATION_ROUND_COMPLETED')
     payload = data.get('payload', {})
-    event = WebhookEvent(event_type=event_type, payload=payload)
-    res = webhook_dispatcher.dispatch(url, event)
-    return jsonify({'success': res.is_success, 'delivery_id': res.delivery_id, 'error': res.error_message})
+    secret_key = data.get('secret_key')
+
+    if target_url:
+        event = WebhookEvent(
+            event_type=event_type,
+            payload=payload,
+            target_url=target_url,
+            secret_key=secret_key or 'mirofish_default_secret_key'
+        )
+        res = webhook_dispatcher.dispatch(target_url, event)
+        return jsonify({
+            'success': res.is_success,
+            'delivery_id': res.delivery_id,
+            'status_code': res.status_code,
+            'attempts': res.attempts,
+            'duration_ms': res.duration_ms,
+            'error': res.error_message
+        })
+    else:
+        # Broadcast ke seluruh langganan aktif
+        results = webhook_dispatcher.broadcast(event_type=event_type, payload=payload)
+        return jsonify({
+            'success': True,
+            'broadcast_count': len(results),
+            'deliveries': [r.model_dump() for r in results]
+        })
+
+
+@enterprise_bp.route('/webhooks/verify', methods=['POST'])
+def verify_webhook_signature():
+    """Verifikasi tanda tangan HMAC-SHA256 & proteksi anti-replay payload webhook."""
+    data = request.get_json(silent=True) or {}
+    payload = data.get('payload')
+    secret_key = data.get('secret_key')
+    signature = data.get('signature')
+    timestamp = data.get('timestamp')
+    tolerance_s = int(data.get('tolerance_seconds', 300))
+
+    if payload is None or not secret_key or not signature:
+        return jsonify({
+            'is_valid': False,
+            'error': 'payload, secret_key, and signature are required'
+        }), 400
+
+    payload_str = json.dumps(payload, sort_keys=True) if isinstance(payload, dict) else str(payload)
+    is_valid, error = WebhookDispatcher.verify_hmac_signature(
+        payload_json=payload_str,
+        secret_key=secret_key,
+        signature=signature,
+        timestamp=timestamp,
+        tolerance_seconds=tolerance_s
+    )
+    return jsonify({
+        'is_valid': is_valid,
+        'error': error
+    })
+
+
+# ---------------------------------------------------------------------------
+# Dead-Letter Queue (DLQ) & Stats Endpoints
+# ---------------------------------------------------------------------------
+
+@enterprise_bp.route('/webhooks/dlq', methods=['GET'])
+def get_webhook_dlq():
+    """Inspeksi event yang gagal terkirim dalam Dead-Letter Queue."""
+    limit = request.args.get('limit', 50, type=int)
+    offset = request.args.get('offset', 0, type=int)
+    event_type = request.args.get('event_type')
+    items = webhook_dispatcher.get_dlq(limit=limit, offset=offset, event_type=event_type)
+    return jsonify({
+        'success': True,
+        'count': len(items),
+        'dlq': items
+    })
+
+
+@enterprise_bp.route('/webhooks/dlq', methods=['DELETE'])
+def clear_webhook_dlq():
+    """Bersihkan seluruh isi Dead-Letter Queue."""
+    count = webhook_dispatcher.clear_dlq()
+    return jsonify({'success': True, 'purged_count': count})
+
+
+@enterprise_bp.route('/webhooks/dlq/replay', methods=['POST'])
+@enterprise_bp.route('/webhooks/dlq/redrive', methods=['POST'])
+def replay_webhook_dlq():
+    """Kirim ulang (re-drive) event dari Dead-Letter Queue."""
+    data = request.get_json(silent=True) or {}
+    event_id = data.get('event_id')
+
+    if event_id:
+        res = webhook_dispatcher.replay_dlq_event(event_id)
+        return jsonify({
+            'success': res.is_success,
+            'replayed_count': 1,
+            'result': res.model_dump()
+        })
+    else:
+        results = webhook_dispatcher.replay_all_dlq()
+        return jsonify({
+            'success': True,
+            'replayed_count': len(results),
+            'results': [r.model_dump() for r in results]
+        })
+
+
+@enterprise_bp.route('/webhooks/stats', methods=['GET'])
+def get_webhook_stats():
+    """Statistik performa pengiriman webhook & latensi P95."""
+    return jsonify({
+        'success': True,
+        'stats': webhook_dispatcher.get_stats()
+    })
+
+
+# ---------------------------------------------------------------------------
+# Mock Receiver untuk Pengujian Webhook End-to-End
+# ---------------------------------------------------------------------------
+
+@enterprise_bp.route('/webhooks/mock-receiver', methods=['POST'])
+def mock_webhook_receiver():
+    """Endpoint receiver uji coba untuk menangkap dan memverifikasi webhook masuk."""
+    signature = request.headers.get('X-Mirofish-Signature') or request.headers.get('X-Signature-SHA256')
+    timestamp = request.headers.get('X-Mirofish-Timestamp')
+    event_type = request.headers.get('X-Mirofish-Event', 'UNKNOWN')
+    delivery_id = request.headers.get('X-Mirofish-Delivery', 'UNKNOWN')
+    payload = request.get_json(silent=True) or {}
+
+    with _mock_webhooks_lock:
+        record = {
+            'event_type': event_type,
+            'delivery_id': delivery_id,
+            'signature': signature,
+            'timestamp': timestamp,
+            'payload': payload,
+            'received_at': datetime.now(timezone.utc).isoformat() if 'datetime' in globals() else str(time.time())
+        }
+        _mock_received_webhooks.append(record)
+
+    return jsonify({
+        'received': True,
+        'event': event_type,
+        'delivery_id': delivery_id
+    }), 200
+
+
+@enterprise_bp.route('/webhooks/mock-receiver/history', methods=['GET'])
+def get_mock_webhook_history():
+    """Ambil riwayat event yang diterima mock-receiver."""
+    with _mock_webhooks_lock:
+        return jsonify({
+            'count': len(_mock_received_webhooks),
+            'history': list(_mock_received_webhooks)
+        })
+
+
+@enterprise_bp.route('/webhooks/mock-receiver/history', methods=['DELETE'])
+def clear_mock_webhook_history():
+    """Bersihkan riwayat mock-receiver."""
+    with _mock_webhooks_lock:
+        count = len(_mock_received_webhooks)
+        _mock_received_webhooks.clear()
+        return jsonify({'cleared': count})
+
+
+# ---------------------------------------------------------------------------
+# FastMCP REST Proxy Endpoints (Agent 17 -> Agent 18)
+# ---------------------------------------------------------------------------
+
+@enterprise_bp.route('/mcp/tools', methods=['GET'])
+def list_mcp_tools():
+    """Katalog 11 Perkakas Kanonikal FastMCP + BettaFish Tools via REST."""
+    tools = register_mcp_tools()
+    return jsonify({
+        'success': True,
+        'count': len(tools),
+        'tools': tools
+    })
+
+
+@enterprise_bp.route('/mcp/health', methods=['GET'])
+def get_mcp_health():
+    """Status kesehatan peladen FastMCP MiroFish."""
+    tools = register_mcp_tools()
+    return jsonify({
+        'status': 'healthy',
+        'service': 'FastMCP Server Proxy (Agent 17/18)',
+        'tools_count': len(tools),
+        'protocol': 'FastMCP / SSE / REST'
+    })
+
+
+@enterprise_bp.route('/mcp/invoke', methods=['POST'])
+def invoke_mcp_tool():
+    """Eksekusi perkakas MCP via HTTP REST dan pancarkan event MCP_TOOL_INVOKED."""
+    data = request.get_json(silent=True) or {}
+    tool_name = data.get('tool_name')
+    params = data.get('parameters', {})
+    broadcast_webhook = data.get('broadcast_webhook', True)
+
+    if not tool_name:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'INVALID_REQUEST', 'message': 'tool_name is required'}
+        }), 422
+
+    handlers = {
+        'create_simulation_project': handle_create_simulation_project,
+        'trigger_web_research': handle_trigger_web_research,
+        'build_knowledge_graph': handle_build_knowledge_graph,
+        'generate_agent_profiles': handle_generate_agent_profiles,
+        'calibrate_platform_algorithms': handle_calibrate_platform_algorithms,
+        'execute_parallel_simulation': handle_execute_parallel_simulation,
+        'fetch_simulation_stream': handle_fetch_simulation_stream,
+        'query_graph_insights': handle_query_graph_insights,
+        'generate_executive_report': handle_generate_executive_report,
+        'interview_simulation_agent': handle_interview_simulation_agent,
+        'audit_system_diagnostics': handle_audit_system_diagnostics,
+        'bettafish_analyze_polar_sentiment': handle_bettafish_analyze_polar_sentiment,
+        'bettafish_generate_c_level_report': handle_bettafish_generate_c_level_report,
+        'bettafish_assess_corporate_risk': handle_bettafish_assess_corporate_risk,
+        'list_projects': handle_list_projects,
+        'get_job_status': handle_get_job_status,
+        'get_simulation_report': handle_get_simulation_report,
+    }
+
+    handler = handlers.get(tool_name)
+    if not handler:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'TOOL_NOT_FOUND', 'message': f'Tool {tool_name} is not recognized'}
+        }), 404
+
+    try:
+        result = handler(**params)
+        
+        # Pancarkan webhook MCP_TOOL_INVOKED
+        if broadcast_webhook:
+            webhook_dispatcher.broadcast(
+                event_type='MCP_TOOL_INVOKED',
+                payload={'tool_name': tool_name, 'parameters': params, 'result': result},
+                async_mode=True
+            )
+
+        return jsonify({
+            'success': True,
+            'tool_name': tool_name,
+            'result': result,
+            'webhook_dispatched': broadcast_webhook
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'TOOL_EXECUTION_ERROR', 'message': str(e)}
+        }), 500
+
+
+# ---------------------------------------------------------------------------
+# OpenAPI 3.1.0 & Interactive Documentation Endpoints
+# ---------------------------------------------------------------------------
+
+@enterprise_bp.route('/openapi.json', methods=['GET'])
+def get_enterprise_openapi_json():
+    """Dokumen spesifikasi OpenAPI 3.1.0 lengkap format JSON."""
+    return jsonify(get_openapi_spec("dict"))
+
+
+@enterprise_bp.route('/openapi.yaml', methods=['GET'])
+def get_enterprise_openapi_yaml():
+    """Dokumen spesifikasi OpenAPI 3.1.0 lengkap format YAML."""
+    from flask import make_response
+    resp = make_response(get_openapi_spec("yaml"))
+    resp.headers["Content-Type"] = "application/x-yaml"
+    return resp
+
+
+@enterprise_bp.route('/docs', methods=['GET'])
+def get_enterprise_api_docs():
+    """Dokumentasi interaktif OpenAPI 3.1.0 Swagger UI."""
+    return get_swagger_ui_html(spec_url="/api/enterprise/openapi.json")
 
 
 @enterprise_bp.route('/contracts', methods=['GET'])

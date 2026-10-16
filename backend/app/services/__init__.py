@@ -161,6 +161,26 @@ from .bettafish_report_engine import (
     CorporateRiskAssessment,
     ExecutiveSummaryCLevel,
 )
+from .webhook_service import (
+    WebhookDeliveryAttempt,
+    WebhookEvent,
+    WebhookSubscription,
+    WebhookDispatchResult,
+    WebhookDLQStats,
+    WebhookDispatcher,
+    webhook_dispatcher,
+)
+from .openapi_engine import (
+    OPENAPI_310_SPEC,
+    OPENAPI_310_WEBHOOKS,
+    COMPONENT_SCHEMAS,
+    SIMULATION_PROJECT_SCHEMA,
+    WEBHOOK_SUBSCRIPTION_SCHEMA,
+    validate_json_schema_2020_12,
+    validate_request_schema,
+    get_openapi_spec,
+    get_swagger_ui_html,
+)
 
 __all__ = [
     'GraphitiService',
@@ -293,5 +313,21 @@ __all__ = [
     'SWOTAnalysis',
     'CorporateRiskAssessment',
     'ExecutiveSummaryCLevel',
+    'WebhookDeliveryAttempt',
+    'WebhookEvent',
+    'WebhookSubscription',
+    'WebhookDispatchResult',
+    'WebhookDLQStats',
+    'WebhookDispatcher',
+    'webhook_dispatcher',
+    'OPENAPI_310_SPEC',
+    'OPENAPI_310_WEBHOOKS',
+    'COMPONENT_SCHEMAS',
+    'SIMULATION_PROJECT_SCHEMA',
+    'WEBHOOK_SUBSCRIPTION_SCHEMA',
+    'validate_json_schema_2020_12',
+    'validate_request_schema',
+    'get_openapi_spec',
+    'get_swagger_ui_html',
 ]
 

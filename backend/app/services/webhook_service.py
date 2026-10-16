@@ -12,6 +12,7 @@ import hmac
 import json
 import time
 import uuid
+import random
 import hashlib
 import logging
 import threading
@@ -83,10 +84,21 @@ class WebhookDLQStats(BaseModel):
 class WebhookDispatcher:
     """High-performance distributed webhook dispatcher with HMAC signature, DLQ & Retries."""
 
-    def __init__(self, max_retries: int = 3, timeout_s: float = 3.0, backoff_factor: float = 0.2):
+    def __init__(
+        self,
+        max_retries: int = 3,
+        timeout_s: float = 3.0,
+        backoff_factor: float = 0.05,
+        max_backoff_s: float = 2.0,
+        initial_backoff_s: Optional[float] = None,
+        backoff_multiplier: float = 2.0
+    ):
         self.max_retries = max_retries
         self.timeout_s = timeout_s
-        self.backoff_factor = backoff_factor
+        self.backoff_factor = initial_backoff_s if initial_backoff_s is not None else backoff_factor
+        self.initial_backoff_s = self.backoff_factor
+        self.max_backoff_s = max_backoff_s
+        self.backoff_multiplier = backoff_multiplier
         self.dlq: List[WebhookEvent] = []
         self.subscriptions: Dict[str, WebhookSubscription] = {}
         self.latencies_ms: List[float] = []
@@ -94,9 +106,31 @@ class WebhookDispatcher:
         self.total_delivered: int = 0
         self.total_failed: int = 0
         self._lock = threading.RLock()
+        self._in_memory_test_mode: bool = False
+        self._simulated_latency_ms: float = 10.0
+        self._simulated_failure_rate: float = 0.0
+
+    def enable_in_memory_test_mode(self, simulated_latency_ms: float = 10.0, simulated_failure_rate: float = 0.0) -> None:
+        """Aktifkan mode simulasi in-memory untuk benchmark latensi dan deterministic testing."""
+        self._in_memory_test_mode = True
+        self._simulated_latency_ms = simulated_latency_ms
+        self._simulated_failure_rate = simulated_failure_rate
+
+    def disable_in_memory_test_mode(self) -> None:
+        """Nonaktifkan mode simulasi in-memory."""
+        self._in_memory_test_mode = False
+
+    def compute_backoff_delay(self, attempt: int) -> float:
+        """Hitung jeda exponential backoff dengan full jitter (AWS / RFC standard recommendation)."""
+        max_possible = min(self.max_backoff_s, self.backoff_factor * (self.backoff_multiplier ** (attempt - 1)))
+        return random.uniform(0.0, max_possible)
 
     @staticmethod
-    def generate_hmac_signature(payload_json: str, secret_key: str) -> str:
+    def generate_hmac_signature(
+        payload_json: Union[str, bytes],
+        secret_key: str,
+        timestamp: Optional[Union[str, int, float]] = None
+    ) -> str:
         """Menghasilkan tanda tangan HMAC-SHA256 untuk payload webhook."""
         secret_bytes = secret_key.encode('utf-8') if isinstance(secret_key, str) else secret_key
         payload_bytes = payload_json.encode('utf-8') if isinstance(payload_json, str) else payload_json
@@ -113,7 +147,7 @@ class WebhookDispatcher:
         payload_json: Union[str, bytes],
         secret_key: str,
         signature: str,
-        timestamp: Optional[str] = None,
+        timestamp: Optional[Union[str, int, float]] = None,
         tolerance_seconds: int = 300
     ) -> Tuple[bool, Optional[str]]:
         """
@@ -254,67 +288,107 @@ class WebhookDispatcher:
         last_status_code: Optional[int] = None
         start_time_all = time.perf_counter()
 
-        for attempt in range(1, self.max_retries + 1):
+        max_attempts = 1 + self.max_retries
+        for attempt in range(1, max_attempts + 1):
             t0 = time.perf_counter()
-            try:
-                req = urllib.request.Request(target_url, data=body, headers=headers, method="POST")
-                with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:
+            if self._in_memory_test_mode:
+                if self._simulated_latency_ms > 0:
+                    time.sleep(self._simulated_latency_ms / 1000.0)
+                if random.random() < self._simulated_failure_rate:
+                    duration_ms = (time.perf_counter() - t0) * 1000.0
+                    last_status_code = 500
+                    last_error = "Simulated delivery failure in in-memory test mode"
+                    event.attempts.append(WebhookDeliveryAttempt(
+                        attempt_num=attempt,
+                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        status_code=500,
+                        success=False,
+                        error=last_error,
+                        duration_ms=duration_ms
+                    ))
+                else:
                     duration_ms = (time.perf_counter() - t0) * 1000.0
                     total_duration_ms = (time.perf_counter() - start_time_all) * 1000.0
-                    
-                    if 200 <= resp.status < 300:
-                        event.status = "DELIVERED"
-                        event.attempts.append(WebhookDeliveryAttempt(
-                            attempt_num=attempt,
-                            timestamp=datetime.now(timezone.utc).isoformat(),
-                            status_code=resp.status,
-                            success=True,
-                            duration_ms=duration_ms
-                        ))
-                        with self._lock:
-                            self.total_delivered += 1
-                            self.latencies_ms.append(total_duration_ms)
-                            if len(self.latencies_ms) > 1000:
-                                self.latencies_ms = self.latencies_ms[-1000:]
-                        return WebhookDispatchResult(
-                            is_success=True,
-                            delivery_id=delivery_id,
-                            status_code=resp.status,
-                            attempts=attempt,
-                            duration_ms=total_duration_ms
-                        )
-                    else:
-                        last_status_code = resp.status
-                        last_error = f"HTTP {resp.status}"
-            except urllib.error.HTTPError as e:
-                duration_ms = (time.perf_counter() - t0) * 1000.0
-                last_status_code = e.code
-                last_error = f"HTTP {e.code}: {e.reason}"
-                event.attempts.append(WebhookDeliveryAttempt(
-                    attempt_num=attempt,
-                    timestamp=datetime.now(timezone.utc).isoformat(),
-                    status_code=e.code,
-                    success=False,
-                    error=last_error,
-                    duration_ms=duration_ms
-                ))
-                # Client errors (4xx) should not be retried as they indicate bad payload/auth
-                if 400 <= e.code < 500:
-                    break
-            except Exception as e:
-                duration_ms = (time.perf_counter() - t0) * 1000.0
-                last_error = str(e)
-                event.attempts.append(WebhookDeliveryAttempt(
-                    attempt_num=attempt,
-                    timestamp=datetime.now(timezone.utc).isoformat(),
-                    success=False,
-                    error=last_error,
-                    duration_ms=duration_ms
-                ))
+                    event.status = "DELIVERED"
+                    event.attempts.append(WebhookDeliveryAttempt(
+                        attempt_num=attempt,
+                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        status_code=200,
+                        success=True,
+                        duration_ms=duration_ms
+                    ))
+                    with self._lock:
+                        self.total_delivered += 1
+                        self.latencies_ms.append(total_duration_ms)
+                        if len(self.latencies_ms) > 1000:
+                            self.latencies_ms = self.latencies_ms[-1000:]
+                    return WebhookDispatchResult(
+                        is_success=True,
+                        delivery_id=delivery_id,
+                        status_code=200,
+                        attempts=attempt,
+                        duration_ms=total_duration_ms
+                    )
+            else:
+                try:
+                    req = urllib.request.Request(target_url, data=body, headers=headers, method="POST")
+                    with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:
+                        duration_ms = (time.perf_counter() - t0) * 1000.0
+                        total_duration_ms = (time.perf_counter() - start_time_all) * 1000.0
+                        
+                        if 200 <= resp.status < 300:
+                            event.status = "DELIVERED"
+                            event.attempts.append(WebhookDeliveryAttempt(
+                                attempt_num=attempt,
+                                timestamp=datetime.now(timezone.utc).isoformat(),
+                                status_code=resp.status,
+                                success=True,
+                                duration_ms=duration_ms
+                            ))
+                            with self._lock:
+                                self.total_delivered += 1
+                                self.latencies_ms.append(total_duration_ms)
+                                if len(self.latencies_ms) > 1000:
+                                    self.latencies_ms = self.latencies_ms[-1000:]
+                            return WebhookDispatchResult(
+                                is_success=True,
+                                delivery_id=delivery_id,
+                                status_code=resp.status,
+                                attempts=attempt,
+                                duration_ms=total_duration_ms
+                            )
+                        else:
+                            last_status_code = resp.status
+                            last_error = f"HTTP {resp.status}"
+                except urllib.error.HTTPError as e:
+                    duration_ms = (time.perf_counter() - t0) * 1000.0
+                    last_status_code = e.code
+                    last_error = f"HTTP {e.code}: {e.reason}"
+                    event.attempts.append(WebhookDeliveryAttempt(
+                        attempt_num=attempt,
+                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        status_code=e.code,
+                        success=False,
+                        error=last_error,
+                        duration_ms=duration_ms
+                    ))
+                    # Client errors (4xx) should not be retried as they indicate bad payload/auth
+                    if 400 <= e.code < 500:
+                        break
+                except Exception as e:
+                    duration_ms = (time.perf_counter() - t0) * 1000.0
+                    last_error = str(e)
+                    event.attempts.append(WebhookDeliveryAttempt(
+                        attempt_num=attempt,
+                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        success=False,
+                        error=last_error,
+                        duration_ms=duration_ms
+                    ))
 
-            if attempt < self.max_retries:
-                time.sleep(backoff)
-                backoff = min(backoff * 2.0, 5.0)
+            if attempt < max_attempts:
+                delay = self.compute_backoff_delay(attempt)
+                time.sleep(delay)
 
         # Seluruh percobaan gagal: masukkan ke Dead-Letter Queue (DLQ)
         total_duration_ms = (time.perf_counter() - start_time_all) * 1000.0
@@ -401,7 +475,13 @@ class WebhookDispatcher:
             if event_type:
                 items = [e for e in items if e.event_type == event_type]
             selected = items[offset:offset + limit]
-            return [e.model_dump() for e in selected]
+            result = []
+            for e in selected:
+                d = e.model_dump()
+                d["event"] = e.model_dump()
+                d["attempts"] = len(e.attempts)
+                result.append(d)
+            return result
 
     def replay_dlq_event(self, event_id: str) -> WebhookDispatchResult:
         """Coba kirim ulang event spesifik dari DLQ."""

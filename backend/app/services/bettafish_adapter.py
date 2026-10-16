@@ -144,15 +144,35 @@ class BettaFishAdapter:
     def assess_corporate_risk(
         self,
         text: str,
-        claim_polarities: Optional[List[float]] = None,
+        claim_polarities: Optional[Any] = None,
         virality_potential: float = 0.0
     ) -> CorporateRiskAssessment:
         """Menilai risiko korporat dan mendeteksi kondisi peringatan dini."""
         polar_res = self.polar_model.analyze(text)
-        polarities = claim_polarities or [polar_res.polarity_score]
+        
+        # Ekstraksi dan normalisasi polaritas klaim (bisa float atau dict {'claim': ..., 'polarity': ...})
+        normalized_polarities: List[float] = []
+        if claim_polarities:
+            for item in claim_polarities:
+                if isinstance(item, (int, float)):
+                    normalized_polarities.append(float(item))
+                elif isinstance(item, dict) and 'polarity' in item:
+                    normalized_polarities.append(float(item['polarity']))
+        
+        if not normalized_polarities:
+            normalized_polarities = [polar_res.polarity_score]
+        else:
+            # Jika teks bebas netral namun klaim memiliki polaritas kuat, selaraskan polaritas
+            avg_claim_polarity = sum(normalized_polarities) / len(normalized_polarities)
+            if polar_res.polarity_score == 0.0 or abs(avg_claim_polarity) > abs(polar_res.polarity_score):
+                polar_res.polarity_score = avg_claim_polarity
+                if avg_claim_polarity < -0.2:
+                    polar_res.emotions.anger = max(polar_res.emotions.anger, 0.75)
+                    polar_res.emotions.fear = max(polar_res.emotions.fear, 0.75)
+
         return self.insight_engine.assess_corporate_risk(
             sentiment=polar_res,
-            claim_polarities=polarities,
+            claim_polarities=normalized_polarities,
             virality_potential=virality_potential
         )
 

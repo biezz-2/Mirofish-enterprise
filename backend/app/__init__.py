@@ -146,6 +146,42 @@ def create_app(config_class=Config):
                 'frontend_vue': 3001
             }
         }
+
+    # OpenAPI 3.1.0 & Swagger UI documentation endpoints (Agent 18)
+    from .services.openapi_engine import get_openapi_spec, get_swagger_ui_html
+
+    @app.route('/openapi.json')
+    @app.route('/api/openapi.json')
+    def app_openapi_json():
+        from flask import jsonify
+        return jsonify(get_openapi_spec("dict"))
+
+    @app.route('/openapi.yaml')
+    @app.route('/api/openapi.yaml')
+    def app_openapi_yaml():
+        from flask import make_response
+        resp = make_response(get_openapi_spec("yaml"))
+        resp.headers["Content-Type"] = "application/x-yaml"
+        return resp
+
+    @app.route('/docs')
+    @app.route('/api/docs')
+    def app_api_docs():
+        return get_swagger_ui_html(spec_url="/api/openapi.json")
+
+    # FastMCP REST Proxy routes (Agent 17 -> Agent 18)
+    @app.route('/api/mcp/tools', methods=['GET'])
+    @app.route('/api/v1/mcp/tools', methods=['GET'])
+    def app_mcp_tools():
+        from mcp_server.tools import register_mcp_tools
+        tools = register_mcp_tools()
+        return {'success': True, 'tools': tools, 'count': len(tools)}
+
+    @app.route('/api/mcp/health', methods=['GET'])
+    @app.route('/api/v1/mcp/health', methods=['GET'])
+    def app_mcp_health():
+        from mcp_server.tools import register_mcp_tools
+        return {'status': 'healthy', 'service': 'FastMCP Server Proxy', 'tools_count': len(register_mcp_tools())}
     
     if should_log_startup:
         logger.info("MiroFish Backend 启动完成")
