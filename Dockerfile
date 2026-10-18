@@ -33,7 +33,7 @@ RUN npm ci \
 # 复制项目源码
 COPY --chown=appuser:appgroup . .
 
-EXPOSE 3000 5001
+EXPOSE 3000 8000
 
 # 同时启动前后端（开发模式）
 CMD ["npm", "run", "dev"]

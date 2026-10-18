@@ -1,0 +1,36 @@
+platform: "x"
+version: "2026-10"
+unified_brand: "X (formerly Twitter)"
+aliases:
+  - "twitter"
+  - "x_twitter"
+regimes:
+  regular:
+    max_chars: 280
+    media_limit: 4
+  premium:
+    max_chars: 25000
+    media_limit: 10
+timelines:
+  for_you:
+    in_network_ratio: 0.50
+    out_network_ratio: 0.50
+    recency_weight: 0.70
+    popularity_weight: 0.50
+    relevance_weight: 0.40
+    echo_chamber_strength: 0.50
+  following:
+    in_network_ratio: 1.00
+    out_network_ratio: 0.00
+    recency_weight: 0.95
+    popularity_weight: 0.05
+    relevance_weight: 0.10
+    echo_chamber_strength: 0.60
+weights:
+  p_like: 0.25
+  p_retweet: 0.35
+  p_reply: 0.25
+  p_dwell: 0.15
+safety:
+  toxic_threshold: 0.75
+  frequency_cap_author_per_slate: 2

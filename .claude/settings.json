@@ -2,19 +2,34 @@
   "hooks": {
     "PreToolUse": [
       {
-        "tools": ["Bash"],
-        "script": "hooks/block-blind-installs.sh"
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/block-blind-installs.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
-        "tools": ["Edit", "Write", "WriteFile", "EditFile", "ReplaceWithGitMergeDiff"],
-        "script": "hooks/verify-after-edit.sh"
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/verify-after-edit.sh"
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "script": "hooks/epistemic-audit.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/epistemic-audit.sh"
+          }
+        ]
       }
     ]
   }

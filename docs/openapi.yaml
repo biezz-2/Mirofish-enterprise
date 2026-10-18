@@ -15,9 +15,9 @@ info:
     name: Apache-2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 servers:
-- url: http://127.0.0.1:5001
+- url: http://127.0.0.1:8000
   description: Local Development Server
-- url: http://localhost:5001
+- url: http://localhost:8000
   description: Localhost Mirror
 tags:
 - name: System & Health

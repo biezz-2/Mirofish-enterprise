@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional, Callable
 from ..config import Config
 from ..utils.logger import get_logger
-from ..utils.llm_client import LLMClient
+from ..utils import llm_client as llm_client_module
 from ..utils.file_parser import split_text_into_chunks
 from ..models.graphrag_ontology import (
     to_pascal_case,
@@ -21,6 +21,7 @@ from ..models.graphrag_ontology import (
     SemanticChunk,
 )
 from .adaptive_chunker import AdaptiveSemanticChunker
+from .embedding_service import configured_embedding_service
 
 logger = get_logger("mirofish.local_graph")
 
@@ -33,6 +34,14 @@ class LocalGraphService:
         graphs_dir = os.path.join(upload_folder, "graphs")
         os.makedirs(graphs_dir, exist_ok=True)
         return graphs_dir
+
+    @classmethod
+    def get_sqlite_connection(cls, db_path: Optional[str] = None):
+        """Koneksi SQLite terstandar dengan penegakan PRAGMA journal_mode=WAL dan PRAGMA synchronous=NORMAL."""
+        from ..utils.sqlite_engine import get_sqlite_connection
+        if db_path is None:
+            db_path = os.path.join(cls.get_graphs_dir(), "local_graphs.sqlite3")
+        return get_sqlite_connection(db_path)
 
     @classmethod
     def get_graph_file_path(cls, graph_id: str) -> str:
@@ -131,10 +140,14 @@ class LocalGraphService:
         graph_id = graph_id or f"mirofish_{uuid.uuid4().hex[:16]}"
         logger.info(f"Memulai ekstraksi graf lokal untuk {graph_id}...")
 
+        # Sanitasi PII (UU PDP No. 27/2022) sebelum ekstraksi graf lokal
+        from .pii_scrubber import PIIScrubber
+        text = PIIScrubber.scrub(text)
+
         if progress_callback:
             progress_callback("Menyiapkan dokumen dan skema ontologi...", 0.1)
 
-        llm_client = LLMClient()
+        llm_client = llm_client_module.LLMClient()
 
         # Ekstrak ringkasan tipe entitas dan relasi dari ontologi
         entity_types_info = []
@@ -187,6 +200,30 @@ class LocalGraphService:
             ]
 
         logger.info(f"Teks dibagi menjadi {len(semantic_chunks)} potongan adaptif untuk ekstraksi graf.")
+
+        # Optional semantic pre-embedding: bounded, resumable, and disabled
+        # unless an embedding credential is explicitly configured. The LLM
+        # extraction contract remains unchanged; vectors are cached for later
+        # retrieval/graph enrichment and make progress visible in logs.
+        embedding_service = None
+        if os.environ.get("ENABLE_GRAPH_PREEMBEDDING", "false").lower() in {"1", "true", "yes"}:
+            embedding_service = configured_embedding_service(Config)
+        if embedding_service:
+            def embedding_progress(completed: int, total: int, cached: int) -> None:
+                ratio = completed / total if total else 1.0
+                if progress_callback:
+                    progress_callback(
+                        f"Embedding {completed}/{total} (cache {cached})...",
+                        0.10 + ratio * 0.05,
+                    )
+
+            embedding_service.embed(
+                [chunk_obj.text for chunk_obj in semantic_chunks],
+                progress=embedding_progress,
+            )
+            logger.info("Pre-embedding completed for %d chunks", len(semantic_chunks))
+        else:
+            logger.info("Pre-embedding skipped: EMBEDDING_API_KEY/NINEROUTER_KEY is not configured")
 
         all_raw_entities: List[Dict[str, Any]] = []
         all_raw_relations: List[Dict[str, Any]] = []

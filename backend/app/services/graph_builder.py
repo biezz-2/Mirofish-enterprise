@@ -97,6 +97,10 @@ class GraphBuilderService:
         Returns:
             任务ID
         """
+        # Sanitasi PII (UU PDP No. 27/2022) pada seed teks graf
+        from .pii_scrubber import PIIScrubber
+        text = PIIScrubber.scrub(text)
+
         # 创建任务
         task_id = self.task_manager.create_task(
             task_type="graph_build",

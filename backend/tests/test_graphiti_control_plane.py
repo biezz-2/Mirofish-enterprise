@@ -326,3 +326,13 @@ def test_graphiti_adapter_integration():
     ctx = adapter.get_entity_context("integ_proj", "AgentA")
     assert ctx["exists"] is True
     assert ctx["connected_edges_count"] == 1
+
+
+def test_graphiti_service_app_health():
+    """Validasi ASGI app pada app.services.graphiti_service memiliki route /health."""
+    from app.services.graphiti_service import app
+    client = TestClient(app)
+    resp = client.get("/health")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "healthy", "service": "graphiti"}
+

@@ -20,6 +20,10 @@ def init_db(database_uri: str):
         pool_pre_ping=True,
         connect_args=connect_args
     )
+    if "sqlite" in database_uri:
+        from ..utils.sqlite_engine import configure_sqlite_engine
+        configure_sqlite_engine(_engine)
+
     Base.metadata.create_all(_engine)
     _SessionFactory = scoped_session(sessionmaker(bind=_engine, expire_on_commit=False))
     return _engine

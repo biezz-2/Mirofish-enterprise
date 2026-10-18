@@ -375,12 +375,10 @@ def test_seven_platform_behaviors_and_scoring():
         assert abs(act_sum - 1.0) < 0.05, f"Probabilitas aksi platform {p} ({act_sum}) tidak mendekati 1.0"
         assert all(0 <= h <= 23 for h in behavior.peak_hours), f"Peak hours {p} tidak valid: {behavior.peak_hours}"
 
-    # Platform tidak dikenal harus memicu ValueError
-    try:
-        get_platform_characteristics("linkedin")
-        assert False, "Platform 'linkedin' yang belum didukung harus memicu ValueError"
-    except ValueError as e:
-        assert "tidak dikenal" in str(e)
+    # LinkedIn adalah bagian dari kontrak tujuh platform kanonik.
+    linkedin = get_platform_characteristics("linkedin")
+    assert linkedin is not None
+    assert linkedin["display_name"].lower().startswith("linkedin")
 
     # 2. Uji compute_feed_score
     agent = {

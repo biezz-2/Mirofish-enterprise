@@ -182,7 +182,11 @@ class CaMeLPromptShield:
                 # Netralisasi pola berbahaya
                 text = re.sub(pattern, f"[REDACTED_{tag}]", text, flags=re.IGNORECASE)
 
-        # 5. Netralisasi HTML tags & special characters
+        # 5. Netralisasi PII sesuai UU PDP No. 27/2022
+        from .pii_scrubber import PIIScrubber
+        text = PIIScrubber.scrub(text)
+
+        # 6. Netralisasi HTML tags & special characters
         text = html.escape(text, quote=True)
 
         return text, detected

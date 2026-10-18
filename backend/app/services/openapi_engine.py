@@ -513,8 +513,8 @@ OPENAPI_310_SPEC: Dict[str, Any] = {
         }
     },
     "servers": [
-        {"url": "http://127.0.0.1:5001", "description": "Local Development Server"},
-        {"url": "http://localhost:5001", "description": "Localhost Mirror"}
+        {"url": "http://127.0.0.1:8000", "description": "Local Development Server"},
+        {"url": "http://localhost:8000", "description": "Localhost Mirror"}
     ],
     "tags": [
         {"name": "System & Health", "description": "Status kesehatan peladen dan diagnosis"},

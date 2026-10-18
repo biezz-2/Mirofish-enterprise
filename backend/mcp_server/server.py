@@ -56,7 +56,7 @@ logger = logging.getLogger("mirofish.fastmcp_server")
 
 DEFAULT_PORT = int(os.environ.get("MCP_SERVER_PORT", os.environ.get("PORT", "8080")))
 DEFAULT_HOST = os.environ.get("MCP_SERVER_HOST", "0.0.0.0")
-BACKEND_API_URL = os.environ.get("BACKEND_API_URL", "http://localhost:5001").rstrip("/")
+BACKEND_API_URL = os.environ.get("BACKEND_API_URL", "http://localhost:8000").rstrip("/")
 
 
 def _http_request(method: str, path: str, data: Optional[Dict[str, Any]] = None, timeout: float = 2.5) -> Optional[Dict[str, Any]]:
@@ -133,6 +133,9 @@ def create_fastmcp_app(
 
     async def health_endpoint(request: Request) -> JSONResponse:
         diag = handle_audit_system_diagnostics(include_vault=True, include_backends=True)
+        diag["status"] = "healthy"
+        diag["service"] = "mirofish-mcp-server"
+        diag["transport"] = "streamable-http"
         diag["fastmcp_port"] = p
         diag["oauth_required"] = require_auth
         return JSONResponse(diag)
@@ -339,10 +342,10 @@ class MCPServer:
             else:
                 res = {
                     "job_id": job_id,
-                    "runner_status": "running",
-                    "current_round": 12,
-                    "progress_percent": 24.0,
-                    "source": "mock_fallback"
+                    "runner_status": "unavailable",
+                    "status": "unavailable",
+                    "error": "backend_error",
+                    "source": "unavailable"
                 }
 
         elif name == "get_simulation_report":
@@ -358,14 +361,12 @@ class MCPServer:
                 res = backend_res.get("data", {})
             else:
                 res = {
-                    "project_id": proj_id or "proj-default",
-                    "simulation_id": sim_id or "sim-default",
-                    "status": "completed",
-                    "summary": "Analisis opini publik dan pergeseran sentimen simulasi",
-                    "consensus_score": 0.82,
-                    "source": "mock_fallback"
+                    "project_id": proj_id,
+                    "simulation_id": sim_id,
+                    "status": "unavailable",
+                    "error": "backend_error",
+                    "source": "unavailable"
                 }
-
         elif name == "search_knowledge_graph":
             proj_id = args.get("project_id", "")
             query = args.get("query", "")
@@ -377,10 +378,14 @@ class MCPServer:
 
         elif name == "create_simulation_job":
             proj_id = args.get("project_id", "proj-default")
-            platforms = []
-            if args.get("enable_twitter", True): platforms.append("twitter")
-            if args.get("enable_reddit", True): platforms.append("reddit")
-            res = handle_create_simulation_project(project_id=proj_id, name=f"Sim-{proj_id}", target_platforms=platforms)
+            raw_platforms = args.get("platforms")
+            from app.services.simulation_manager import normalize_platforms
+            resolved_platforms = normalize_platforms(
+                raw_platforms,
+                enable_twitter=args.get("enable_twitter", True),
+                enable_reddit=args.get("enable_reddit", True),
+            )
+            res = handle_create_simulation_project(project_id=proj_id, name=f"Sim-{proj_id}", target_platforms=resolved_platforms)
 
         elif name == "start_simulation":
             sim_id = args.get("simulation_id", "sim-default")
@@ -388,7 +393,13 @@ class MCPServer:
 
         elif name == "stop_simulation":
             sim_id = args.get("simulation_id", "sim-default")
-            res = {"simulation_id": sim_id, "runner_status": "stopped", "source": "mock_fallback"}
+            res = {
+                "simulation_id": sim_id,
+                "runner_status": "unavailable",
+                "status": "unavailable",
+                "error": "backend_error",
+                "source": "unavailable"
+            }
 
         else:
             res = {"status": "ok", "tool": name, "echo_args": args}

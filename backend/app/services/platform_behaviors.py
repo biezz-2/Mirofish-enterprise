@@ -50,10 +50,30 @@ PLATFORM_CHARACTERISTICS: Dict[str, dict] = {
         "viral_threshold": 5000, "max_content_length": 500,
         "interaction_style": "conversational", "base_activity_multiplier": 0.8,
     },
+    "youtube": {
+        "display_name": "YouTube", "recency_weight": 0.3, "popularity_weight": 0.7,
+        "relevance_weight": 0.6, "echo_chamber_strength": 0.6,
+        "viral_threshold": 25000, "max_content_length": 5000,
+        "interaction_style": "video_broadcast", "base_activity_multiplier": 0.9,
+    },
+    "linkedin": {
+        "display_name": "LinkedIn", "recency_weight": 0.4, "popularity_weight": 0.6,
+        "relevance_weight": 0.7, "echo_chamber_strength": 0.4,
+        "viral_threshold": 2000, "max_content_length": 3000,
+        "interaction_style": "professional_networking", "base_activity_multiplier": 0.85,
+    },
 }
 
+CANONICAL_PLATFORMS = (
+    "instagram",
+    "linkedin",
+    "reddit",
+    "threads",
+    "tiktok",
+    "twitter",
+    "youtube",
+)
 DEFAULT_PLATFORMS = ["twitter", "reddit"]  # kompatibilitas mundur
-
 def get_platform_characteristics(platform: str) -> dict:
     if platform not in PLATFORM_CHARACTERISTICS:
         raise ValueError(f"Platform tidak dikenal: {platform}")
@@ -95,12 +115,23 @@ class PlatformBehavior:
             self.content_style = "naratif panjang, personal, keluarga/lokal"
             self.demographic_bias = {"age": "30-60", "network": "kenalan nyata"}
             self.peak_hours = [8, 13, 20]
+        elif self.platform == "youtube":
+            self.agent_type_distribution = {"individual": 0.65, "public_figure": 0.25, "institutional": 0.10}
+            self.action_probabilities = {"post": 0.1, "comment": 0.4, "like": 0.4, "share": 0.1}
+            self.content_style = "naratif deskriptif video, analitis, opini terperinci"
+            self.demographic_bias = {"age": "18-50", "consumption": "video_broadcast"}
+            self.peak_hours = [14, 18, 20, 22]
+        elif self.platform == "linkedin":
+            self.agent_type_distribution = {"individual": 0.50, "public_figure": 0.20, "institutional": 0.30}
+            self.action_probabilities = {"post": 0.25, "comment": 0.35, "like": 0.30, "share": 0.10}
+            self.content_style = "profesional, berorientasi karir/industri, formal"
+            self.demographic_bias = {"age": "22-60", "network": "profesional_korporat"}
+            self.peak_hours = [8, 9, 12, 17]
         else:  # x, instagram, threads — turunan parametrik
             self.agent_type_distribution = {"individual": 0.65, "public_figure": 0.25, "institutional": 0.1}
             self.action_probabilities = {"post": 0.25, "repost": 0.25, "comment": 0.25, "like": 0.25}
             self.content_style = "percakapan teks ringan"
             self.peak_hours = [9, 18, 21]
-
 def get_platform_behavior(platform: str) -> PlatformBehavior:
     return PlatformBehavior(platform=platform, characteristics=get_platform_characteristics(platform))
 

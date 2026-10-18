@@ -1,26 +1,38 @@
-# Validation Report — audit-board-mirofish-i18n-cron/p01-audit
-Verdict: CONDITIONAL
-Date: 2026-10-16T17:20:00Z
-
-- Reviewer context: independent subagent (cron audit session) — yes
+# Validation Report — mirofish-i18n/p01-audit
+- Reviewer context: independent scheduled audit context — yes
+- Repository: `biezz-2/Mirofish-enterprise` (local checkout)
+- Jules session: `3767768341149407718`
+- Audit timestamp: 2026-10-17 (current cron run)
 - Verdict: CONDITIONAL
 
-## Summary
-Audit pemantauan berkala sesi Jules 3767768341149407718 dan validasi implementasi lokalisasi i18n 3 bahasa (zh, en, id) Mirofish Enterprise (repo: `biezz-2/Mirofish-enterprise`).
-
 ## Checklist
-- V1 Spec completeness: PARTIAL — Kamus 3 bahasa (`locales/zh.json`, `locales/en.json`, `locales/id.json`) tersinkronisasi 859 leaf keys dengan 100% key parity (0 missing, 0 extra). Terdeteksi 190 baris aktif string literal Mandarin non-komentar di 13 file frontend (`frontend/src/views/`, `frontend/src/components/`, `frontend/src/api/`). Sesi Jules 3767768341149407718 berstatus 'stable' (agentMessaged @ 2026-10-15T11:04:39.788410Z) tanpa PR/code diff baru (0 files changed); Jules terhenti akibat syntax error pada batch refactor dan menunggu izin/arahan pengguna untuk strategi perbaikan manual/skrip per-file secara bertahap.
-- V2 Logic correctness: MET — Konfigurasi fallback multi-locale `['en', 'zh']` aktif di `frontend/src/i18n/index.js`. Konsistensi interpolasi parameter `{param}` identik (0 mismatch) pada seluruh 859 leaf keys di ketiga kamus bahasa.
-- V3 Security: MET — Vue template auto-escaping aktif, tidak ada injeksi `v-html` berbahaya pada i18n, tidak ada rahasia/kredensial pada file locales JSON.
-- V4 Standards: MET — Sesuai standar Vue I18n v11 (Composition API `createI18n({ legacy: false, fallbackLocale: ['en', 'zh'] })`, https://vue-i18n.intlify.dev/), format JSON valid 100% (RFC 8259), Vite v7.3.6 production build standard terpenuhi.
-- V5 Performance: MET — Build Vite production sukses (`dist/index.html` 1.06 kB, `dist/assets/index-D_5VPj7v.js` 602.34 kB, gzip 194.86 kB, `dist/assets/index-Dlr-4OZe.css` 156.10 kB, gzip 23.73 kB) dalam 5.98s.
-- V6 Regression: MET — Frontend production build lulus 100% tanpa syntax error, compile failure, atau broken imports.
-- V7 Code quality: PARTIAL — Masih terdapat 190 baris hardcoded string Mandarin non-komentar di 13 file frontend (`views/Process.vue` 73 baris, `Step4Report.vue` 52 baris, `GraphPanel.vue` 14 baris, `Step2EnvSetup.vue` 13 baris, `HistoryDatabase.vue` 11 baris, `Step3Simulation.vue` 11 baris, dll) yang belum diekstrak ke `$t(...)`/`t(...)`. Sesi Jules terhenti di status 'stable' tanpa menghasilkan commit/PR baru.
-- V8 Handoff & docs: MET — Status sesi Jules terdokumentasi, audit trail tercatat di board `.state/boards/audit-board-mirofish-i18n-cron.json`, registry `.state/registry/boards.json`, dan laporan validasi ini.
+- V1 Spec completeness: PARTIAL — `locales/zh.json`, `locales/en.json`, and `locales/id.json` exist and parse as JSON. The requested full extraction is not complete: `rg` found 839 lines containing Chinese characters under `frontend/src`, including active UI text in `views/Process.vue` and other components. Exact locale leaf-key parity was not established by the available quick check; top-level structures differ when compared directly.
+- V2 Logic correctness: MET for current tree — `npm run build` completed successfully with exit code 0; 707 modules transformed. No new i18n implementation diff was produced by Jules.
+- V3 Security: MET — no new auth, data, or secret exposure found in this audit; no locale secret values observed.
+- V4 Standards: MET — current official Vue I18n documentation was checked: Composition API guidance at https://vue-i18n.intlify.dev/guide/advanced/composition and getting-started guidance at https://vue-i18n.intlify.dev/guide/essentials/started, accessed during this audit. The repository declares `vue-i18n` `^11.3.0` and uses `createI18n`; official guidance recommends Composition API mode for current versions. Vite build uses the repository's declared dependency range; installed output reports Vite `7.3.6`.
+- V5 Performance: PARTIAL — build succeeds, but Vite reports a 711.33 kB minified JS chunk and dynamic/static import overlap for `src/store/pendingUpload.js`.
+- V6 Regression: MET — `npm run build` succeeded in 6.13s. Warnings only; no compile or import failure.
+- V7 Code quality: PARTIAL — hardcoded Mandarin UI strings remain. Jules reports prior automated refactor attempts caused syntax/regex errors and no verified PR/code diff exists.
+- V8 Handoff & docs: MET — this report and the audit board are updated. Jules is stable and waiting for permission to retry a safer per-file approach.
+
+## Evidence
+- Jules state: `stable`; last activity `agentMessaged`; timestamp `2026-10-15T11:04:39.788410Z`; no PR/code diff reported.
+- Locale files: `locales/zh.json`, `locales/en.json`, `locales/id.json` all parse successfully. Direct top-level comparison reports 20 sections each but not identical serialized structures; exact recursive leaf parity remains unverified.
+- Frontend build: `npm run build` in `frontend/` — exit code 0, 707 modules, Vite 7.3.6, 6.13s.
+- Hardcoded-string scan: `rg -n --glob '*.vue' '[\\x{4e00}-\\x{9fff}]' frontend/src | wc -l` returned 839 matching lines, including `frontend/src/views/Process.vue` and other UI components. This count includes comments and requires manual classification, but confirms unresolved Chinese literals.
 
 ## Findings
-- [F-001] (MAJOR) Masih terdapat 190 baris aktif string literal Mandarin non-komentar di 13 file frontend (`views/Process.vue` 73 baris, `Step4Report.vue` 52 baris, `GraphPanel.vue` 14 baris, `Step2EnvSetup.vue` 13 baris, `HistoryDatabase.vue` 11 baris, `Step3Simulation.vue` 11 baris, `Home.vue` 5 baris, `Step1GraphBuild.vue` 3 baris, `Step5Interaction.vue` 3 baris, dll). Belum diekstrak ke binding `$t(...)` dan `t(...)`.
-- [F-002] (MAJOR) Sesi Jules 3767768341149407718 berstatus 'stable' (agentMessaged @ 2026-10-15T11:04:39.788410Z) tanpa PR/branch baru (0 files changed). Upaya refactor otomatis mengalami syntax error, dan Jules menunggu keputusan/izin pengguna untuk strategi modifikasi per-file.
+- [F-001] (MAJOR) Hardcoded Chinese UI strings remain in the frontend and are not fully routed through `$t(...)`/`t(...)`. Evidence: 839 matching Vue lines, with active literals visible in `frontend/src/views/Process.vue`. Suggested fix: refactor one Vue file at a time, update all three locale files, and build after each batch.
+- [F-002] (MAJOR) Jules session `3767768341149407718` is stable with no PR/code diff. Last message says previous refactor attempts caused syntax/regex errors and requests permission for a safer per-file retry. Suggested fix: approve a manually scoped per-file implementation or assign the work to a fresh implementation agent.
+- [F-003] (MINOR) Vite emits a large-chunk warning and dynamic/static import overlap for `pendingUpload.js`. Suggested fix: defer unless the performance budget requires it; split the chunk and normalize the import strategy.
+- [F-004] (MAJOR) Exact recursive key parity across `zh.json`, `en.json`, and `id.json` was not proven by this run; the direct serialized top-level comparison was unequal. Suggested fix: run a recursive key-set comparison and block validation on any missing or extra key.
 
 ## Decision
-CONDITIONAL. Paritas kamus 100% (859/859 leaf keys) dan build Vite v7.3.6 lulus verifikasi. Terdapat temuan [F-001] MAJOR (190 baris hardcoded string Mandarin di 13 file frontend) dan [F-002] MAJOR (Jules sesi terhenti di status stable meminta persetujuan pengguna untuk reapply perbaikan secara bertahap per-file).
+CONDITIONAL. No BLOCKER was found, but F-001, F-002, and F-004 remain MAJOR. Keep the validation card `IN_PROGRESS`; do not mark the phase `VALIDATED` until hardcoded UI strings are extracted, recursive dictionary key parity is proven, and a verified PR/code diff exists. Monitoring remains active.
+
+## Cron Recheck — 2026-10-18 12:02 WIB
+- Sesi Jules 3767768341149407718 tetap `stable` (`lastActivity=agentMessaged` @ `2026-10-15T11:04:39.788410Z`), 0 diff, tidak ada PR i18n.
+- Paritas kamus: 100% (898/898 leaf keys identik di `zh.json`, `en.json`, `id.json`).
+- Build Vite frontend: SUCCESS (Vite v7.3.6, exit code 0, 709 modul terkompilasi, bundle JS 721.46 kB).
+- Hardcoded strings: 841 baris di 15 file Vue (Process.vue: 190, Step4Report.vue: 175, HistoryDatabase.vue: 124, GraphPanel.vue: 84, Step2EnvSetup.vue: 75).
+- Verdict: CONDITIONAL (tidak ada perubahan status; F-001 & F-002 terbuka; card tetap IN_PROGRESS). Delivery disupresi via SILENT.

@@ -2,7 +2,7 @@ import service from './index'
 
 /**
  * 创建模拟
- * @param {Object} data - { project_id, graph_id?, enable_twitter?, enable_reddit? }
+ * @param {Object} data - { project_id, graph_id?, enable_twitter?, enable_reddit?, platforms? }
  */
 export const createSimulation = (data) => {
   return service.post('/api/simulation/create', data)
@@ -35,7 +35,7 @@ export const getSimulation = (simulationId) => {
 /**
  * 获取模拟的 Agent Profiles
  * @param {string} simulationId
- * @param {string} [platform] - 'reddit' | 'twitter'（省略时由后端根据模拟配置自动选择）
+ * @param {string} [platform] - 'reddit' | 'twitter' | 'instagram' | 'linkedin' | 'threads' | 'tiktok' | 'youtube'（省略时由后端根据模拟配置自动选择）
  */
 export const getSimulationProfiles = (simulationId, platform) => {
   const params = platform ? { platform } : {}
@@ -45,7 +45,7 @@ export const getSimulationProfiles = (simulationId, platform) => {
 /**
  * 实时获取生成中的 Agent Profiles
  * @param {string} simulationId
- * @param {string} [platform] - 'reddit' | 'twitter'（省略时由后端根据模拟配置自动选择）
+ * @param {string} [platform] - 'reddit' | 'twitter' | 'instagram' | 'linkedin' | 'threads' | 'tiktok' | 'youtube'（省略时由后端根据模拟配置自动选择）
  */
 export const getSimulationProfilesRealtime = (simulationId, platform) => {
   const params = platform ? { platform } : {}

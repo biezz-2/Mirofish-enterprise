@@ -93,7 +93,11 @@ class TextProcessor:
         # 移除行首行尾空白
         lines = [line.strip() for line in text.split('\n')]
         text = '\n'.join(lines)
-        
+
+        # Sanitasi PII (UU PDP No. 27/2022) pada input ingest Step 1
+        from .pii_scrubber import PIIScrubber
+        text = PIIScrubber.scrub(text)
+
         return text.strip()
     
     @staticmethod

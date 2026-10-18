@@ -20,10 +20,12 @@ def get_graph_adapter() -> GraphMemoryAdapter:
         control_plane_url = getattr(Config, "GRAPHITI_CONTROL_PLANE_URL", "http://127.0.0.1:8080")
         falkordb_host = getattr(Config, "FALKORDB_HOST", "127.0.0.1")
         falkordb_port = int(getattr(Config, "FALKORDB_PORT", 6379))
+        falkordb_password = getattr(Config, "REDIS_PASSWORD", "")
         _adapter_instance = GraphitiAdapter(
             control_plane_url=control_plane_url,
             falkordb_host=falkordb_host,
-            falkordb_port=falkordb_port
+            falkordb_port=falkordb_port,
+            falkordb_password=falkordb_password
         )
     else:
         api_key = getattr(Config, "ZEP_API_KEY", "") or "default_zep_key"

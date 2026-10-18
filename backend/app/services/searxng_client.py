@@ -92,7 +92,7 @@ class SearXNGClient:
         rate_limit_burst: float = 20.0,
         cache_ttl_s: float = 300.0,
     ):
-        self.base_url = (base_url or os.environ.get("SEARXNG_URL", "http://127.0.0.1:8888")).rstrip("/")
+        self.base_url = (base_url or os.environ.get("SEARXNG_ENDPOINT") or os.environ.get("SEARXNG_URL") or os.environ.get("SEARCHXNG_URL", "http://127.0.0.1:8888")).rstrip("/")
         self.timeout_s = timeout_s
         self.cache_ttl_s = cache_ttl_s
         self.rate_limiter = TokenBucketRateLimiter(rate=rate_limit_qps, capacity=rate_limit_burst)

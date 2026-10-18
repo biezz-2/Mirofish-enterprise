@@ -253,7 +253,7 @@ class WebhookDispatcher:
             event.target_url = target_url
         else:
             event = target_or_event
-            target_url = event.target_url or "http://127.0.0.1:5001/api/webhooks/mock"
+            target_url = event.target_url or "http://127.0.0.1:8000/api/webhooks/mock"
 
         with self._lock:
             self.total_dispatched += 1

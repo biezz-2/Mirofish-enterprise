@@ -24,7 +24,7 @@
 import { ref, onMounted } from 'vue'
 
 const services = ref([
-  { name: 'Backend Flask', status: 'healthy', detail: 'Port 5001 • REST Active' },
+  { name: 'Backend Flask', status: 'healthy', detail: 'Port 8000 • REST Active' },
   { name: 'SQLite DB', status: 'healthy', detail: 'WAL Mode • Synchronous' },
   { name: 'Graph Memory', status: 'healthy', detail: 'Zep / Graphiti Adapter' },
   { name: 'SearXNG Privat', status: 'healthy', detail: 'Docker Local • No Tracking' },

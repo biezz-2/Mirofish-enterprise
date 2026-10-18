@@ -2,7 +2,7 @@
 
 <img src="./static/image/MiroFish_logo_compressed.jpeg" alt="MiroFish Enterprise Logo" width="70%"/>
 
-# 🌊 MiroFish Enterprise (v3.1)
+# 🌊 MiroFish Enterprise (v3.6.0-enterprise)
 ### Autonomous Swarm Intelligence & Multi-Agent Predictive Simulation Sandbox
 *Simulate high-fidelity parallel societies, forecast public opinion dynamics, and test macro decisions with zero risk.*
 
@@ -11,7 +11,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B%20LTS-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![PM2 Ready](https://img.shields.io/badge/PM2-Cluster%20%26%20Fork-2B037A?style=for-the-badge&logo=pm2&logoColor=white)](https://pm2.keymetrics.io/)
 [![Docker Ready](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](./LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](./LICENSE)
 
 ---
 
@@ -194,7 +194,7 @@ Configure your `.env` variables:
 DEVELOPMENT_MODE=true                # Set true to bypass external API checks during local testing
 SECRET_KEY=mirofish-enterprise-secret-key-2026
 FLASK_DEBUG=false
-PORT=5001
+PORT=8000
 
 # LLM Gateway (OpenAI-compatible)
 LLM_API_KEY=your-api-key-here
@@ -247,7 +247,7 @@ pm2 status
 
 | ID | Name | Mode | Status | Address |
 | :--- | :--- | :--- | :--- | :--- |
-| `0` | **`mirofish-backend`** | fork | **online** | `http://localhost:5001` |
+| `0` | **`mirofish-backend`** | fork | **online** | `http://localhost:8000` |
 | `1` | **`mirofish-frontend`** | cluster | **online** | `http://localhost:3000` |
 | `2` | **`mirofish-mcp`** | fork | **online** | `stdio / JSON-RPC` |
 
@@ -257,11 +257,11 @@ pm2 status
 
 ```bash
 # Backend Health Check
-curl http://127.0.0.1:5001/health
-# Response: {"database":"sqlite","multi_platform":true,"searxng":true,"service":"MiroFish Enterprise Backend (v3.1)","status":"healthy"}
+curl http://127.0.0.1:8000/health
+# Response: {"status":"healthy","service":"mirofish-backend","version":"3.6.0-enterprise","port":8000}
 
 # Platform Configuration Matrix
-curl http://127.0.0.1:5001/api/platforms
+curl http://127.0.0.1:8000/api/platforms
 
 # Frontend Web Interface
 curl -I http://127.0.0.1:3000/
@@ -319,13 +319,14 @@ All architectural specs, mathematical formulas, and runbooks are available in th
 
 ## 👥 Credits & Authorship
 
+- **Upstream MiroFish**: [666ghj/MiroFish](https://github.com/666ghj/MiroFish) (AGPL-3.0)
+- **Simulation Engine**: [CAMEL-AI OASIS](https://github.com/camel-ai/oasis) (Apache-2.0)
 - **Project Lead & Maintainer**: **[biezz-2](https://github.com/biezz-2)**
 - **Autonomous System Co-Author**: **[claude-biezz-2](https://github.com/apps/claude-code)**
-- **Foundation Engine**: Supported by **[CAMEL-AI OASIS](https://github.com/camel-ai/oasis)** (Open Agent Social Interaction Simulations).
 - **Technology Stack**: Python 3.13, Flask, SQLAlchemy, Vite, Vue 3, Tailwind CSS, PM2, SearXNG, Zep Cloud, Neo4j.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](./LICENSE).
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](./LICENSE) file for details.

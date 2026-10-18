@@ -12,8 +12,8 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
-    open: true,
+    port: 3001,
+    open: false,
     allowedHosts: true,
     headers: {
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
@@ -23,7 +23,22 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/openapi.json': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/openapi.yaml': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false
       }

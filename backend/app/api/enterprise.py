@@ -110,7 +110,7 @@ def get_enterprise_status():
             'searxng': 8888,
             'graphiti': 8090,
             'mcp_server': 8091,
-            'backend_api': 5001,
+            'backend_api': 8000,
             'frontend_vue': 3001
         },
         'orchestrator': {
@@ -1163,7 +1163,15 @@ def invoke_mcp_tool():
         }), 404
 
     try:
-        result = handler(**params)
+        # Filter parameters to match handler's expected kwargs or allow dynamic kwargs
+        import inspect
+        sig = inspect.signature(handler)
+        valid_params = {}
+        has_varkw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
+        for k, v in params.items():
+            if has_varkw or k in sig.parameters:
+                valid_params[k] = v
+        result = handler(**valid_params)
         
         # Pancarkan webhook MCP_TOOL_INVOKED
         if broadcast_webhook:
@@ -1209,6 +1217,64 @@ def get_enterprise_openapi_yaml():
 def get_enterprise_api_docs():
     """Dokumentasi interaktif OpenAPI 3.1.0 Swagger UI."""
     return get_swagger_ui_html(spec_url="/api/enterprise/openapi.json")
+
+
+@enterprise_bp.route('/wiki', methods=['GET'])
+def list_wiki_documents():
+    """Daftar artikel dokumentasi sistem MiroFish dari direktori wiki/."""
+    from flask import request
+    base_dir = Path(__file__).resolve().parent.parent.parent.parent / 'wiki'
+    lang = request.args.get('lang', 'id')
+    target_dir = base_dir / 'en' if lang == 'en' else base_dir
+
+    docs = []
+    if target_dir.exists():
+        for f in sorted(target_dir.glob('*.md')):
+            try:
+                content = f.read_text(encoding='utf-8')
+                lines = content.splitlines()
+                title = f.stem.replace('-', ' ').title()
+                for line in lines:
+                    if line.startswith('# '):
+                        title = line.replace('# ', '').strip()
+                        break
+                    elif line.startswith('title:'):
+                        title = line.replace('title:', '').strip(' "\'')
+                docs.append({
+                    'id': f.stem,
+                    'title': title,
+                    'filename': f.name,
+                    'lang': lang,
+                    'size_bytes': f.stat().st_size
+                })
+            except Exception:
+                continue
+    return jsonify({'success': True, 'lang': lang, 'documents': docs})
+
+
+@enterprise_bp.route('/wiki/<doc_id>', methods=['GET'])
+def get_wiki_document(doc_id):
+    """Mendapatkan konten dokumen markdown tertentu."""
+    from flask import request, abort
+    base_dir = Path(__file__).resolve().parent.parent.parent.parent / 'wiki'
+    lang = request.args.get('lang', 'id')
+    target_dir = base_dir / 'en' if lang == 'en' else base_dir
+    doc_path = (target_dir / f"{doc_id}.md").resolve()
+
+    # Path traversal protection
+    if not str(doc_path).startswith(str(base_dir.resolve())) or not doc_path.exists():
+        return jsonify({'success': False, 'error': 'Dokumen tidak ditemukan'}), 404
+
+    try:
+        content = doc_path.read_text(encoding='utf-8')
+        return jsonify({
+            'success': True,
+            'id': doc_id,
+            'lang': lang,
+            'content': content
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @enterprise_bp.route('/contracts', methods=['GET'])

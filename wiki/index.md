@@ -121,6 +121,8 @@ Untuk menyelami detail teknis MiroFish v3.1, silakan merujuk pada bab-bab dokume
   Struktur pohon repositori berkas demi berkas, matriks dependensi antar-modul, alur data *end-to-end* mikro, dan peta kepemilikan berkas untuk 10 subagent tim pengembang.
 * **[[panduan-operasional]] - Panduan Deployment, Eksekusi, dan Pengujian**:
   Langkah instalasi dan eksekusi produksi menggunakan PM2 (Linux/Windows/macOS), orkestrasi Docker Compose (SearXNG + Neo4j), referensi katalog REST API, dan pengujian gerbang pemulihan crash E1/E2.
+* **[[en/mcp-specification|mcp-specification.md]] - Spesifikasi Model Context Protocol (MCP)**:
+  Arsitektur transport ganda (`stdio` untuk integrasi CLI lokal Claude/Cursor, `streamable-http` pada port 8091 untuk kontainer/remote), kontrak endpoint `/health`, dan katalog 11 canonical tools.
 
 ---
 

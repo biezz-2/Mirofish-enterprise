@@ -34,12 +34,12 @@ jobs:
       - name: Run Bandit AST Security Scan
         run: |
           # Scan backend code for common security flaws (OWASP, injection, unsafe calls)
-          bandit -r backend/app -ll -ii || true
+          bandit -r backend/app -ll -ii
 
       - name: Audit Python Dependencies
         run: |
           cd backend
-          pip-audit -r pyproject.toml || true
+          pip-audit -r pyproject.toml
 
   npm-security:
     name: "Node.js Dependency Vulnerability Audit"
@@ -75,7 +75,6 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
 
   trivy-fs-scan:
     name: "Trivy Vulnerability Scanner (FS & Config)"
@@ -91,4 +90,4 @@ jobs:
           scan-ref: '.'
           severity: 'CRITICAL,HIGH'
           format: 'table'
-          exit-code: '0'
+          exit-code: '1'

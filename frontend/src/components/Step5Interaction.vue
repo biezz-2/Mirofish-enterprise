@@ -415,6 +415,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chatWithReport, getReport, getAgentLog } from '../api/report'
 import { interviewAgents, getSimulationProfilesRealtime } from '../api/simulation'
+import { sanitizeHtml, sanitizeUrl } from '@/utils/sanitize'
 
 const { t } = useI18n()
 
@@ -602,6 +603,13 @@ const renderMarkdown = (content) => {
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
   html = html.replace(/_(.+?)_/g, '<em>$1</em>')
+
+  // 处理链接（过滤 javascript:, vbscript:, data:text/html）
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+    const safeUrl = sanitizeUrl(url, '#')
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">${linkText}</a>`
+  })
+
   html = html.replace(/^---$/gm, '<hr class="md-hr">')
   html = html.replace(/\n\n/g, '</p><p class="md-p">')
   html = html.replace(/\n/g, '<br>')
@@ -647,7 +655,7 @@ const renderMarkdown = (content) => {
   }
   html = tokens.join('')
 
-  return html
+  return sanitizeHtml(html)
 }
 
 // Chat Methods

@@ -904,6 +904,61 @@
       "queued": "Dalam Antrean"
     },
     "subtitle": "Pemantauan kesehatan infrastruktur, status node, dan orkestrasi pemulihan state-machine",
-    "backHome": "← Beranda"
+    "backHome": "← Beranda",
+    "allPanels": "Semua Panel",
+    "singlePane": "Single Pane of Glass Enterprise",
+    "systemOnline": "Seluruh Sistem Operasional",
+    "nav": {
+      "dashboard": "Dashboard",
+      "home": "Beranda",
+      "simulation": "Simulasi"
+    },
+    "p1": {
+      "title": "Matriks Kalibrasi Algoritma Platform",
+      "subtitle": "Kalibrasi RecSys Multi-Objektif, Ruang Gema, & Simulasi Batas Pareto",
+      "matrixTableTitle": "Matriks Komparatif Kalibrasi 7 Platform",
+      "attentionCurve": "Estimasi Kurva Distribusi Atensi",
+      "echoVulnerability": "Kerentanan Ruang Gema",
+      "epsilon": "Eksplorasi Epsilon",
+      "halflife": "Waktu Paruh (t½)",
+      "paramAlpha": "Parameter Alpha",
+      "paramEpsilon": "Parameter Eksplorasi Epsilon",
+      "paramSampleSize": "Ukuran Sampel Simulasi",
+      "participationRule": "Aturan Partisipasi",
+      "rankingWeights": "Bobot Pemeringkatan Algoritma",
+      "runSimulation": "Jalankan Simulasi Pareto",
+      "simulating": "Menjalankan Simulasi...",
+      "simulationOutput": "Hasil Telemetri Simulasi",
+      "simulatorTitle": "Simulator Kurva Pareto & Distribusi Konten",
+      "top10Share": "Pangsa Top 10%",
+      "top1Share": "Pangsa Top 1%",
+      "viralityDecay": "Peluruhan Viralitas",
+      "visualAffinity": "Afinitas Visual"
+    },
+    "p2": {
+      "title": "Penjelajah GraphRAG & Graf Pengetahuan",
+      "subtitle": "D3 Force-Directed Dual Engine: Ekstraksi GraphRAG & Subgraf Temporal Graphiti"
+    },
+    "p3": {
+      "title": "Konsol Simulasi Swarm Langsung",
+      "subtitle": "Telemetri Simulasi Multi-Agent, Kontrol Ronde Waktu-Nyata, & Feed Multi-Platform"
+    },
+    "p4": {
+      "title": "Pengelola API, MCP & Webhook",
+      "subtitle": "Pendaftaran Endpoint Webhook HMAC-SHA256, Inspeksi DLQ, & Metrik Latensi P95",
+      "newWebhook": "Daftarkan Webhook"
+    },
+    "p5": {
+      "title": "Katalog Alat MCP & Sandbox Interaktif",
+      "subtitle": "Eksplorasi 22 Alat FastMCP Kanonikal, Inspeksi Skema, & Eksekusi Langsung via API Invocation"
+    },
+    "p6": {
+      "title": "Pusat Audit & Keamanan Kriptografis",
+      "subtitle": "Enkripsi Envelope AES-256-GCM Vault, Pertahanan Injeksi Prompt 3-Lapis CaMeL, & Buku Besar Kontrak Enterprise"
+    },
+    "p7": {
+      "title": "Kesehatan Sistem & Diagnostik Mesin",
+      "subtitle": "Pemantauan Node Klaster Microservices (Flask, FastMCP, SearXNG, Graphiti, Redis, 9Router) & Pemulihan Crash WAL"
+    }
   }
 }

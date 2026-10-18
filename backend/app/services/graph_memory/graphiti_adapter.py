@@ -22,14 +22,20 @@ class GraphitiAdapter(GraphMemoryAdapter):
         control_plane_url: str = "http://127.0.0.1:8080",
         falkordb_host: str = "127.0.0.1",
         falkordb_port: int = 6379,
+        falkordb_password: Optional[str] = None,
         service: Optional['GraphitiService'] = None
     ):
         self.control_plane_url = control_plane_url.rstrip("/")
         self.falkordb_host = falkordb_host
         self.falkordb_port = falkordb_port
+        self.falkordb_password = falkordb_password
         if service is None:
             from ..graphiti_service import GraphitiService
-            self.service = GraphitiService(falkordb_host=falkordb_host, falkordb_port=falkordb_port)
+            self.service = GraphitiService(
+                falkordb_host=falkordb_host,
+                falkordb_port=falkordb_port,
+                falkordb_password=falkordb_password
+            )
         else:
             self.service = service
         logger.info(f"GraphitiAdapter aktif -> Control Plane: {self.control_plane_url}, FalkorDB: {self.falkordb_host}:{self.falkordb_port}")

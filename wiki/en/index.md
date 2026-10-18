@@ -121,6 +121,8 @@ Explore the technical depth of MiroFish v3.1 across the following dedicated chap
   Repository directory hierarchy, module dependency matrix, micro end-to-end data pipelines, and subagent module ownership breakdown.
 * **[[operational-guide|operational-guide.md]] - Deployment, Runbook, and Field Testing**:
   Production deployment with PM2 across Linux/Windows/macOS, Docker Compose orchestration, comprehensive REST API catalog, and recovery fault-injection tests.
+* **[[mcp-specification|mcp-specification.md]] - Model Context Protocol (MCP) Server Specification**:
+  Dual-transport architecture (`stdio` for local CLI integration, `streamable-http` on port 8091 for container/remote deployments), healthcheck contract, OAuth 2.1 RFC compliance, and 11 canonical tools catalog.
 
 ---
 

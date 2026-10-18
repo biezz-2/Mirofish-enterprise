@@ -6,6 +6,7 @@ import asyncio
 from flask import Blueprint, request, jsonify
 from ..utils.auth import require_auth
 from ..services.web_research_service import WebResearchService
+from ..services.pii_scrubber import PIIScrubber
 from ..utils.logger import get_logger
 
 logger = get_logger('mirofish.api.research')
@@ -34,6 +35,10 @@ def search_with_searchxng():
 
     if not query:
         return jsonify({"success": False, "error": {"code": "INVALID_QUERY", "message": "Kueri riset tidak boleh kosong"}}), 400
+
+    # Sanitasi PII pada input kueri sebelum pemrosesan
+    query = PIIScrubber.scrub(query)
+
     if len(query) > 400:
         return jsonify({"success": False, "error": {"code": "QUERY_TOO_LONG", "message": "Kueri melebihi batas 400 karakter"}}), 400
 

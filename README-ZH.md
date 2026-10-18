@@ -155,7 +155,7 @@ npm run dev
 
 **服务地址：**
 - 前端：`http://localhost:3000`
-- 后端 API：`http://localhost:5001`
+- 后端 API：`http://localhost:8000`
 
 **单独启动：**
 
@@ -174,7 +174,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-默认会读取根目录下的 `.env`，并映射端口 `3000（前端）/5001（后端）`
+默认会读取根目录下的 `.env`，并映射端口 `3000（前端）/8000（后端）`
 
 > 在 `docker-compose.yml` 中已通过注释提供加速镜像地址，可按需替换
 

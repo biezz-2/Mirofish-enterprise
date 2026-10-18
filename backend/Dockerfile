@@ -1,0 +1,56 @@
+# Stage 1: Build dependencies in a virtual environment
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    python3-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Minimal runtime image
+FROM python:3.12-slim AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Setup non-root user mirofish (uid/gid 1000)
+RUN groupadd -g 1000 mirofish && \
+    useradd -u 1000 -g mirofish -s /bin/bash -m mirofish
+
+WORKDIR /app
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH" \
+    PORT=8000 \
+    FLASK_PORT=8000 \
+    PYTHONUNBUFFERED=1
+
+# Copy source code backend
+COPY --chown=mirofish:mirofish . /app
+
+# Ensure directories for logs, uploads, and checkpoints
+RUN mkdir -p /app/logs /app/uploads /app/snapshots && \
+    chown -R mirofish:mirofish /app
+
+# Expose port 8000
+EXPOSE 8000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"
+
+# User mirofish
+USER mirofish
+
+# Entrypoint/CMD menjalankan python3 run.py
+CMD ["python3", "run.py"]

@@ -56,7 +56,7 @@ Isi berkas `.env` dengan kredensial yang valid:
 # Flask Server Config
 SECRET_KEY=mirofish-super-deterministic-enterprise-key-2026
 FLASK_DEBUG=False
-PORT=5001
+PORT=8000
 
 # LLM Gateway Config (Mendukung OpenAI / 9Router / vLLM)
 LLM_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -130,7 +130,7 @@ module.exports = {
       env: {
         PYTHONUNBUFFERED: '1',
         FLASK_ENV: 'production',
-        PORT: 5001
+        PORT: 8000
       },
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       error_file: './logs/backend-error.log',
@@ -294,7 +294,7 @@ Untuk memvalidasi kesiapan operasional tingkat enterprise, sistem harus lolos du
 **Langkah Pengujian**:
 1. Jalankan simulasi dengan 10 ronde:
    ```bash
-   curl -X POST http://127.0.0.1:5001/api/simulation/start -H "Content-Type: application/json" \
+   curl -X POST http://127.0.0.1:8000/api/simulation/start -H "Content-Type: application/json" \
      -d '{"simulation_id": "sim-test-e1", "project_id": "proj-test"}'
    ```
 2. Pantau log hingga simulasi mencapai ronde ke-4:

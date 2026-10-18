@@ -162,7 +162,11 @@ class SimulationParameters:
     # 事件配置
     event_config: EventConfig = field(default_factory=EventConfig)
     
-    # 平台配置
+    # 平台列表及配置
+    platforms: List[str] = field(default_factory=lambda: ["twitter", "reddit"])
+    platform_configs: Dict[str, PlatformConfig] = field(default_factory=dict)
+
+    # 平台配置 (兼容旧字段)
     twitter_config: Optional[PlatformConfig] = None
     reddit_config: Optional[PlatformConfig] = None
     
@@ -173,10 +177,35 @@ class SimulationParameters:
     # 生成元数据
     generated_at: str = field(default_factory=lambda: datetime.now().isoformat())
     generation_reasoning: str = ""  # LLM的推理说明
+
+    def __post_init__(self):
+        # 保证 platform_configs 和 platforms 完整且与 twitter_config / reddit_config 互通
+        if not self.platforms:
+            self.platforms = []
+            if self.twitter_config:
+                self.platforms.append("twitter")
+            if self.reddit_config:
+                self.platforms.append("reddit")
+            if not self.platforms and self.platform_configs:
+                self.platforms = list(self.platform_configs.keys())
+
+        for p, cfg in self.platform_configs.items():
+            if p == "twitter" and self.twitter_config is None:
+                self.twitter_config = cfg
+            elif p == "reddit" and self.reddit_config is None:
+                self.reddit_config = cfg
+
+        if self.twitter_config and "twitter" not in self.platform_configs:
+            self.platform_configs["twitter"] = self.twitter_config
+        if self.reddit_config and "reddit" not in self.platform_configs:
+            self.platform_configs["reddit"] = self.reddit_config
     
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         time_dict = asdict(self.time_config)
+        configs_dict = {
+            k: asdict(v) for k, v in self.platform_configs.items()
+        }
         return {
             "simulation_id": self.simulation_id,
             "project_id": self.project_id,
@@ -185,6 +214,8 @@ class SimulationParameters:
             "time_config": time_dict,
             "agent_configs": [asdict(a) for a in self.agent_configs],
             "event_config": asdict(self.event_config),
+            "platforms": self.platforms,
+            "platform_configs": configs_dict,
             "twitter_config": asdict(self.twitter_config) if self.twitter_config else None,
             "reddit_config": asdict(self.reddit_config) if self.reddit_config else None,
             "llm_model": self.llm_model,
@@ -192,7 +223,6 @@ class SimulationParameters:
             "generated_at": self.generated_at,
             "generation_reasoning": self.generation_reasoning,
         }
-    
     def to_json(self, indent: int = 2) -> str:
         """转换为JSON字符串"""
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=indent)
@@ -251,11 +281,11 @@ class SimulationConfigGenerator:
         entities: List[EntityNode],
         enable_twitter: bool = True,
         enable_reddit: bool = True,
+        platforms: Optional[List[str]] = None,
         progress_callback: Optional[Callable[[int, int, str], None]] = None,
     ) -> SimulationParameters:
         """
         智能生成完整的模拟配置（分步生成）
-        
         Args:
             simulation_id: 模拟ID
             project_id: 项目ID
@@ -336,28 +366,25 @@ class SimulationConfigGenerator:
         
         # ========== 最后一步: 生成平台配置 ==========
         report_progress(total_steps, t('progress.generatingPlatformConfig'))
-        twitter_config = None
-        reddit_config = None
-        
-        if enable_twitter:
-            twitter_config = PlatformConfig(
-                platform="twitter",
-                recency_weight=0.4,
-                popularity_weight=0.3,
-                relevance_weight=0.3,
-                viral_threshold=10,
-                echo_chamber_strength=0.5
+        from app.services.platform_behaviors import PLATFORM_CHARACTERISTICS
+        from app.services.simulation_manager import normalize_platforms
+
+        resolved_platforms = normalize_platforms(platforms, enable_twitter, enable_reddit)
+        platform_configs: Dict[str, PlatformConfig] = {}
+
+        for p in resolved_platforms:
+            chars = PLATFORM_CHARACTERISTICS.get(p, {})
+            platform_configs[p] = PlatformConfig(
+                platform=p,
+                recency_weight=chars.get("recency_weight", 0.4),
+                popularity_weight=chars.get("popularity_weight", 0.3),
+                relevance_weight=chars.get("relevance_weight", 0.3),
+                viral_threshold=int(chars.get("viral_threshold", 10)),
+                echo_chamber_strength=float(chars.get("echo_chamber_strength", 0.5)),
             )
-        
-        if enable_reddit:
-            reddit_config = PlatformConfig(
-                platform="reddit",
-                recency_weight=0.3,
-                popularity_weight=0.4,
-                relevance_weight=0.3,
-                viral_threshold=15,
-                echo_chamber_strength=0.6
-            )
+
+        twitter_config = platform_configs.get("twitter")
+        reddit_config = platform_configs.get("reddit")
         
         # 构建最终参数
         params = SimulationParameters(
@@ -368,6 +395,8 @@ class SimulationConfigGenerator:
             time_config=time_config,
             agent_configs=all_agent_configs,
             event_config=event_config,
+            platforms=resolved_platforms,
+            platform_configs=platform_configs,
             twitter_config=twitter_config,
             reddit_config=reddit_config,
             llm_model=self.model_name,

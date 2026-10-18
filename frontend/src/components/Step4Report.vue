@@ -394,6 +394,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick, h, reactive } f
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getAgentLog, getConsoleLog } from '../api/report'
+import { sanitizeHtml, sanitizeUrl, escapeHtml } from '@/utils/sanitize'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -1533,10 +1534,10 @@ const InterviewDisplay = {
                   h('div', {
                     class: ['qa-text', 'answer-text', { 'placeholder-text': isPlaceholder }],
                     innerHTML: isPlaceholder
-                      ? answerText
-                      : formatAnswer(answerText, isExpanded)
+                      ? sanitizeHtml(escapeHtml(answerText))
+                      : sanitizeHtml(formatAnswer(escapeHtml(answerText), isExpanded)
                           .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\n/g, '<br>')
+                          .replace(/\n/g, '<br>'))
                   }),
                   // Expand/Collapse Button（占位文本不显示）
                   !isPlaceholder && answerText.length > 400 && h('button', {
@@ -1929,7 +1930,13 @@ const renderMarkdown = (content) => {
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
   html = html.replace(/_(.+?)_/g, '<em>$1</em>')
-  
+
+  // 处理链接（过滤 javascript:, vbscript:, data:text/html）
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+    const safeUrl = sanitizeUrl(url, '#')
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">${linkText}</a>`
+  })
+
   // 处理分隔线
   html = html.replace(/^---$/gm, '<hr class="md-hr">')
   
@@ -1982,7 +1989,7 @@ const renderMarkdown = (content) => {
   }
   html = tokens.join('')
 
-  return html
+  return sanitizeHtml(html)
 }
 
 const getTimelineItemClass = (log, idx, total) => {

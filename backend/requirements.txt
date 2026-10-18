@@ -47,3 +47,9 @@ sentence-transformers>=3.0.0
 unstructured>=0.13.7
 transformers>=4.40.0
 nltk>=3.9
+
+# ============= FastMCP Server & Graphiti Control Plane =============
+mcp>=1.0.0
+starlette>=0.38.0
+uvicorn>=0.30.0
+fastapi>=0.110.0

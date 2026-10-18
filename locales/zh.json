@@ -904,6 +904,61 @@
       "queued": "排队中"
     },
     "subtitle": "基础设施健康监控、节点状态与状态机恢复编排",
-    "backHome": "← 首页"
+    "backHome": "← 首页",
+    "allPanels": "全部面板",
+    "singlePane": "企业级统一控制中心 (Single Pane of Glass)",
+    "systemOnline": "全部系统运行正常",
+    "nav": {
+      "dashboard": "控制台",
+      "home": "首页",
+      "simulation": "仿真"
+    },
+    "p1": {
+      "title": "平台推荐算法校准矩阵",
+      "subtitle": "多目标推荐系统校准、回音室效应与帕累托前沿模拟",
+      "matrixTableTitle": "7大社交平台算法校准对比矩阵",
+      "attentionCurve": "注意力分配曲线预估",
+      "echoVulnerability": "回音室易感度",
+      "epsilon": "探索系数 Epsilon",
+      "halflife": "半衰期 (t½)",
+      "paramAlpha": "幂律参数 Alpha",
+      "paramEpsilon": "探索参数 Epsilon",
+      "paramSampleSize": "模拟样本量",
+      "participationRule": "参与度法则",
+      "rankingWeights": "算法排序特征权重",
+      "runSimulation": "运行帕累托模拟",
+      "simulating": "正在执行模拟...",
+      "simulationOutput": "模拟遥测输出",
+      "simulatorTitle": "帕累托曲线与内容分发模拟器",
+      "top10Share": "前 10% 流量占比",
+      "top1Share": "前 1% 流量占比",
+      "viralityDecay": "病毒式衰减率",
+      "visualAffinity": "视觉亲和力"
+    },
+    "p2": {
+      "title": "知识图谱与 GraphRAG 探索器",
+      "subtitle": "D3 力导向双引擎：GraphRAG 知识提取与 Graphiti 时序子图"
+    },
+    "p3": {
+      "title": "实时集群模拟控制台",
+      "subtitle": "多智能体模拟遥测、轮次时间轴控制与多平台动态信息流"
+    },
+    "p4": {
+      "title": "API、MCP 与 Webhook 管理器",
+      "subtitle": "HMAC-SHA256 Webhook 订阅、死信队列 (DLQ) 检查与 P95 延迟 SLA 指标",
+      "newWebhook": "注册 Webhook"
+    },
+    "p5": {
+      "title": "MCP 工具目录与交互式沙箱",
+      "subtitle": "探索 22 个标准 FastMCP 工具，检查参数模式并通过 API 交互执行"
+    },
+    "p6": {
+      "title": "密码学审计与安全中心",
+      "subtitle": "信封加密 AES-256-GCM 保险库、CaMeL 三层 Prompt 防护与企业契约账本"
+    },
+    "p7": {
+      "title": "系统健康状态与引擎诊断",
+      "subtitle": "微服务集群节点监控 (Flask, FastMCP, SearXNG, Graphiti, Redis, 9Router) 与 WAL 崩溃恢复"
+    }
   }
 }

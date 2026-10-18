@@ -86,9 +86,16 @@ def _parse_iso(ts: Optional[str]) -> Optional[datetime]:
 class FalkorDBNativeClient:
     """Klien protokol Redis RESP ringan untuk FalkorDB GRAPH.QUERY tanpa external driver berat."""
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 6382, timeout: float = 1.0):
+    def __init__(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 6382,
+        password: Optional[str] = None,
+        timeout: float = 1.0
+    ):
         self.host = host
         self.port = port
+        self.password = (password if password is not None else os.environ.get("REDIS_PASSWORD", "")).strip()
         self.timeout = timeout
         self.is_connected = False
         self._test_connection()
@@ -107,6 +114,20 @@ class FalkorDBNativeClient:
         s.settimeout(self.timeout)
         try:
             s.connect((self.host, self.port))
+            # Kirim perintah AUTH jika password dikonfigurasi (requirepass)
+            if self.password:
+                auth_lines = [
+                    "*2\r\n",
+                    "$4\r\n",
+                    "AUTH\r\n",
+                    f"${len(self.password)}\r\n",
+                    f"{self.password}\r\n"
+                ]
+                s.sendall("".join(auth_lines).encode("utf-8"))
+                auth_res = s.recv(1024)
+                if auth_res.startswith(b"-ERR") or auth_res.startswith(b"-WRONGPASS"):
+                    return auth_res
+
             lines = ["*%d\r\n" % len(args)]
             for a in args:
                 b = str(a).encode("utf-8")
@@ -146,12 +167,14 @@ class GraphitiService(GraphMemoryAdapter):
         uri: Optional[str] = None,
         falkordb_host: Optional[str] = None,
         falkordb_port: Optional[int] = None,
+        falkordb_password: Optional[str] = None,
         auto_connect: bool = True
     ):
         self.port = port
         self.uri = uri or os.environ.get("GRAPHITI_URI", "bolt://127.0.0.1:7687")
         self.falkordb_host = falkordb_host or os.environ.get("FALKORDB_HOST", "127.0.0.1")
-        
+        self.falkordb_password = (falkordb_password if falkordb_password is not None else os.environ.get("REDIS_PASSWORD", "")).strip()
+
         # Probe FalkorDB port (prioritaskan 6382 jika ada, lalu 6379 atau env)
         env_falkor_port = os.environ.get("FALKORDB_PORT")
         candidate_ports = [int(env_falkor_port)] if env_falkor_port else [6382, 6379]
@@ -160,11 +183,16 @@ class GraphitiService(GraphMemoryAdapter):
 
         self.falkordb_port = candidate_ports[0]
         self.falkor_client: Optional[FalkorDBNativeClient] = None
-        
+
         if auto_connect:
             for p in candidate_ports:
                 try:
-                    client = FalkorDBNativeClient(host=self.falkordb_host, port=p, timeout=0.8)
+                    client = FalkorDBNativeClient(
+                        host=self.falkordb_host,
+                        port=p,
+                        password=self.falkordb_password,
+                        timeout=0.8
+                    )
                     if client.is_connected:
                         self.falkor_client = client
                         self.falkordb_port = p
@@ -534,3 +562,54 @@ class GraphitiService(GraphMemoryAdapter):
             "connected_edges_count": len(connected_edges),
             "neighbors": neighbors
         }
+
+
+# =============================================================================
+# ASGI Application & Health Endpoint
+# =============================================================================
+
+try:
+    from fastapi import FastAPI
+    app = FastAPI(title="MiroFish Graphiti Service")
+
+    @app.get("/health")
+    def health():
+        return {"status": "healthy", "service": "graphiti"}
+except ImportError:
+    from starlette.applications import Starlette
+    from starlette.responses import JSONResponse
+    from starlette.routing import Route
+
+    class _StarletteApp(Starlette):
+        """Starlette wrapper dengan decorator @app.get."""
+        def get(self, path: str):
+            def decorator(func):
+                import inspect
+                async def endpoint(request):
+                    if inspect.iscoroutinefunction(func):
+                        res = await func()
+                    else:
+                        res = func()
+                    if isinstance(res, dict):
+                        return JSONResponse(res)
+                    return res
+                self.router.routes.append(Route(path, endpoint, methods=["GET"]))
+                return func
+            return decorator
+
+    app = _StarletteApp()
+
+    @app.get("/health")
+    def health():
+        return {"status": "healthy", "service": "graphiti"}
+
+# Attach control plane API routes if available
+try:
+    from .graphiti_control_plane import create_control_plane_app
+    _cp_app = create_control_plane_app()
+    for _r in _cp_app.routes:
+        if getattr(_r, "path", None) != "/health":
+            app.router.routes.append(_r)
+except Exception:
+    pass
+

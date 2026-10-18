@@ -6,6 +6,7 @@ import SimulationRunView from '../views/SimulationRunView.vue'
 import ReportView from '../views/ReportView.vue'
 import InteractionView from '../views/InteractionView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import DocsView from '../views/DocsView.vue'
 
 const routes = [
   {
@@ -17,6 +18,11 @@ const routes = [
     path: '/dashboard',
     name: 'Dashboard',
     component: DashboardView
+  },
+  {
+    path: '/docs',
+    name: 'Docs',
+    component: DocsView
   },
   {
     path: '/process/:projectId',

@@ -254,18 +254,24 @@ def create_simulation():
             }), 400
         
         manager = SimulationManager()
-        state = manager.create_simulation(
-            project_id=project_id,
-            graph_id=graph_id,
-            enable_twitter=data.get('enable_twitter', True),
-            enable_reddit=data.get('enable_reddit', True),
-        )
+        try:
+            state = manager.create_simulation(
+                project_id=project_id,
+                graph_id=graph_id,
+                enable_twitter=data.get('enable_twitter', True),
+                enable_reddit=data.get('enable_reddit', True),
+                platforms=data.get('platforms'),
+            )
+        except ValueError as ve:
+            return jsonify({
+                "success": False,
+                "error": str(ve)
+            }), 400
         
         return jsonify({
             "success": True,
             "data": state.to_dict()
         })
-        
     except Exception as e:
         logger.error(f"创建模拟失败: {str(e)}")
         return jsonify({
@@ -300,13 +306,36 @@ def _check_simulation_prepared(simulation_id: str) -> tuple:
     if not os.path.exists(simulation_dir):
         return False, {"reason": "模拟目录不存在"}
     
-    # 必要文件列表（不包括脚本，脚本位于 backend/scripts/）
-    required_files = [
-        "state.json",
-        "simulation_config.json",
-        "reddit_profiles.json",
-        "twitter_profiles.csv"
-    ]
+    # 检查 state.json 是否存在
+    state_file = os.path.join(simulation_dir, "state.json")
+    if not os.path.exists(state_file):
+        return False, {
+            "reason": "缺少必要文件",
+            "missing_files": ["state.json"],
+            "existing_files": []
+        }
+
+    try:
+        import json
+        with open(state_file, 'r', encoding='utf-8') as f:
+            state_data = json.load(f)
+    except Exception as e:
+        return False, {"reason": f"读取状态文件失败: {str(e)}"}
+
+    # 根据配置的平台动态确定必要文件
+    required_files = ["state.json", "simulation_config.json"]
+    platforms = state_data.get("platforms")
+    if platforms is not None:
+        for p in platforms:
+            if p == "twitter":
+                required_files.append("twitter_profiles.csv")
+            else:
+                required_files.append(f"{p}_profiles.json")
+    else:
+        if state_data.get("enable_twitter", True):
+            required_files.append("twitter_profiles.csv")
+        if state_data.get("enable_reddit", True):
+            required_files.append("reddit_profiles.json")
     
     # 检查文件是否存在
     existing_files = []
@@ -325,13 +354,7 @@ def _check_simulation_prepared(simulation_id: str) -> tuple:
             "existing_files": existing_files
         }
     
-    # 检查state.json中的状态
-    state_file = os.path.join(simulation_dir, "state.json")
     try:
-        import json
-        with open(state_file, 'r', encoding='utf-8') as f:
-            state_data = json.load(f)
-        
         status = state_data.get("status", "")
         config_generated = state_data.get("config_generated", False)
         
@@ -349,15 +372,16 @@ def _check_simulation_prepared(simulation_id: str) -> tuple:
         prepared_statuses = ["ready", "preparing", "running", "completed", "stopped", "failed"]
         if status in prepared_statuses and config_generated:
             # 获取文件统计信息
-            profiles_file = os.path.join(simulation_dir, "reddit_profiles.json")
-            config_file = os.path.join(simulation_dir, "simulation_config.json")
-            
-            profiles_count = 0
-            if os.path.exists(profiles_file):
-                with open(profiles_file, 'r', encoding='utf-8') as f:
-                    profiles_data = json.load(f)
-                    profiles_count = len(profiles_data) if isinstance(profiles_data, list) else 0
-            
+            profiles_count = state_data.get("profiles_count", 0)
+            for p in (platforms or ["reddit", "twitter"]):
+                prof_filename = "twitter_profiles.csv" if p == "twitter" else f"{p}_profiles.json"
+                prof_path = os.path.join(simulation_dir, prof_filename)
+                if os.path.exists(prof_path):
+                    if prof_filename.endswith(".json"):
+                        with open(prof_path, 'r', encoding='utf-8') as f:
+                            pdata = json.load(f)
+                            profiles_count = len(pdata) if isinstance(pdata, list) else 0
+                    break
             # 如果状态是preparing但文件已完成，自动更新状态为ready
             if status == "preparing":
                 try:

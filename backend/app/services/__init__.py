@@ -181,6 +181,16 @@ from .openapi_engine import (
     get_openapi_spec,
     get_swagger_ui_html,
 )
+from .token_cost_estimator import (
+    TokenCostEstimator,
+    TokenBudgetReport,
+    CostEstimateResult,
+    OASIS_BASELINE_TOKENS,
+    estimate_simulation_tokens,
+    estimate_simulation_cost,
+    allocate_simulation_phase_tokens,
+    check_simulation_budget_warning,
+)
 
 __all__ = [
     'GraphitiService',
@@ -329,5 +339,13 @@ __all__ = [
     'validate_request_schema',
     'get_openapi_spec',
     'get_swagger_ui_html',
+    'TokenCostEstimator',
+    'TokenBudgetReport',
+    'CostEstimateResult',
+    'OASIS_BASELINE_TOKENS',
+    'estimate_simulation_tokens',
+    'estimate_simulation_cost',
+    'allocate_simulation_phase_tokens',
+    'check_simulation_budget_warning',
 ]
 

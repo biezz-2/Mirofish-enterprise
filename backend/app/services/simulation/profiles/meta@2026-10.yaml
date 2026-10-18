@@ -1,0 +1,23 @@
+platform: "meta"
+version: "2026-10"
+sub_platforms:
+  - "instagram"
+  - "facebook"
+  - "threads"
+close_network_weight: 0.65
+reel_distribution_ratio: 0.45
+weights:
+  p_like: 0.35
+  p_retweet: 0.20
+  p_reply: 0.30
+  p_dwell: 0.15
+regimes:
+  instagram:
+    max_chars: 2200
+  facebook:
+    max_chars: 63206
+  threads:
+    max_chars: 500
+safety:
+  toxic_threshold: 0.70
+  frequency_cap_author_per_slate: 2

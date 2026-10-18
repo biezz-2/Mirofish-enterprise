@@ -4,6 +4,12 @@
     <nav class="navbar">
       <div class="nav-brand">MIROFISH</div>
       <div class="nav-links">
+        <router-link to="/dashboard" class="github-link">
+          <span>📊</span> {{ $t('dashboard.nav.dashboard') || 'Dashboard' }}
+        </router-link>
+        <router-link to="/docs" class="github-link">
+          <span>📚</span> Docs
+        </router-link>
         <LanguageSwitcher />
         <a href="https://github.com/666ghj/MiroFish" target="_blank" class="github-link">
           {{ $t('nav.visitGithub') }} <span class="arrow">↗</span>

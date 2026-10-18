@@ -1,0 +1,20 @@
+platform: "tiktok"
+version: "2026-10"
+watch_time_duration_weight: 0.50
+completion_rate_weight: 0.35
+algorithmic_viral:
+  threshold_views: 10000
+  retention_gate: 0.70
+  viral_multiplier: 1.50
+weights:
+  p_like: 0.20
+  p_retweet: 0.20
+  p_reply: 0.10
+  p_dwell: 0.50
+regimes:
+  regular:
+    max_chars: 2200
+    comment_max_chars: 150
+safety:
+  toxic_threshold: 0.70
+  frequency_cap_author_per_slate: 1

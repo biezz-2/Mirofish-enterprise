@@ -2,7 +2,7 @@
 
 <img src="./static/image/MiroFish_logo_compressed.jpeg" alt="Logo MiroFish Enterprise" width="70%"/>
 
-# 🌊 MiroFish Enterprise (v3.1)
+# 🌊 MiroFish Enterprise (v3.6.0-enterprise)
 ### Mesin Simulasi Prediksi Kecerdasan Kelompok & Kotak Pasir Digital Sosial Multi-Agen
 *Simulasi masyarakat paralel berakurasi tinggi, proyeksi opini publik, dan gladi bersih keputusan makro berisiko nol.*
 
@@ -11,7 +11,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B%20LTS-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![PM2 Ready](https://img.shields.io/badge/PM2-Cluster%20%26%20Fork-2B037A?style=for-the-badge&logo=pm2&logoColor=white)](https://pm2.keymetrics.io/)
 [![Docker Ready](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Lisensi](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](./LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](./LICENSE)
 
 ---
 
@@ -194,7 +194,7 @@ Sesuaikan variabel lingkungan utama pada `.env`:
 DEVELOPMENT_MODE=true                # Aktifkan true untuk melewati validasi API key eksternal saat pengujian lokal
 SECRET_KEY=mirofish-enterprise-secret-key-2026
 FLASK_DEBUG=false
-PORT=5001
+PORT=8000
 
 # LLM Gateway (Format kompatibel OpenAI)
 LLM_API_KEY=your-api-key-here
@@ -247,7 +247,7 @@ pm2 status
 
 | ID | Nama Proses | Mode | Status | Alamat Layanan |
 | :--- | :--- | :--- | :--- | :--- |
-| `0` | **`mirofish-backend`** | fork | **online** | `http://localhost:5001` |
+| `0` | **`mirofish-backend`** | fork | **online** | `http://localhost:8000` |
 | `1` | **`mirofish-frontend`** | cluster | **online** | `http://localhost:3000` |
 | `2` | **`mirofish-mcp`** | fork | **online** | `stdio / JSON-RPC` |
 
@@ -257,11 +257,11 @@ pm2 status
 
 ```bash
 # Cek Kesehatan Backend
-curl http://127.0.0.1:5001/health
-# Respons: {"database":"sqlite","multi_platform":true,"searxng":true,"service":"MiroFish Enterprise Backend (v3.1)","status":"healthy"}
+curl http://127.0.0.1:8000/health
+# Respons: {"status":"healthy","service":"mirofish-backend","version":"3.6.0-enterprise","port":8000}
 
 # Matriks Konfigurasi 7 Platform
-curl http://127.0.0.1:5001/api/platforms
+curl http://127.0.0.1:8000/api/platforms
 
 # Akses Antarmuka Web Frontend
 curl -I http://127.0.0.1:3000/
@@ -317,15 +317,16 @@ Seluruh spesifikasi arsitektur mendalam, rumus matematis, dan buku panduan tekni
 
 ---
 
-## 👥 Kredit & Kontribusi
+## 👥 Credits & Authorship
 
+- **Upstream MiroFish**: [666ghj/MiroFish](https://github.com/666ghj/MiroFish) (AGPL-3.0)
+- **Simulation Engine**: [CAMEL-AI OASIS](https://github.com/camel-ai/oasis) (Apache-2.0)
 - **Pemimpin Proyek & Pengelola**: **[biezz-2](https://github.com/biezz-2)**
 - **Ko-Author Sistem Otonom**: **[claude-biezz-2](https://github.com/apps/claude-code)**
-- **Fondasi Mesin Simulasi**: Didukung oleh **[CAMEL-AI OASIS](https://github.com/camel-ai/oasis)** (Open Agent Social Interaction Simulations).
 - **Teknologi Utama**: Python 3.13, Flask, SQLAlchemy, Vite, Vue 3, Tailwind CSS, PM2, SearXNG, Zep Cloud, Neo4j.
 
 ---
 
-## 📄 Lisensi
+## 📄 License
 
-Proyek ini dilisensikan di bawah lisensi terbuka [MIT License](./LICENSE).
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](./LICENSE) file for details.

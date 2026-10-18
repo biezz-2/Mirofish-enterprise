@@ -224,7 +224,9 @@ def test_diagnostics_and_health_endpoint(test_client):
     resp = test_client.get("/health")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["status"] == "HEALTHY"
+    assert data["status"] == "healthy"
+    assert data["service"] == "mirofish-mcp-server"
+    assert data["transport"] == "streamable-http"
     assert data["fastmcp_port"] == 8080
     assert data["active_tools_count"] == 11
     assert data["integrity_check"] == "PASSED"

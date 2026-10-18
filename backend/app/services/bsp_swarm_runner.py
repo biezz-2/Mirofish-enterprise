@@ -34,6 +34,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, List, Optional, Tuple, Set
 from pydantic import BaseModel, Field
+from ..utils.sqlite_engine import get_sqlite_connection
 
 from .cascade_dynamics import (
     CascadeDynamicsEngine,
@@ -184,9 +185,12 @@ class SQLiteWALCheckpointer:
         self._init_database()
 
     def _get_connection(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path, timeout=10.0, check_same_thread=False)
-        conn.row_factory = sqlite3.Row
-        return conn
+        return get_sqlite_connection(
+            self.db_path,
+            timeout=10.0,
+            wal_mode=(self.db_path != ":memory:"),
+            check_same_thread=False
+        )
 
     def _init_database(self):
         """Inisialisasi skema tabel dan konfigurasi SQLite WAL."""

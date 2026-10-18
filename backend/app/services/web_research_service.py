@@ -14,6 +14,7 @@ from ..config import Config
 from ..utils.logger import get_logger
 from ..utils.llm_client import LLMClient
 from .searchxng_service import SearchXNGService, SearchXNGResult
+from .pii_scrubber import PIIScrubber
 from .domain_credibility import (
     DomainCredibilityScorer,
     EpistemicGroundingValidator,
@@ -35,11 +36,12 @@ _INJECTION_PATTERNS = [
 ]
 
 def sanitize_snippet(text: str, max_len: int = 500) -> str:
-    """Sanitasi snippet: lepas instruksi bawaan, markup, dan pangkas."""
+    """Sanitasi snippet: lepas instruksi bawaan, PII (UU PDP), markup, dan pangkas."""
     t = re.sub(r"\s+", " ", str(text or "")).strip()
     for pat in _INJECTION_PATTERNS:
         t = re.sub(pat, "[teks disunting]", t, flags=re.IGNORECASE)
     t = re.sub(r"[<>{}]", "", t)
+    t = PIIScrubber.scrub(t)
     return t[:max_len]
 
 
@@ -130,13 +132,14 @@ class WebResearchService:
     async def research(self, query: str, research_type: str = "general",
                        include_facts_extraction: bool = True,
                        days_back: int = 7, max_results: int = 20) -> ResearchReport:
-        report = ResearchReport(query=query, research_type=research_type)
+        clean_query = PIIScrubber.scrub(query)
+        report = ResearchReport(query=clean_query, research_type=research_type)
         if research_type == "news":
-            sr = await self.searchxng.search_news(query, days_back=days_back, max_results=max_results)
+            sr = await self.searchxng.search_news(clean_query, days_back=days_back, max_results=max_results)
         elif research_type == "images":
-            sr = await self.searchxng.search_images(query, max_results=max_results)
+            sr = await self.searchxng.search_images(clean_query, max_results=max_results)
         else:
-            sr = await self.searchxng.search(query, max_results=max_results)
+            sr = await self.searchxng.search(clean_query, max_results=max_results)
             
         # Sanitasi hasil sebelum disimpan
         for r in sr.results:

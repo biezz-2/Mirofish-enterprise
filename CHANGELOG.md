@@ -7,6 +7,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.0-enterprise] - 2026-10-18
+
+### Added
+- **Multi-Platform Algorithm & Human-Like AI Comment Simulator Engine (`backend/app/services/simulation/`)**:
+  - Implemented 6-stage Home-Mixer feed pipeline (`Source`, `Hydrator`, `Filter`, `Scorer`, `Selector`, `SideEffect`) in `feed_pipeline.py`.
+  - Added versioned YAML platform profile store in `platform_profile_store.py` (`x@2026-10.yaml`, `reddit@2026-10.yaml`, `tiktok@2026-10.yaml`, `meta@2026-10.yaml`), unifying Twitter and X into a single platform with 280 / 25,000 character regimes.
+  - Added rich multi-dimensional agent persona generator in `persona_store.py` (Big Five OCEAN, Indonesian demographics, registers, log-normal comment length distributions, baseline anger).
+  - Implemented 7-intent taxonomy multinomial sampler in `intent_sampler.py` calibrated to empirical Dataset B frequencies.
+  - Added thread transcript few-shot prompt builder in `style_realizer.py` for realistic conversational dynamics.
+  - Added deterministic post-LLM noise layer in `noise_layer.py` (Indonesian internet slang/abbreviation dictionary, 1-3% QWERTY neighbor key swaps, repeated punctuation quirks, and regional dialect mixing).
+  - Implemented opinion dynamics modeling in `opinion_dynamics.py` combining Bounded Confidence (Deffuant/Hegselmann-Krause), emotional contagion, and Hawkes self-exciting point processes for cascade arrival bursts.
+  - Implemented stylized facts validator in `calibration_harness.py` (90-9-1 participation inequality, Pareto heavy-tail cascade distribution, diurnal cycles).
+  - Implemented comprehensive evaluation suite in `evaluation_suite.py` (Classifier Two-Sample Test proxy, Type-Token Ratio, perplexity, Self-BLEU, and 8-gram leakage detection with zero seed overlap).
+  - Implemented `EthicsGuard` sandbox lock in `ethics_guard.py` (refusal of live social platform API connections, mandatory `is_synthetic: true` metadata, export watermark "HASIL SIMULASI — BUKAN DATA NYATA", and structured audit logs).
+  - Added comprehensive test suite `backend/tests/test_simulation_engine_v36.py` (10/10 passed).
+- **Personal Data Protection & Privacy Compliance (UU PDP No. 27/2022)**:
+  - Created automatic PII scrubber in `backend/app/services/pii_scrubber.py` redacting 16-digit NIK, Indonesian phone numbers (+62 / 08xx), email addresses, financial/banking numbers, and targeted names with idempotent execution.
+  - Integrated PII scrubbing into Step 0 web research ingestion and Step 1 knowledge graph building pipelines (`web_research_service.py`, `anti_injection.py`, `text_processor.py`, `graph_builder.py`, `local_graph_service.py`).
+  - Added formal compliance policy in `docs/privacy-ID.md` and ethical usage guidelines in `USAGE.md`.
+  - Added test suite `backend/tests/test_pii_scrubber.py` (17/17 passed).
+- **Token Budget & Cost Estimator (`backend/app/services/token_cost_estimator.py`)**:
+  - Calibrated against empirical OASIS baseline (~335.6k tokens per 100 agents / 10 rounds).
+  - Multi-provider pricing models (Claude 3.5 Sonnet, GPT-4o, local Llama 3) with USD/IDR conversion and phase budget allocation recommendations.
+  - Added test suite `backend/tests/test_token_cost_estimator.py` (17/17 passed).
+- **Automated Documentation & Test Registry Generator (`scripts/gen_docs.py`)**:
+  - Deterministic AST extraction generating `docs/mcp-catalog.md` (22 tools) and `docs/test-registry.md` (48 test files, 449 test cases) with `--check` verification for CI/CD zero-drift enforcement.
+- **Service Containerization & Multi-Stage Builds**:
+  - Created `backend/Dockerfile` multi-stage `python:3.12-slim` with non-root user `mirofish` (1000:1000), internal port 8000, and HTTP healthcheck.
+  - Created `backend/Dockerfile.graphiti` (port 8090, uvicorn service, healthcheck).
+  - Created `backend/Dockerfile.mcp` (port 8091, FastMCP streamable-http, healthcheck).
+  - Created `frontend/Dockerfile` multi-stage Node 20 + Nginx alpine (port 3000, SPA routing fallback, `/health` endpoint).
+  - Documented MCP transport dual-mode specification in `wiki/en/mcp-specification.md`.
+- **Automated Blocking CI Workflow (`.github/workflows/tests.yml`)**:
+  - Added automated GitHub Actions test runner executing backend pytest suite and frontend production build on push and pull request to `main`.
+
+### Changed
+- **License Reconciliation & Legal Attribution**:
+  - Synchronized `README.md` and `README-ID.md` license declaration and badges from MIT to GNU AGPL-3.0 to match `LICENSE`.
+  - Created root `NOTICE` file containing explicit AGPL-3.0 Section 13 network source code notice and attribution to upstream `666ghj/MiroFish` (AGPL-3.0) and `camel-ai/oasis` (Apache-2.0).
+- **Port Unification & SQLite WAL Concurrency**:
+  - Unified all backend ports to 8000 across configuration, documentation, Vite frontend proxy, and docker-compose.
+  - Enforced `instances: 1, exec_mode: 'fork'` in `ecosystem.config.js` to eliminate multi-process write corruption on SQLite WAL databases.
+- **Docker Compose Hardening (`docker-compose.yml`)**:
+  - Removed deprecated `version: '3.8'` syntax.
+  - Removed default password `mirofish_secret_pass`, mandating `${NEO4J_PASSWORD:?}` and `${REDIS_PASSWORD:?}` via environment interpolation.
+  - Added healthchecks across all database, graphiti, mcp-server, backend, and frontend containers.
+
+### Security
+- **Fail-Fast Startup Security Guard (`validate_startup_security`)**:
+  - Server boot immediately aborts in production mode (`FLASK_DEBUG=false`) if `SECRET_KEY` is missing, short, or matches insecure test patterns, or if `DEVELOPMENT_MODE=true`.
+  - Added unit test suite `backend/tests/test_startup_security_guard.py` (16/16 passed).
+- **JWT Authentication Hardening (`backend/app/utils/auth.py`)**:
+  - Pinned algorithm to `HS256` (`ALLOWED_JWT_ALGORITHMS = ["HS256"]`).
+  - Enforced signature verification and validated claims (`exp`, `iss`, `aud`) with explicit 401 error payloads.
+  - Added unit test suite `backend/tests/test_jwt_hardening.py` (16/16 passed).
+- **Frontend Strict XSS & DOM Sanitization (`frontend/src/utils/sanitize.js`)**:
+  - Hardened markdown link rendering against dangerous URI schemes (`javascript:`, `vbscript:`, `data:text/html`).
+  - Sanitized dynamic HTML to block script injection and dangerous inline event handlers.
+- **Redis Password Authentication & SQLite WAL Enforcement**:
+  - Created `backend/app/utils/redis_client.py` enforcing authentication credentials and blocking anonymous connections when `REDIS_PASSWORD` is configured.
+  - Created `backend/app/utils/sqlite_engine.py` standardizing `PRAGMA journal_mode=WAL` and `PRAGMA synchronous=NORMAL` across SQLAlchemy connection pools.
+  - Added unit test suite `backend/tests/test_redis_auth_hardening.py` (14/14 passed).
+- **Blocking Security Scanning CI (`.github/workflows/security-scan.yml`)**:
+  - Removed `|| true` from Bandit and pip-audit steps.
+  - Removed `continue-on-error: true` from Gitleaks.
+  - Enforced exit code 1 on Trivy filesystem scan when HIGH or CRITICAL vulnerabilities are found.
+
+---
+
 ## [3.5.0-enterprise] - 2026-10-15
 
 ### Added

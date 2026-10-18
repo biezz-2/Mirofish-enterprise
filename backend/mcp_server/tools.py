@@ -42,7 +42,11 @@ def handle_create_simulation_project(
     target_platforms: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """Membuat proyek simulasi baru pada platform MiroFish Enterprise."""
-    platforms = target_platforms or ["twitter", "reddit", "tiktok", "instagram", "facebook", "threads"]
+    from app.services.simulation_manager import normalize_platforms, CANONICAL_PLATFORMS
+    if target_platforms is not None:
+        platforms = normalize_platforms(target_platforms)
+    else:
+        platforms = list(CANONICAL_PLATFORMS)
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
     res = SimulationProjectResult(
         project_id=project_id,
@@ -493,14 +497,34 @@ def handle_get_job_status(job_id: str) -> Dict[str, Any]:
 
 
 def handle_get_simulation_report(project_id: Optional[str] = None, simulation_id: Optional[str] = None) -> Dict[str, Any]:
+    if simulation_id:
+        try:
+            from app.services.report_agent import ReportManager
+            report = ReportManager.get_report_by_simulation(simulation_id)
+            if not report:
+                report = ReportManager.get_report(simulation_id)
+            if report:
+                return {
+                    "project_id": project_id,
+                    "simulation_id": simulation_id,
+                    "report_id": report.report_id,
+                    "status": report.status.value,
+                    "platforms": report.platforms,
+                    "platform_statuses": report.platform_statuses,
+                    "markdown_content": report.markdown_content,
+                    "created_at": report.created_at,
+                    "completed_at": report.completed_at,
+                    "source": "backend",
+                }
+        except Exception:
+            pass
     return {
         "project_id": project_id,
         "simulation_id": simulation_id,
-        "sentiment_score": 0.42,
-        "summary": "Simulasi berhasil mengonfirmasi stabilitas opini publik dengan polarisasi rendah.",
-        "dominant_opinion": "Mendukung adopsi bertahap dengan pengawasan audit independen."
+        "status": "unavailable",
+        "error": "backend_error",
+        "source": "unavailable",
     }
-
 
 # ---------------------------------------------------------------------------
 # FastMCP Registration Helper
@@ -694,11 +718,16 @@ def register_canonical_tools(mcp_instance: Any):
         return handle_trigger_web_research(query, max_results=max_results, search_type=research_type)
 
     @mcp_instance.tool(name="create_simulation_job", description="Membuat konfigurasi dan pekerjaan simulasi baru untuk suatu proyek")
-    def create_simulation_job(project_id: str, graph_id: Optional[str] = None, enable_twitter: bool = True, enable_reddit: bool = True) -> Dict[str, Any]:
-        platforms = []
-        if enable_twitter: platforms.append("twitter")
-        if enable_reddit: platforms.append("reddit")
-        return handle_create_simulation_project(project_id=project_id, name=f"Sim-{project_id}", target_platforms=platforms)
+    def create_simulation_job(
+        project_id: str,
+        graph_id: Optional[str] = None,
+        enable_twitter: bool = True,
+        enable_reddit: bool = True,
+        platforms: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        from app.services.simulation_manager import normalize_platforms
+        resolved_platforms = normalize_platforms(platforms, enable_twitter, enable_reddit)
+        return handle_create_simulation_project(project_id=project_id, name=f"Sim-{project_id}", target_platforms=resolved_platforms)
 
     @mcp_instance.tool(name="start_simulation", description="Memulai atau melanjutkan jalannya simulasi OASIS multi-platform")
     def start_simulation(simulation_id: str, platform: str = "parallel", max_rounds: int = 50, force: bool = False) -> Dict[str, Any]:
@@ -706,7 +735,15 @@ def register_canonical_tools(mcp_instance: Any):
 
     @mcp_instance.tool(name="stop_simulation", description="Menghentikan simulasi yang sedang berjalan")
     def stop_simulation(simulation_id: str) -> Dict[str, Any]:
-        return {"simulation_id": simulation_id, "status": "stopped", "stopped_at": time.time()}
+        # This registration has no backend stop operation. Never claim a stop
+        # that was not executed and verified by the simulation runner.
+        return {
+            "simulation_id": simulation_id,
+            "status": "unavailable",
+            "runner_status": "unavailable",
+            "error": "backend_error",
+            "source": "unavailable",
+        }
 
 
 def register_mcp_tools() -> List[Dict[str, Any]]:

@@ -460,6 +460,9 @@ class Report:
     created_at: str = ""
     completed_at: str = ""
     error: Optional[str] = None
+    platforms: List[str] = field(default_factory=list)
+    platform_statuses: Dict[str, str] = field(default_factory=dict)
+    platform_states: Dict[str, Any] = field(default_factory=dict)
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -472,7 +475,10 @@ class Report:
             "markdown_content": self.markdown_content,
             "created_at": self.created_at,
             "completed_at": self.completed_at,
-            "error": self.error
+            "error": self.error,
+            "platforms": self.platforms,
+            "platform_statuses": self.platform_statuses,
+            "platform_states": self.platform_states,
         }
 
 
@@ -1655,13 +1661,23 @@ class ReportAgent:
             report_id = f"report_{uuid.uuid4().hex[:12]}"
         start_time = datetime.now()
         
+        from .simulation_manager import SimulationManager
+        sim_manager = SimulationManager()
+        sim_state = sim_manager.get_simulation(self.simulation_id)
+        platforms = sim_state.platforms if sim_state and sim_state.platforms else []
+        platform_statuses = sim_state.platform_statuses if sim_state and sim_state.platform_statuses else {}
+        platform_states = sim_state.platform_states if sim_state and sim_state.platform_states else {}
+
         report = Report(
             report_id=report_id,
             simulation_id=self.simulation_id,
             graph_id=self.graph_id,
             simulation_requirement=self.simulation_requirement,
             status=ReportStatus.PENDING,
-            created_at=datetime.now().isoformat()
+            created_at=datetime.now().isoformat(),
+            platforms=platforms,
+            platform_statuses=platform_statuses,
+            platform_states=platform_states,
         )
         
         # 已完成的章节标题列表（用于进度追踪）
@@ -2589,7 +2605,10 @@ class ReportManager:
             markdown_content=markdown_content,
             created_at=data.get('created_at', ''),
             completed_at=data.get('completed_at', ''),
-            error=data.get('error')
+            error=data.get('error'),
+            platforms=data.get('platforms', []),
+            platform_statuses=data.get('platform_statuses', {}),
+            platform_states=data.get('platform_states', {}),
         )
     
     @classmethod

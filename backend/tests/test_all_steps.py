@@ -4,7 +4,7 @@ import time
 import os
 from pathlib import Path
 
-BASE_URL = "http://localhost:5001"
+BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
 TEST_FILES_DIR = Path("backend/tests/test_assets")
 TEST_FILES_DIR.mkdir(parents=True, exist_ok=True)
 

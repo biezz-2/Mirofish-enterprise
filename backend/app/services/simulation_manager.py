@@ -39,6 +39,151 @@ class PlatformType(str, Enum):
     """平台类型"""
     TWITTER = "twitter"
     REDDIT = "reddit"
+    INSTAGRAM = "instagram"
+    LINKEDIN = "linkedin"
+    THREADS = "threads"
+    TIKTOK = "tiktok"
+    YOUTUBE = "youtube"
+
+
+CANONICAL_PLATFORMS = (
+    "instagram",
+    "linkedin",
+    "reddit",
+    "threads",
+    "tiktok",
+    "twitter",
+    "youtube",
+)
+CANONICAL_PLATFORMS_SET = set(CANONICAL_PLATFORMS)
+PLATFORM_ALIASES = {
+    "x": "twitter",
+    "x_twitter": "twitter",
+    "ig": "instagram",
+    "insta": "instagram",
+    "yt": "youtube",
+    "li": "linkedin",
+    "th": "threads",
+}
+
+
+def normalize_platforms(
+    platforms: Optional[List[str]] = None,
+    enable_twitter: bool = True,
+    enable_reddit: bool = True,
+) -> List[str]:
+    """
+    规范化平台列表并校验合法性。
+    支持向后兼容 enable_twitter / enable_reddit。
+    """
+    if platforms is None:
+        res = []
+        if enable_twitter:
+            res.append("twitter")
+        if enable_reddit:
+            res.append("reddit")
+        return res
+
+    resolved = []
+    seen = set()
+    for raw in platforms:
+        p = str(raw).lower().strip()
+        p = PLATFORM_ALIASES.get(p, p)
+        if p not in CANONICAL_PLATFORMS_SET:
+            raise ValueError(f"不支持的平台: {raw}")
+        if p not in seen:
+            seen.add(p)
+            resolved.append(p)
+    return resolved
+
+
+def _atomic_json_dump(path: str, value: Dict[str, Any]) -> None:
+    """Write JSON through a sibling temporary file so readers never see partial JSON."""
+    temporary_path = f"{path}.tmp"
+    with open(temporary_path, "w", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=False, indent=2)
+    os.replace(temporary_path, path)
+
+
+def migrate_prepared_simulation(simulation_dir: str) -> Dict[str, Any]:
+    """Expand an inactive prepared simulation using its existing generated profiles."""
+    simulation_dir = os.fspath(simulation_dir)
+    state_path = os.path.join(simulation_dir, "state.json")
+    config_path = os.path.join(simulation_dir, "simulation_config.json")
+    reddit_path = os.path.join(simulation_dir, "reddit_profiles.json")
+    twitter_path = os.path.join(simulation_dir, "twitter_profiles.csv")
+    if not os.path.isfile(state_path):
+        raise ValueError("prepared simulation requires state.json")
+    with open(state_path, "r", encoding="utf-8") as handle:
+        state = json.load(handle)
+    if state.get("status") != SimulationStatus.READY.value:
+        raise ValueError("only a ready simulation can be migrated without process control")
+    required_paths = (config_path, reddit_path, twitter_path)
+    if not all(os.path.isfile(path) for path in required_paths):
+        raise ValueError("prepared simulation requires config, Reddit, and Twitter artifacts")
+    if not state.get("profiles_generated") or not state.get("config_generated"):
+        raise ValueError("only a generated prepared simulation can be migrated")
+
+    with open(reddit_path, "r", encoding="utf-8") as handle:
+        reddit_profiles = json.load(handle)
+    if not isinstance(reddit_profiles, list) or len(reddit_profiles) != state.get("profiles_count"):
+        raise ValueError("Reddit profile artifact does not match state profiles_count")
+
+    for platform in CANONICAL_PLATFORMS:
+        if platform in {"reddit", "twitter"}:
+            continue
+        destination = os.path.join(simulation_dir, f"{platform}_profiles.json")
+        temporary_path = f"{destination}.tmp"
+        shutil.copyfile(reddit_path, temporary_path)
+        os.replace(temporary_path, destination)
+
+    with open(config_path, "r", encoding="utf-8") as handle:
+        config = json.load(handle)
+    from .platform_behaviors import PLATFORM_CHARACTERISTICS
+
+    existing_configs = config.get("platform_configs") or {}
+    legacy_configs = {
+        "twitter": config.get("twitter_config"),
+        "reddit": config.get("reddit_config"),
+    }
+    platform_configs = {}
+    for platform in CANONICAL_PLATFORMS:
+        platform_config = existing_configs.get(platform) or legacy_configs.get(platform)
+        if not platform_config:
+            characteristics = PLATFORM_CHARACTERISTICS[platform]
+            platform_config = {
+                "platform": platform,
+                "recency_weight": characteristics["recency_weight"],
+                "popularity_weight": characteristics["popularity_weight"],
+                "relevance_weight": characteristics["relevance_weight"],
+                "viral_threshold": int(characteristics["viral_threshold"]),
+                "echo_chamber_strength": float(characteristics["echo_chamber_strength"]),
+            }
+        platform_configs[platform] = platform_config
+    config["platforms"] = list(CANONICAL_PLATFORMS)
+    config["platform_configs"] = platform_configs
+    _atomic_json_dump(config_path, config)
+
+    old_statuses = state.get("platform_statuses") or {}
+    state["platforms"] = list(CANONICAL_PLATFORMS)
+    state["enable_twitter"] = True
+    state["enable_reddit"] = True
+    state["platform_statuses"] = {
+        platform: old_statuses.get(platform, state.get(f"{platform}_status", "not_started"))
+        for platform in CANONICAL_PLATFORMS
+    }
+    state["platform_states"] = {
+        platform: {
+            "profiles_count": state["profiles_count"],
+            "prepared": True,
+            "config_generated": True,
+        }
+        for platform in CANONICAL_PLATFORMS
+    }
+    state["twitter_status"] = state["platform_statuses"]["twitter"]
+    state["reddit_status"] = state["platform_statuses"]["reddit"]
+    _atomic_json_dump(state_path, state)
+    return state
 
 
 @dataclass
@@ -48,10 +193,10 @@ class SimulationState:
     project_id: str
     graph_id: str
     
-    # 平台启用状态
+    # 平台列表及启用状态
+    platforms: Optional[List[str]] = None
     enable_twitter: bool = True
     enable_reddit: bool = True
-    
     # 状态
     status: SimulationStatus = SimulationStatus.CREATED
     
@@ -65,11 +210,12 @@ class SimulationState:
     config_generated: bool = False
     config_reasoning: str = ""
     
-    # 运行时数据
+    # 运行时数据与平台状态持久化
     current_round: int = 0
+    platform_statuses: Dict[str, str] = field(default_factory=dict)
+    platform_states: Dict[str, Any] = field(default_factory=dict)
     twitter_status: str = "not_started"
     reddit_status: str = "not_started"
-    
     # 时间戳
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -77,12 +223,38 @@ class SimulationState:
     # 错误信息
     error: Optional[str] = None
     
+    def __post_init__(self):
+        # 保持 platforms 和 enable_twitter / enable_reddit 逻辑同步
+        if self.platforms is None:
+            self.platforms = []
+            if self.enable_twitter:
+                self.platforms.append("twitter")
+            if self.enable_reddit:
+                self.platforms.append("reddit")
+        else:
+            self.enable_twitter = "twitter" in self.platforms
+            self.enable_reddit = "reddit" in self.platforms
+
+        if not self.platform_statuses:
+            self.platform_statuses = {p: "not_started" for p in self.platforms}
+
+        if "twitter" in self.platform_statuses:
+            self.twitter_status = self.platform_statuses["twitter"]
+        elif not self.enable_twitter:
+            self.twitter_status = "disabled"
+
+        if "reddit" in self.platform_statuses:
+            self.reddit_status = self.platform_statuses["reddit"]
+        elif not self.enable_reddit:
+            self.reddit_status = "disabled"
+
     def to_dict(self) -> Dict[str, Any]:
         """完整状态字典（内部使用）"""
         return {
             "simulation_id": self.simulation_id,
             "project_id": self.project_id,
             "graph_id": self.graph_id,
+            "platforms": self.platforms,
             "enable_twitter": self.enable_twitter,
             "enable_reddit": self.enable_reddit,
             "status": self.status.value,
@@ -93,6 +265,8 @@ class SimulationState:
             "config_generated": self.config_generated,
             "config_reasoning": self.config_reasoning,
             "current_round": self.current_round,
+            "platform_statuses": self.platform_statuses,
+            "platform_states": self.platform_states,
             "twitter_status": self.twitter_status,
             "reddit_status": self.reddit_status,
             "created_at": self.created_at,
@@ -102,12 +276,15 @@ class SimulationState:
     
     def get_default_platform(self) -> str:
         """根据启用状态返回默认平台"""
-        if self.enable_twitter and self.enable_reddit:
-            return "reddit"  # 两者都启用时保持原默认
-        elif self.enable_twitter:
-            return "twitter"
-        else:
+        if "reddit" in self.platforms and "twitter" in self.platforms:
             return "reddit"
+        elif "twitter" in self.platforms:
+            return "twitter"
+        elif self.platforms:
+            return self.platforms[0]
+        elif self.enable_twitter and not self.enable_reddit:
+            return "twitter"
+        return "reddit"
 
     def to_simple_dict(self) -> Dict[str, Any]:
         """简化状态字典（API返回使用）"""
@@ -115,15 +292,18 @@ class SimulationState:
             "simulation_id": self.simulation_id,
             "project_id": self.project_id,
             "graph_id": self.graph_id,
+            "platforms": self.platforms,
+            "enable_twitter": self.enable_twitter,
+            "enable_reddit": self.enable_reddit,
             "status": self.status.value,
             "entities_count": self.entities_count,
             "profiles_count": self.profiles_count,
             "entity_types": self.entity_types,
             "profiles_generated": self.profiles_generated,
             "config_generated": self.config_generated,
+            "platform_statuses": self.platform_statuses,
             "error": self.error,
         }
-
 
 class SimulationManager:
     """
@@ -181,12 +361,33 @@ class SimulationManager:
         with open(state_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
+        platforms = data.get("platforms")
+        enable_twitter = data.get("enable_twitter", True)
+        enable_reddit = data.get("enable_reddit", True)
+        if platforms is None:
+            platforms = []
+            if enable_twitter:
+                platforms.append("twitter")
+            if enable_reddit:
+                platforms.append("reddit")
+
+        platform_statuses = data.get("platform_statuses") or {}
+        if not platform_statuses:
+            for p in platforms:
+                if p == "twitter":
+                    platform_statuses[p] = data.get("twitter_status", "not_started")
+                elif p == "reddit":
+                    platform_statuses[p] = data.get("reddit_status", "not_started")
+                else:
+                    platform_statuses[p] = "not_started"
+
         state = SimulationState(
             simulation_id=simulation_id,
             project_id=data.get("project_id", ""),
             graph_id=data.get("graph_id", ""),
-            enable_twitter=data.get("enable_twitter", True),
-            enable_reddit=data.get("enable_reddit", True),
+            platforms=platforms,
+            enable_twitter=enable_twitter,
+            enable_reddit=enable_reddit,
             status=SimulationStatus(data.get("status", "created")),
             entities_count=data.get("entities_count", 0),
             profiles_count=data.get("profiles_count", 0),
@@ -195,6 +396,8 @@ class SimulationManager:
             config_generated=data.get("config_generated", False),
             config_reasoning=data.get("config_reasoning", ""),
             current_round=data.get("current_round", 0),
+            platform_statuses=platform_statuses,
+            platform_states=data.get("platform_states", {}),
             twitter_status=data.get("twitter_status", "not_started"),
             reddit_status=data.get("reddit_status", "not_started"),
             created_at=data.get("created_at", datetime.now().isoformat()),
@@ -211,6 +414,7 @@ class SimulationManager:
         graph_id: str,
         enable_twitter: bool = True,
         enable_reddit: bool = True,
+        platforms: Optional[List[str]] = None,
     ) -> SimulationState:
         """
         创建新的模拟
@@ -220,6 +424,7 @@ class SimulationManager:
             graph_id: Zep图谱ID
             enable_twitter: 是否启用Twitter模拟
             enable_reddit: 是否启用Reddit模拟
+            platforms: 显式指定的平台列表 (可选)
             
         Returns:
             SimulationState
@@ -227,17 +432,29 @@ class SimulationManager:
         import uuid
         simulation_id = f"sim_{uuid.uuid4().hex[:12]}"
         
+        resolved_platforms = normalize_platforms(platforms, enable_twitter, enable_reddit)
+        resolved_twitter = "twitter" in resolved_platforms
+        resolved_reddit = "reddit" in resolved_platforms
+
+        platform_statuses = {p: "not_started" for p in resolved_platforms}
+        platform_states = {p: {} for p in resolved_platforms}
+
         state = SimulationState(
             simulation_id=simulation_id,
             project_id=project_id,
             graph_id=graph_id,
-            enable_twitter=enable_twitter,
-            enable_reddit=enable_reddit,
+            platforms=resolved_platforms,
+            enable_twitter=resolved_twitter,
+            enable_reddit=resolved_reddit,
             status=SimulationStatus.CREATED,
+            platform_statuses=platform_statuses,
+            platform_states=platform_states,
+            twitter_status=platform_statuses.get("twitter", "not_started" if resolved_twitter else "disabled"),
+            reddit_status=platform_statuses.get("reddit", "not_started" if resolved_reddit else "disabled"),
         )
         
         self._save_simulation_state(state)
-        logger.info(f"创建模拟: {simulation_id}, project={project_id}, graph={graph_id}")
+        logger.info(f"创建模拟: {simulation_id}, project={project_id}, graph={graph_id}, platforms={resolved_platforms}")
         
         return state
     
@@ -344,15 +561,19 @@ class SimulationManager:
                         item_name=msg
                     )
             
-            # 设置实时保存的文件路径（优先使用 Reddit JSON 格式）
+            # 设置实时保存的文件路径
             realtime_output_path = None
             realtime_platform = "reddit"
-            if state.enable_reddit:
+            if "reddit" in state.platforms:
                 realtime_output_path = os.path.join(sim_dir, "reddit_profiles.json")
                 realtime_platform = "reddit"
-            elif state.enable_twitter:
+            elif "twitter" in state.platforms:
                 realtime_output_path = os.path.join(sim_dir, "twitter_profiles.csv")
                 realtime_platform = "twitter"
+            elif state.platforms:
+                first_p = state.platforms[0]
+                realtime_output_path = os.path.join(sim_dir, f"{first_p}_profiles.json")
+                realtime_platform = first_p
             
             profiles = generator.generate_profiles_from_entities(
                 entities=filtered.entities,
@@ -368,8 +589,7 @@ class SimulationManager:
             state.profiles_generated = len(profiles) > 0
             self._save_simulation_state(state)
             
-            # 保存Profile文件（注意：Twitter使用CSV格式，Reddit使用JSON格式）
-            # Reddit 已经在生成过程中实时保存了，这里再保存一次确保完整性
+            # 保存各平台Profile文件（Twitter使用CSV，其它平台使用JSON）
             if progress_callback:
                 progress_callback(
                     "generating_profiles", 95,
@@ -378,21 +598,27 @@ class SimulationManager:
                     total=total_entities
                 )
             
-            if state.enable_reddit:
-                generator.save_profiles(
-                    profiles=profiles,
-                    file_path=os.path.join(sim_dir, "reddit_profiles.json"),
-                    platform="reddit"
-                )
-            
-            if state.enable_twitter:
-                # Twitter使用CSV格式！这是OASIS的要求
-                generator.save_profiles(
-                    profiles=profiles,
-                    file_path=os.path.join(sim_dir, "twitter_profiles.csv"),
-                    platform="twitter"
-                )
-            
+            for p in state.platforms:
+                if p == "twitter":
+                    generator.save_profiles(
+                        profiles=profiles,
+                        file_path=os.path.join(sim_dir, "twitter_profiles.csv"),
+                        platform="twitter"
+                    )
+                else:
+                    generator.save_profiles(
+                        profiles=profiles,
+                        file_path=os.path.join(sim_dir, f"{p}_profiles.json"),
+                        platform=p
+                    )
+                state.platform_statuses[p] = "ready"
+                state.platform_states[p] = {"profiles_count": len(profiles), "prepared": True}
+
+            if "twitter" in state.platform_statuses:
+                state.twitter_status = state.platform_statuses["twitter"]
+            if "reddit" in state.platform_statuses:
+                state.reddit_status = state.platform_statuses["reddit"]
+            self._save_simulation_state(state)
             if progress_callback:
                 progress_callback(
                     "generating_profiles", 100,
@@ -428,9 +654,9 @@ class SimulationManager:
                 document_text=document_text,
                 entities=filtered.entities,
                 enable_twitter=state.enable_twitter,
-                enable_reddit=state.enable_reddit
+                enable_reddit=state.enable_reddit,
+                platforms=state.platforms,
             )
-            
             if progress_callback:
                 progress_callback(
                     "generating_config", 70,
@@ -460,8 +686,15 @@ class SimulationManager:
             
             # 更新状态
             state.status = SimulationStatus.READY
+            for p in state.platforms:
+                state.platform_statuses[p] = "ready"
+                if p in state.platform_states:
+                    state.platform_states[p]["config_generated"] = True
+            if "twitter" in state.platform_statuses:
+                state.twitter_status = state.platform_statuses["twitter"]
+            if "reddit" in state.platform_statuses:
+                state.reddit_status = state.platform_statuses["reddit"]
             self._save_simulation_state(state)
-            
             logger.info(f"模拟准备完成: {simulation_id}, "
                        f"entities={state.entities_count}, profiles={state.profiles_count}")
             
@@ -507,26 +740,32 @@ class SimulationManager:
         if platform is None:
             platform = state.get_default_platform()
 
-        if platform not in {"twitter", "reddit"}:
+        norm_p = PLATFORM_ALIASES.get(str(platform).lower().strip(), str(platform).lower().strip())
+        if norm_p not in CANONICAL_PLATFORMS_SET:
             raise ValueError(f"不支持的平台: {platform}")
 
         sim_dir = self._get_simulation_dir(simulation_id)
-        profile_path = os.path.join(
-            sim_dir,
-            "twitter_profiles.csv" if platform == "twitter" else "reddit_profiles.json",
-        )
-        
-        if not os.path.exists(profile_path):
-            return []
-
-        if platform == "twitter":
+        if norm_p == "twitter":
+            profile_path = os.path.join(sim_dir, "twitter_profiles.csv")
+            if not os.path.exists(profile_path):
+                return []
             import csv
-
             with open(profile_path, 'r', encoding='utf-8', newline='') as f:
                 return list(csv.DictReader(f))
+        else:
+            profile_path = os.path.join(sim_dir, f"{norm_p}_profiles.json")
+            if not os.path.exists(profile_path):
+                # Never substitute another platform's profile file. A missing
+                # platform artifact is unavailable, not evidence from Reddit.
+                if norm_p == "reddit":
+                    fallback = os.path.join(sim_dir, "reddit_profiles.json")
+                    if os.path.exists(fallback):
+                        with open(fallback, 'r', encoding='utf-8') as f:
+                            return json.load(f)
+                return []
 
-        with open(profile_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            with open(profile_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
     
     def get_simulation_config(self, simulation_id: str) -> Optional[Dict[str, Any]]:
         """获取模拟配置"""

@@ -904,6 +904,61 @@
       "queued": "Queued"
     },
     "subtitle": "Infrastructure health monitoring, node status, and state-machine recovery orchestration",
-    "backHome": "← Home"
+    "backHome": "← Home",
+    "allPanels": "All Panels",
+    "singlePane": "Enterprise Single Pane of Glass",
+    "systemOnline": "All Systems Operational",
+    "nav": {
+      "dashboard": "Dashboard",
+      "home": "Home",
+      "simulation": "Simulation"
+    },
+    "p1": {
+      "title": "Platform Algorithm Calibration Matrix",
+      "subtitle": "Multi-Objective RecSys Calibration, Echo Chambers, & Pareto Frontier Simulation",
+      "matrixTableTitle": "7 Platforms Calibration Comparative Matrix",
+      "attentionCurve": "Attention Distribution Curve Estimate",
+      "echoVulnerability": "Echo Chamber Vulnerability",
+      "epsilon": "Epsilon Exploration",
+      "halflife": "Half-life (t½)",
+      "paramAlpha": "Alpha Parameter",
+      "paramEpsilon": "Epsilon Exploration Parameter",
+      "paramSampleSize": "Simulation Sample Size",
+      "participationRule": "Participation Rule",
+      "rankingWeights": "Algorithm Ranking Weights",
+      "runSimulation": "Run Pareto Simulation",
+      "simulating": "Running Simulation...",
+      "simulationOutput": "Simulation Telemetry Output",
+      "simulatorTitle": "Pareto Curve & Content Distribution Simulator",
+      "top10Share": "Top 10% Share",
+      "top1Share": "Top 1% Share",
+      "viralityDecay": "Virality Decay",
+      "visualAffinity": "Visual Affinity"
+    },
+    "p2": {
+      "title": "Knowledge Graph & GraphRAG Explorer",
+      "subtitle": "D3 Force-Directed Dual Engine: GraphRAG Extraction & Graphiti Temporal Subgraphs"
+    },
+    "p3": {
+      "title": "Live Swarm Simulation Console",
+      "subtitle": "Multi-Agent Simulation Telemetry, Round Scrubbing, and Multi-Platform Feed Streams"
+    },
+    "p4": {
+      "title": "API, MCP & Webhook Manager",
+      "subtitle": "HMAC-SHA256 Webhook Subscriptions, DLQ Inspection & P95 Latency SLA Metrics",
+      "newWebhook": "Register Webhook"
+    },
+    "p5": {
+      "title": "MCP Tools Catalog & Interactive Sandbox",
+      "subtitle": "Explore 22 Canonical FastMCP Tools, Inspect Schemas, and Invoke Live API Executions"
+    },
+    "p6": {
+      "title": "Cryptographic Audit & Security Center",
+      "subtitle": "Envelope Encryption AES-256-GCM Vault, CaMeL 3-Layer Prompt Shield & Enterprise Contract Ledger"
+    },
+    "p7": {
+      "title": "System Health & Engine Diagnostics",
+      "subtitle": "Microservices Cluster Health (Flask, FastMCP, SearXNG, Graphiti, Redis, 9Router) & WAL Crash Recovery"
+    }
   }
 }

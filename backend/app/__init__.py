@@ -16,10 +16,61 @@ from .config import Config
 from .utils.logger import setup_logger, get_logger
 
 
+def validate_startup_security(app=None):
+    """
+    Startup Security Fail-Fast Guard (P0-2 / P0-4).
+    Enforces strict security checks when running in production mode (FLASK_DEBUG=false/0):
+    1. SECRET_KEY cannot be empty and cannot contain 'example', 'test', or 'mirofish-enterprise-secret-key-2026'.
+    2. DEVELOPMENT_MODE cannot be 'true' or '1'.
+    """
+    flask_debug = str(os.environ.get("FLASK_DEBUG", "")).strip().lower()
+    if flask_debug in ("false", "0"):
+        if "SECRET_KEY" in os.environ:
+            secret_key = os.environ.get("SECRET_KEY", "")
+            if app is not None:
+                app.config["SECRET_KEY"] = secret_key
+        elif app is not None:
+            secret_key = app.config.get("SECRET_KEY", "")
+        else:
+            secret_key = ""
+        secret_key = str(secret_key or "").strip()
+
+        if not secret_key:
+            raise RuntimeError(
+                "FATAL: Insecure SECRET_KEY detected in production mode. "
+                "Set a cryptographically random SECRET_KEY."
+            )
+
+        lower_key = secret_key.lower()
+        if any(bad in lower_key for bad in ("example", "test", "mirofish-enterprise-secret-key-2026")):
+            raise RuntimeError(
+                "FATAL: Insecure SECRET_KEY detected in production mode. "
+                "Set a cryptographically random SECRET_KEY."
+            )
+
+        if "DEVELOPMENT_MODE" in os.environ:
+            dev_mode = os.environ.get("DEVELOPMENT_MODE", "")
+            if app is not None:
+                app.config["DEVELOPMENT_MODE"] = dev_mode
+        elif app is not None:
+            dev_mode = app.config.get("DEVELOPMENT_MODE", "")
+        else:
+            dev_mode = ""
+        dev_mode = str(dev_mode or "").strip().lower()
+
+        if dev_mode in ("true", "1"):
+            raise RuntimeError(
+                "FATAL: DEVELOPMENT_MODE cannot be enabled in production (FLASK_DEBUG=false)."
+            )
+
+
 def create_app(config_class=Config):
     """Flask应用工厂函数"""
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    # Startup Security Fail-Fast Guard (P0-2 / P0-4)
+    validate_startup_security(app)
     
     # 设置JSON编码：确保中文直接显示（而不是 \uXXXX 格式）
     # Flask >= 2.3 使用 app.json.ensure_ascii，旧版本使用 JSON_AS_ASCII 配置
@@ -65,7 +116,7 @@ def create_app(config_class=Config):
         # Security headers
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-        response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' *"
+        response.headers['Content-Security-Policy'] = "default-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; connect-src 'self' * https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' *"
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
 
         return response
@@ -131,8 +182,9 @@ def create_app(config_class=Config):
         db_label = f"supabase ({db_type})" if "postgresql" in db_type else db_type
         return {
             'status': 'healthy',
-            'service': 'MiroFish Enterprise Backend (v3.2)',
-            'version': '3.2.0',
+            'service': 'mirofish-backend',
+            'version': '3.6.0-enterprise',
+            'port': 8000,
             'subagents_count': 20,
             'divisions_count': 6,
             'database': db_label,
@@ -142,7 +194,7 @@ def create_app(config_class=Config):
                 'searxng': 8888,
                 'graphiti': 8090,
                 'mcp_server': 8091,
-                'backend_api': 5001,
+                'backend_api': 8000,
                 'frontend_vue': 3001
             }
         }

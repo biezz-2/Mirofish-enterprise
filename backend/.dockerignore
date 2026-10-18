@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.db
+*.sqlite
+*.sqlite3
+mirofish.db
+logs/*.log
+uploads/*
+!uploads/.gitkeep
+snapshots/*
+!snapshots/.gitkeep

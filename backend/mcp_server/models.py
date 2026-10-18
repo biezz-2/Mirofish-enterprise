@@ -17,7 +17,7 @@ class CreateSimulationProjectInput(BaseModel):
     name: str = Field(..., description="Nama atau judul proyek simulasi")
     description: str = Field("", description="Deskripsi singkat tujuan simulasi")
     target_platforms: List[str] = Field(
-        default_factory=lambda: ["twitter", "reddit", "tiktok", "instagram", "facebook", "threads"],
+        default_factory=lambda: ["instagram", "linkedin", "reddit", "threads", "tiktok", "twitter", "youtube"],
         description="Daftar platform sosial target yang dimodelkan"
     )
 
@@ -80,8 +80,7 @@ class AgentProfilesResult(BaseModel):
 
 # Tool 5: calibrate_platform_algorithms
 class CalibratePlatformAlgorithmsInput(BaseModel):
-    platform: str = Field(..., description="Nama platform (misal: twitter, reddit, tiktok, instagram, facebook, threads)")
-    moral_emotional_weight: Optional[float] = Field(None, ge=0.0, le=2.0, description="Bobot amplifikasi konten moral-emosional")
+    platform: str = Field(..., description="Nama platform (misal: instagram, linkedin, reddit, threads, tiktok, twitter, youtube)")
     outgroup_penalty: Optional[float] = Field(None, ge=0.0, le=2.0, description="Penalti interaksi outgroup")
     echo_damping: Optional[float] = Field(None, ge=0.0, le=1.0, description="Faktor peredam echo chamber")
 
