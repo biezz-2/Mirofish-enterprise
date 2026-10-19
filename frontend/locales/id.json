@@ -129,6 +129,8 @@
     "noBio": "Belum ada biodata",
     "dualPlatformConfig": "Konfigurasi Simulasi Platform Ganda",
     "dualPlatformConfigDesc": "LLM menetapkan laju waktu dunia, algoritma rekomendasi, jam aktif individu, frekuensi unggahan, pemicu peristiwa, dan parameter lainnya secara cerdas berdasarkan kebutuhan dan bibit realitas",
+    "multiPlatformConfig": "Konfigurasi Simulasi Multi-Platform",
+    "multiPlatformConfigDesc": "LLM menetapkan laju waktu dunia, algoritma rekomendasi 7 platform (Twitter/X, Reddit, TikTok, Instagram, Threads, LinkedIn, YouTube), jam aktif individu, frekuensi unggahan, pemicu peristiwa, dan parameter lainnya secara cerdas berdasarkan kebutuhan dan bibit realitas",
     "simulationDuration": "Durasi Simulasi",
     "roundDuration": "Durasi per Ronde",
     "totalRounds": "Total Ronde",
@@ -172,6 +174,7 @@
     "customTip": "Untuk simulasi pertama kali, sangat disarankan beralih ke 'Mode Kustom' dengan jumlah ronde lebih sedikit untuk pratinjau cepat dan meminimalkan risiko galat",
     "backToGraphBuild": "Kembali ke Pembangunan Graf",
     "startDualWorldSim": "Mulai Simulasi Paralel Dunia Ganda",
+    "startMultiWorldSim": "Mulai Simulasi Paralel Multi-Platform (7 Platform)",
     "profileModalAge": "Usia Terlihat",
     "profileModalGender": "Jenis Kelamin Terlihat",
     "profileModalCountry": "Negara/Wilayah",
@@ -233,7 +236,14 @@
     "roundLabel": "RONDE",
     "timeLabel": "WAKTU",
     "actsLabel": "AKSI",
-    "availableActions": "Aksi yang Tersedia"
+    "availableActions": "Aksi yang Tersedia",
+    "allPlatforms": "Semua Platform",
+    "autoScrollOn": "Auto-Scroll Aktif",
+    "autoScrollPaused": "Auto-Scroll Jeda",
+    "resumeAutoScroll": "Ke Aksi Terbaru",
+    "streamMode": "Aliran",
+    "dualMode": "Ganda",
+    "noActionsFiltered": "Tidak ada aksi pada filter platform ini"
   },
   "step4": {
     "generatingSection": "Sedang menyusun {title}...",

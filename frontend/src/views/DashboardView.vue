@@ -90,12 +90,18 @@
 
       <!-- Panel 2: GraphRAG & Graphiti Dual Knowledge Explorer -->
       <section v-show="activeTab === 'all' || activeTab === 'p2'" id="panel-2">
-        <Panel2GraphExplorer />
+        <Panel2GraphExplorer
+          :initial-graph-id="currentGraphId"
+          @select-graph="onGraphChange"
+        />
       </section>
 
       <!-- Panel 3: Live Swarm Simulation Console & Feed Stream -->
       <section v-show="activeTab === 'all' || activeTab === 'p3'" id="panel-3">
-        <Panel3SwarmConsole />
+        <Panel3SwarmConsole
+          :initial-simulation-id="currentSimulationId"
+          @select-simulation="onSimulationChange"
+        />
       </section>
 
       <!-- Panel 4: Webhooks, HMAC-SHA256 & DLQ Re-Drive -->
@@ -119,7 +125,10 @@
       </section>
 
       <section v-show="activeTab === 'all' || activeTab === 'p8'" id="panel-8">
-        <Panel8SimulationVisibility />
+        <Panel8SimulationVisibility
+          :simulation-id="currentSimulationId"
+          :project-id="currentProjectId"
+        />
       </section>
     </main>
 
@@ -181,6 +190,9 @@ export default {
     return {
       activeTab: 'all',
       showBackToTop: false,
+      currentSimulationId: '',
+      currentProjectId: '',
+      currentGraphId: '',
       panels: [
         { id: 'p1', label: '1. Kalibrasi Algoritma', icon: '📊' },
         { id: 'p2', label: '2. Graf & GraphRAG', icon: '🕸️' },
@@ -193,6 +205,25 @@ export default {
       ]
     }
   },
+  watch: {
+    '$route.query': {
+      immediate: true,
+      handler(query) {
+        if (!query) return
+        if (query.simulation_id) {
+          this.currentSimulationId = String(query.simulation_id)
+        }
+        if (query.project_id) {
+          this.currentProjectId = String(query.project_id)
+        }
+        if (query.graph_id) {
+          this.currentGraphId = String(query.graph_id)
+        } else if (query.project_id && !this.currentGraphId) {
+          this.currentGraphId = String(query.project_id)
+        }
+      }
+    }
+  },
   mounted() {
     window.addEventListener('scroll', this.handleScroll)
   },
@@ -200,6 +231,12 @@ export default {
     window.removeEventListener('scroll', this.handleScroll)
   },
   methods: {
+    onSimulationChange(simId) {
+      if (simId) this.currentSimulationId = simId
+    },
+    onGraphChange(graphId) {
+      if (graphId) this.currentGraphId = graphId
+    },
     selectTab(tabId) {
       this.activeTab = tabId
       if (tabId === 'all') {

@@ -257,3 +257,27 @@ def test_chat_json_reports_missing_choices_without_retrying_forever():
         )
 
     assert len(sequence.calls) == 2
+
+
+def test_chat_failover_to_fallback_model():
+    primary_error = ProviderError(
+        status_code=410,
+        body={"error": {"message": "model deprecated / gone"}},
+    )
+    fallback_sequence = CompletionSequence(_response('{"fallback_ok": true}'))
+    primary_sequence = CompletionSequence(primary_error)
+
+    client = _client_for(primary_sequence)
+    client.fallback_model = "oasis"
+    client.fallback_client = SimpleNamespace(
+        chat=SimpleNamespace(completions=fallback_sequence)
+    )
+
+    result = client.chat_json(
+        messages=[{"role": "user", "content": "Return JSON"}],
+        max_attempts=1,
+    )
+    assert result == {"fallback_ok": True}
+    assert len(primary_sequence.calls) == 1
+    assert len(fallback_sequence.calls) == 1
+    assert fallback_sequence.calls[0]["model"] == "oasis"

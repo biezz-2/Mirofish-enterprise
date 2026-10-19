@@ -105,9 +105,19 @@ class OasisAgentProfile:
     # 来源实体信息
     source_entity_uuid: Optional[str] = None
     source_entity_type: Optional[str] = None
-    
+
+    # Big Five OCEAN traits [0.0 - 1.0]
+    ocean_openness: float = 0.5
+    ocean_conscientiousness: float = 0.5
+    ocean_extraversion: float = 0.5
+    ocean_agreeableness: float = 0.5
+    ocean_neuroticism: float = 0.5
+
+    # Gaya komunikasi PUEBI / Register Bahasa
+    puebi_register: Optional[str] = None
+
     created_at: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
-    
+
     def __post_init__(self):
         """Normalize structured LLM fields once at the profile boundary."""
         self.bio = _coerce_to_str(self.bio) or self.name
@@ -119,6 +129,49 @@ class OasisAgentProfile:
         self.gender = _coerce_to_str(self.gender) or None
         self.mbti = _coerce_to_str(self.mbti) or None
         self.interested_topics = _coerce_to_str_list(self.interested_topics)
+
+        # Kalibrasi Big Five OCEAN berdasarkan MBTI jika masih default 0.5
+        if self.mbti:
+            m = self.mbti.upper()
+            if self.ocean_extraversion == 0.5:
+                self.ocean_extraversion = 0.75 if "E" in m else 0.30
+            if self.ocean_openness == 0.5:
+                self.ocean_openness = 0.80 if "N" in m else 0.35
+            if self.ocean_agreeableness == 0.5:
+                self.ocean_agreeableness = 0.75 if "F" in m else 0.40
+            if self.ocean_conscientiousness == 0.5:
+                self.ocean_conscientiousness = 0.80 if "J" in m else 0.40
+            if self.ocean_neuroticism == 0.5:
+                self.ocean_neuroticism = 0.45
+
+        # Kalibrasi register PUEBI
+        if not self.puebi_register:
+            ent = (self.source_entity_type or "").lower()
+            prof = (self.profession or "").lower()
+            if ent in ["mediaoutlet", "university", "governmentagency", "ngo", "organization"] or prof in ["media", "official", "institution", "expert"]:
+                self.puebi_register = "formal_baku"
+            elif ent in ["student", "alumni"]:
+                self.puebi_register = "gaul_santai"
+            elif ent in ["publicfigure", "faculty"]:
+                self.puebi_register = "semi_formal"
+            else:
+                self.puebi_register = "santai_kritis"
+
+    @property
+    def ocean(self) -> Dict[str, float]:
+        """Big Five OCEAN dictionary"""
+        return {
+            "O": round(self.ocean_openness, 2),
+            "C": round(self.ocean_conscientiousness, 2),
+            "E": round(self.ocean_extraversion, 2),
+            "A": round(self.ocean_agreeableness, 2),
+            "N": round(self.ocean_neuroticism, 2),
+            "openness": round(self.ocean_openness, 2),
+            "conscientiousness": round(self.ocean_conscientiousness, 2),
+            "extraversion": round(self.ocean_extraversion, 2),
+            "agreeableness": round(self.ocean_agreeableness, 2),
+            "neuroticism": round(self.ocean_neuroticism, 2),
+        }
 
     def to_reddit_format(self) -> Dict[str, Any]:
         """转换为Reddit平台格式"""
@@ -198,8 +251,21 @@ class OasisAgentProfile:
             "interested_topics": self.interested_topics,
             "source_entity_uuid": self.source_entity_uuid,
             "source_entity_type": self.source_entity_type,
+            "ocean": self.ocean,
+            "puebi_register": self.puebi_register,
             "created_at": self.created_at,
         }
+
+    def to_canonical_format(self, platform: str) -> Dict[str, Any]:
+        """Konversi profil ke format kanonikal platform."""
+        p = platform.lower().strip()
+        if p in ("twitter", "x"):
+            res = self.to_twitter_format()
+        else:
+            res = self.to_reddit_format()
+        res["ocean"] = self.ocean
+        res["puebi_register"] = self.puebi_register
+        return res
 
 
 class OasisProfileGenerator:
@@ -1106,7 +1172,7 @@ class OasisProfileGenerator:
             file_path: 文件路径
             platform: 平台类型 ("reddit" 或 "twitter")
         """
-        if platform == "twitter":
+        if str(platform).lower().strip() in ("twitter", "x"):
             self._save_twitter_csv(profiles, file_path)
         else:
             self._save_reddit_json(profiles, file_path)
@@ -1228,7 +1294,11 @@ class OasisProfileGenerator:
                 item["profession"] = profile.profession
             if profile.interested_topics:
                 item["interested_topics"] = profile.interested_topics
-            
+            if hasattr(profile, "ocean"):
+                item["ocean"] = profile.ocean
+            if getattr(profile, "puebi_register", None):
+                item["puebi_register"] = profile.puebi_register
+
             data.append(item)
         
         with open(file_path, 'w', encoding='utf-8') as f:

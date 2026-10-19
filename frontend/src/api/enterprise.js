@@ -8,14 +8,14 @@ import request from './index'
 // Panel 1: Platform Algorithm Calibration Matrix
 export function getPlatformMatrix() {
   return request({
-    url: '/enterprise/platforms',
+    url: '/api/enterprise/platforms',
     method: 'get'
   })
 }
 
 export function simulatePareto(data) {
   return request({
-    url: '/enterprise/platforms/simulate-pareto',
+    url: '/api/enterprise/platforms/simulate-pareto',
     method: 'post',
     data
   })
@@ -24,7 +24,7 @@ export function simulatePareto(data) {
 // Panel 2: GraphRAG & Knowledge Explorer
 export function getGraphProjects(limit = 50) {
   return request({
-    url: '/graph/project/list',
+    url: '/api/graph/project/list',
     method: 'get',
     params: { limit }
   })
@@ -32,14 +32,14 @@ export function getGraphProjects(limit = 50) {
 
 export function getGraphData(graphId) {
   return request({
-    url: `/graph/data/${graphId}`,
+    url: `/api/graph/data/${graphId}`,
     method: 'get'
   })
 }
 
 export function getGraphitiSubgraph(params) {
   return request({
-    url: '/enterprise/graphiti/subgraph',
+    url: '/api/enterprise/graphiti/subgraph',
     method: 'get',
     params
   })
@@ -48,7 +48,7 @@ export function getGraphitiSubgraph(params) {
 // Panel 3: Live Swarm Simulation Console
 export function getSimulationList() {
   return request({
-    url: '/simulation/list',
+    url: '/api/simulation/list',
     method: 'get'
   })
 }
@@ -56,7 +56,7 @@ export function getSimulationList() {
 export function getSimulationPosts(simulationId, platform = null) {
   const params = platform ? { platform } : {}
   return request({
-    url: `/simulation/${simulationId}/posts`,
+    url: `/api/simulation/${simulationId}/posts`,
     method: 'get',
     params
   })
@@ -64,14 +64,14 @@ export function getSimulationPosts(simulationId, platform = null) {
 
 export function getSimulationAgentStats(simulationId) {
   return request({
-    url: `/simulation/${simulationId}/agent-stats`,
+    url: `/api/simulation/${simulationId}/agent-stats`,
     method: 'get'
   })
 }
 
 export function getSimulationTimeline(simulationId) {
   return request({
-    url: `/simulation/${simulationId}/timeline`,
+    url: `/api/simulation/${simulationId}/timeline`,
     method: 'get'
   })
 }
@@ -79,14 +79,14 @@ export function getSimulationTimeline(simulationId) {
 // Panel 4: Webhook & API Manager
 export function getWebhookSubscriptions() {
   return request({
-    url: '/enterprise/webhooks/subscriptions',
+    url: '/api/enterprise/webhooks/subscriptions',
     method: 'get'
   })
 }
 
 export function createWebhookSubscription(data) {
   return request({
-    url: '/enterprise/webhooks/subscriptions',
+    url: '/api/enterprise/webhooks/subscriptions',
     method: 'post',
     data
   })
@@ -94,21 +94,21 @@ export function createWebhookSubscription(data) {
 
 export function deleteWebhookSubscription(subscriptionId) {
   return request({
-    url: `/enterprise/webhooks/subscriptions/${subscriptionId}`,
+    url: `/api/enterprise/webhooks/subscriptions/${subscriptionId}`,
     method: 'delete'
   })
 }
 
 export function getWebhookStats() {
   return request({
-    url: '/enterprise/webhooks/stats',
+    url: '/api/enterprise/webhooks/stats',
     method: 'get'
   })
 }
 
 export function getWebhookDlq(params = {}) {
   return request({
-    url: '/enterprise/webhooks/dlq',
+    url: '/api/enterprise/webhooks/dlq',
     method: 'get',
     params
   })
@@ -116,7 +116,7 @@ export function getWebhookDlq(params = {}) {
 
 export function redriveWebhookDlq(data = {}) {
   return request({
-    url: '/enterprise/webhooks/dlq/redrive',
+    url: '/api/enterprise/webhooks/dlq/redrive',
     method: 'post',
     data
   })
@@ -124,7 +124,7 @@ export function redriveWebhookDlq(data = {}) {
 
 export function clearWebhookDlq() {
   return request({
-    url: '/enterprise/webhooks/dlq',
+    url: '/api/enterprise/webhooks/dlq',
     method: 'delete'
   })
 }
@@ -132,14 +132,14 @@ export function clearWebhookDlq() {
 // Panel 5: FastMCP Canonical Tools & Sandbox
 export function getMcpTools() {
   return request({
-    url: '/enterprise/mcp/tools',
+    url: '/api/enterprise/mcp/tools',
     method: 'get'
   })
 }
 
 export function invokeMcpTool(toolName, parameters = {}) {
   return request({
-    url: '/enterprise/mcp/invoke',
+    url: '/api/enterprise/mcp/invoke',
     method: 'post',
     data: {
       tool_name: toolName,
@@ -150,7 +150,7 @@ export function invokeMcpTool(toolName, parameters = {}) {
 
 export function getMcpHealth() {
   return request({
-    url: '/enterprise/mcp/health',
+    url: '/api/enterprise/mcp/health',
     method: 'get'
   })
 }
@@ -158,16 +158,17 @@ export function getMcpHealth() {
 // Panel 6: Audit & Security Center
 export function getContracts() {
   return request({
-    url: '/enterprise/contracts',
+    url: '/api/enterprise/contracts',
     method: 'get'
   })
 }
 
 export function sanitizeShieldPrompt(prompt, context = {}) {
   return request({
-    url: '/enterprise/shield/sanitize',
+    url: '/api/enterprise/shield/sanitize',
     method: 'post',
     data: {
+      text: prompt,
       prompt,
       context
     }
@@ -176,7 +177,7 @@ export function sanitizeShieldPrompt(prompt, context = {}) {
 
 export function getWatchdogStatus() {
   return request({
-    url: '/enterprise/orchestrator/watchdog',
+    url: '/api/enterprise/orchestrator/watchdog',
     method: 'get'
   })
 }
@@ -184,35 +185,35 @@ export function getWatchdogStatus() {
 // Panel 7: System Health & Diagnostics
 export function getSystemHealth() {
   return request({
-    url: '/health',
+    url: '/api/health',
     method: 'get'
   })
 }
 
 export function getResearchHealth() {
   return request({
-    url: '/research/health',
+    url: '/api/research/health',
     method: 'get'
   })
 }
 
 export function getEnterpriseStatus() {
   return request({
-    url: '/enterprise/status',
+    url: '/api/enterprise/status',
     method: 'get'
   })
 }
 
 export function getActiveJobs() {
   return request({
-    url: '/jobs',
+    url: '/api/jobs',
     method: 'get'
   })
 }
 
 export function recoverJob(jobId) {
   return request({
-    url: `/jobs/${jobId}/recover`,
+    url: `/api/jobs/${jobId}/recover`,
     method: 'post'
   })
 }

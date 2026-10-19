@@ -3,18 +3,31 @@ Model Relasional Database MiroFish (SQLAlchemy)
 Mendukung SQLite (default) dan migrasi ke PostgreSQL
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Float, Boolean, Text, DateTime, ForeignKey
+from typing import Set, Dict, Any, Optional
+from sqlalchemy import Column, String, Integer, Float, Boolean, Text, DateTime, ForeignKey, Index
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
+
+CANONICAL_SIMULATION_PLATFORMS = (
+    "twitter",
+    "reddit",
+    "tiktok",
+    "instagram",
+    "threads",
+    "linkedin",
+    "youtube",
+)
 
 class ProjectModel(Base):
     __tablename__ = "projects"
     id = Column(String(64), primary_key=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    status = Column(String(32), default="created", index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     tasks = relationship("TaskModel", back_populates="project", cascade="all, delete-orphan")
+    simulation_runs = relationship("SimulationRunModel", back_populates="project", cascade="all, delete-orphan")
 
 class TaskModel(Base):
     __tablename__ = "tasks"
@@ -87,3 +100,130 @@ class AuditLogModel(Base):
     resource_id = Column(String(64), nullable=True)
     details_json = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class SimulationRunModel(Base):
+    __tablename__ = "simulation_runs"
+    id = Column(String(64), primary_key=True)  # simulation_id (e.g. sim_xxx)
+    project_id = Column(String(64), ForeignKey("projects.id", ondelete="CASCADE"), nullable=True, index=True)
+    name = Column(String(255), nullable=True)
+    status = Column(String(32), default="idle", index=True)
+    platforms_json = Column(Text, nullable=True)  # JSON array of platforms
+    current_round = Column(Integer, default=0)
+    total_rounds = Column(Integer, default=0)
+    simulated_hours = Column(Integer, default=0)
+    total_simulation_hours = Column(Integer, default=0)
+    config_json = Column(Text, nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    project = relationship("ProjectModel", back_populates="simulation_runs")
+    actions = relationship("SimulationActionModel", back_populates="simulation", cascade="all, delete-orphan")
+
+class SimulationActionModel(Base):
+    __tablename__ = "simulation_actions"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    simulation_id = Column(String(64), ForeignKey("simulation_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    platform = Column(String(32), nullable=False, index=True)  # twitter, reddit, tiktok, instagram, threads, linkedin, youtube
+    round_num = Column(Integer, nullable=False, default=0, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    agent_id = Column(Integer, nullable=False, default=0, index=True)
+    agent_name = Column(String(255), nullable=True)
+    action_type = Column(String(64), nullable=False, index=True)
+    action_args_json = Column(Text, nullable=True)
+    result = Column(Text, nullable=True)
+    success = Column(Boolean, default=True)
+
+    simulation = relationship("SimulationRunModel", back_populates="actions")
+
+    __table_args__ = (
+        Index("ix_sim_actions_sim_platform", "simulation_id", "platform"),
+        Index("ix_sim_actions_platform_round", "simulation_id", "platform", "round_num"),
+        Index("ix_sim_actions_platform_agent", "simulation_id", "platform", "agent_id"),
+        Index("ix_sim_actions_platform_type", "platform", "action_type"),
+        Index("ix_sim_actions_sim_platform_time", "simulation_id", "platform", "timestamp"),
+    )
+
+
+# ==========================================
+# State Machine & Concurrency Primitives
+# ==========================================
+
+class TaskState:
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    ALLOWED_TRANSITIONS = {
+        PENDING: {PROCESSING, FAILED},
+        PROCESSING: {COMPLETED, FAILED},
+        COMPLETED: set(),
+        FAILED: set(),
+    }
+
+
+class JobState:
+    QUEUED = "queued"
+    RUNNING = "running"
+    PAUSED = "paused"
+    CHECKPOINTING = "checkpointing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    ALLOWED_TRANSITIONS = {
+        QUEUED: {RUNNING, FAILED, CANCELLED},
+        RUNNING: {CHECKPOINTING, PAUSED, COMPLETED, FAILED, CANCELLED},
+        CHECKPOINTING: {RUNNING, FAILED},
+        PAUSED: {RUNNING, CANCELLED, FAILED},
+        COMPLETED: set(),
+        FAILED: set(),
+        CANCELLED: set(),
+    }
+
+
+def atomic_transition_task(
+    session,
+    task_id: str,
+    expected_status: str,
+    new_status: str,
+    **kwargs
+) -> bool:
+    """
+    Transisi status TaskModel secara atomik menggunakan optimistic concurrency control.
+    Mengembalikan True jika update berhasil, False jika status di DB tidak cocok (race condition dicegah).
+    """
+    allowed = TaskState.ALLOWED_TRANSITIONS.get(expected_status, set())
+    if new_status not in allowed:
+        raise ValueError(f"Transisi status task tidak valid: {expected_status} -> {new_status}")
+
+    values = {"status": new_status, **kwargs}
+    rows = session.query(TaskModel).filter(
+        TaskModel.id == task_id,
+        TaskModel.status == expected_status
+    ).update(values, synchronize_session="fetch")
+    return rows > 0
+
+
+def atomic_transition_job(
+    session,
+    job_id: str,
+    expected_state: str,
+    new_state: str,
+    **kwargs
+) -> bool:
+    """
+    Transisi status JobModel secara atomik menggunakan optimistic concurrency control.
+    Mengembalikan True jika update berhasil, False jika state di DB tidak cocok (race condition dicegah).
+    """
+    allowed = JobState.ALLOWED_TRANSITIONS.get(expected_state, set())
+    if new_state not in allowed:
+        raise ValueError(f"Transisi status job tidak valid: {expected_state} -> {new_state}")
+
+    values = {"state": new_state, "updated_at": datetime.utcnow(), **kwargs}
+    rows = session.query(JobModel).filter(
+        JobModel.id == job_id,
+        JobModel.state == expected_state
+    ).update(values, synchronize_session="fetch")
+    return rows > 0
+

@@ -155,7 +155,7 @@
             <!-- Sanitized output snippet -->
             <div>
               <span class="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Sanitized Spotlight Output:</span>
-              <pre class="bg-slate-900 p-2 rounded border border-slate-800 text-[11px] font-mono text-emerald-300 whitespace-pre-wrap max-h-24 overflow-y-auto">{{ shieldResult.sanitized_text || shieldResult.sanitized_prompt }}</pre>
+              <pre class="bg-slate-900 p-2 rounded border border-slate-800 text-[11px] font-mono text-emerald-300 whitespace-pre-wrap max-h-24 overflow-y-auto">{{ shieldResult.sanitized_text || shieldResult.spotlight_xml || shieldResult.sanitized_prompt }}</pre>
             </div>
           </div>
         </div>
@@ -168,19 +168,19 @@
             <h3 class="font-bold text-sm text-white flex items-center gap-1.5">
               <span>📜</span> Buku Besar Kontrak Pipeline
             </h3>
-            <span class="text-[10px] font-mono text-slate-400">{{ contracts.length }} Kontrak</span>
+            <span class="text-[10px] font-mono text-slate-400">{{ (contracts && contracts.length) || 0 }} Kontrak</span>
           </div>
 
           <!-- Contracts List -->
           <div class="mt-3 space-y-2 max-h-[300px] overflow-y-auto pr-1">
             <div
               v-for="c in contracts"
-              :key="c.name || c.file"
+              :key="c.filename || c.name || c.file"
               class="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between font-mono"
             >
               <div>
-                <span class="text-slate-200 font-bold block text-[11px] truncate max-w-[200px]" :title="c.name || c.file">
-                  {{ c.name || c.file }}
+                <span class="text-slate-200 font-bold block text-[11px] truncate max-w-[200px]" :title="c.filename || c.name || c.file">
+                  {{ c.filename || c.name || c.file }}
                 </span>
                 <span class="text-[10px] text-slate-500">
                   {{ c.size_bytes ? (c.size_bytes / 1024).toFixed(1) + ' KB' : 'Valid' }}
@@ -191,7 +191,7 @@
               </span>
             </div>
 
-            <div v-if="contracts.length === 0" class="text-center py-6 text-slate-500 text-xs font-sans">
+            <div v-if="!contracts || contracts.length === 0" class="text-center py-6 text-slate-500 text-xs font-sans">
               Buku besar kontrak pipeline sinkron.
             </div>
           </div>
@@ -203,8 +203,11 @@
             <span class="text-slate-300 font-bold flex items-center gap-1">
               <span>🐕</span> 20-Subagent Orchestrator Watchdog
             </span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-950 text-emerald-400 border border-emerald-800">
-              0 Dead Agents
+            <span
+              class="px-1.5 py-0.5 rounded text-[10px] font-mono border"
+              :class="(watchdog?.dead_agents?.length || 0) > 0 ? 'bg-rose-950 text-rose-400 border-rose-800' : 'bg-emerald-950 text-emerald-400 border-emerald-800'"
+            >
+              {{ watchdog?.dead_agents?.length || 0 }} Dead Agents
             </span>
           </div>
           <div class="text-[10px] text-slate-400 font-mono flex items-center justify-between mt-1">
@@ -246,8 +249,9 @@ export default {
           getWatchdogStatus()
         ])
 
-        if (contractsRes.status === 'fulfilled' && contractsRes.value?.contracts) {
-          this.contracts = contractsRes.value.contracts
+        if (contractsRes.status === 'fulfilled') {
+          const val = contractsRes.value
+          this.contracts = val?.contracts || val?.data?.contracts || (Array.isArray(val) ? val : [])
         }
         if (watchdogRes.status === 'fulfilled') {
           this.watchdog = watchdogRes.value

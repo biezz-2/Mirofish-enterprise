@@ -386,6 +386,7 @@ class RedditSimulationRunner:
     """Reddit模拟运行器"""
     
     # Reddit可用动作（不包含INTERVIEW，INTERVIEW只能通过ManualAction手动触发）
+    # Catatan: ActionType.TREND dihilangkan karena schema OpenAI 'required' tanpa 'properties' memicu BadRequest 400
     AVAILABLE_ACTIONS = [
         ActionType.LIKE_POST,
         ActionType.DISLIKE_POST,
@@ -395,7 +396,6 @@ class RedditSimulationRunner:
         ActionType.DISLIKE_COMMENT,
         ActionType.SEARCH_POSTS,
         ActionType.SEARCH_USER,
-        ActionType.TREND,
         ActionType.REFRESH,
         ActionType.DO_NOTHING,
         ActionType.FOLLOW,
@@ -447,7 +447,7 @@ class RedditSimulationRunner:
         
         # 如果 .env 中没有，则使用 config 作为备用
         if not llm_model:
-            llm_model = self.config.get("llm_model", "gpt-4o-mini")
+            llm_model = self.config.get("llm_model", "mirofish-agent")
         
         # 设置 camel-ai 所需的环境变量
         if llm_api_key:
@@ -574,11 +574,12 @@ class RedditSimulationRunner:
             print(f"已删除旧数据库: {db_path}")
         
         print("创建OASIS环境...")
+        adaptive_semaphore = min(30, max(4, (os.cpu_count() or 2) * 2))
         self.env = oasis.make(
             agent_graph=self.agent_graph,
             platform=oasis.DefaultPlatformType.REDDIT,
             database_path=db_path,
-            semaphore=30,  # 限制最大并发 LLM 请求数，防止 API 过载
+            semaphore=adaptive_semaphore,
         )
         
         await self.env.reset()

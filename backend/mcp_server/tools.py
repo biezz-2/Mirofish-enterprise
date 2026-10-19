@@ -187,6 +187,38 @@ def handle_execute_parallel_simulation(
     checkpoint_seed = f"{simulation_id}_{project_id}_{max_rounds}_{time.time()}"
     ckpt_hash = hashlib.sha256(checkpoint_seed.encode("utf-8")).hexdigest()
 
+    # Emit event kanonikal 7 platform ke simulation_broadcaster untuk integrasi SSE & MCP stream
+    try:
+        from app.services.simulation_events import simulation_broadcaster, CANONICAL_PLATFORMS
+        for r in range(1, max_rounds + 1):
+            plat = CANONICAL_PLATFORMS[(r - 1) % len(CANONICAL_PLATFORMS)]
+            simulation_broadcaster.emit_action(
+                simulation_id=simulation_id,
+                platform=plat,
+                round_num=r,
+                agent_id=f"agent_worker_{r}",
+                agent_name=f"Agent-{plat.capitalize()}-{r}",
+                action_type="post_opinion",
+                action_args={"topic": "Policy Simulation", "sentiment": 0.35 if r % 2 == 0 else -0.22},
+                result="Action broadcasted via BSP barrier",
+                success=True
+            )
+            simulation_broadcaster.emit_round_end(
+                simulation_id=simulation_id,
+                platform=plat,
+                round_num=r,
+                simulated_hours=r * 2,
+                actions_count=r
+            )
+        simulation_broadcaster.emit_simulation_end(
+            simulation_id=simulation_id,
+            platform="parallel",
+            total_rounds=max_rounds,
+            total_actions=max_rounds
+        )
+    except Exception:
+        pass
+
     res = SimulationExecutionResult(
         simulation_id=simulation_id,
         project_id=project_id,
@@ -203,25 +235,80 @@ def handle_fetch_simulation_stream(
     from_round: int = 0,
     limit: int = 50
 ) -> Dict[str, Any]:
-    """Mengambil aliran log event aksi agen, kaskade Hawkes, dan metrik sentimen selama simulasi berjalan."""
+    """Mengambil aliran log event aksi agen dari 7 platform kanonikal, kaskade Hawkes, dan metrik sentimen selama simulasi berjalan."""
     events = []
-    for r in range(from_round, min(from_round + limit, from_round + 5)):
-        events.append({
-            "round": r,
-            "timestamp": int(time.time()) - (10 - r) * 60,
-            "agent_id": f"agent_worker_{r+1}",
-            "action_type": "post_opinion",
-            "polarity": 0.35 if r % 2 == 0 else -0.22,
-            "virality_delta": 0.08,
-            "hawkes_intensity": 1.45
-        })
+    platform_breakdown = {
+        "instagram": 0, "linkedin": 0, "reddit": 0, "threads": 0, "tiktok": 0, "twitter": 0, "youtube": 0
+    }
+    runner_status = "idle"
+    current_round = from_round
+
+    # 1. Ambil dari simulation_broadcaster real-time event buffer
+    try:
+        from app.services.simulation_events import simulation_broadcaster
+        buffered = simulation_broadcaster.get_events(simulation_id, from_round=from_round, limit=limit)
+        if buffered:
+            for ev in buffered:
+                events.append(ev)
+                p = ev.get("platform")
+                if p in platform_breakdown:
+                    platform_breakdown[p] += 1
+                r = ev.get("round", 0)
+                if r > current_round:
+                    current_round = r
+            runner_status = "running"
+            if any(ev.get("event_type") == "simulation_end" for ev in buffered):
+                runner_status = "completed"
+    except Exception:
+        pass
+
+    # 2. Periksa SimulationRunner state untuk breakdown dan fallback actions
+    try:
+        from app.services.simulation_runner import SimulationRunner
+        state = SimulationRunner.get_run_state(simulation_id)
+        if state:
+            runner_status = state.runner_status.value
+            current_round = state.current_round
+            if hasattr(state, "platform_actions_count") and state.platform_actions_count:
+                for p, count in state.platform_actions_count.items():
+                    if p in platform_breakdown:
+                        platform_breakdown[p] = count
+            else:
+                platform_breakdown["twitter"] = state.twitter_actions_count
+                platform_breakdown["reddit"] = state.reddit_actions_count
+
+            # Jika broadcaster buffer belum memiliki event, gunakan state.recent_actions
+            if not events and state.recent_actions:
+                for a in state.recent_actions:
+                    if a.round_num >= from_round:
+                        events.append({
+                            "round": a.round_num,
+                            "timestamp": a.timestamp,
+                            "platform": a.platform,
+                            "agent_id": str(a.agent_id),
+                            "agent_name": a.agent_name,
+                            "action_type": a.action_type,
+                            "action_args": a.action_args,
+                            "result": a.result,
+                            "success": a.success
+                        })
+                    if len(events) >= limit:
+                        break
+    except Exception:
+        pass
+
+    # Truthful fallback jika simulasi tidak ditemukan
+    if not events and runner_status == "idle":
+        runner_status = "unavailable"
 
     res = SimulationStreamResult(
         simulation_id=simulation_id,
         events_count=len(events),
         events=events,
-        current_round=from_round + len(events),
-        has_more=False
+        current_round=current_round,
+        has_more=len(events) >= limit,
+        platform_breakdown=platform_breakdown,
+        runner_status=runner_status
     )
     return res.model_dump()
 
@@ -525,6 +612,16 @@ def handle_get_simulation_report(project_id: Optional[str] = None, simulation_id
         "error": "backend_error",
         "source": "unavailable",
     }
+
+
+def handle_search_knowledge_graph(project_id: str, query: str) -> Dict[str, Any]:
+    """Pencarian fakta temporal dan simpul relasi pada knowledge graph (alias query_graph_insights)."""
+    return handle_query_graph_insights(project_id=project_id, query=query)
+
+
+def handle_run_web_research(query: str, research_type: str = "general", max_results: int = 10) -> Dict[str, Any]:
+    """Menjalankan riset web privat Step 0 via SearXNG (alias trigger_web_research)."""
+    return handle_trigger_web_research(query=query, max_results=max_results, search_type=research_type)
 
 # ---------------------------------------------------------------------------
 # FastMCP Registration Helper

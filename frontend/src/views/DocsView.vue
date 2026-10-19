@@ -143,7 +143,7 @@
             <router-link to="/dashboard" class="hover:text-blue-400 flex items-center justify-between">
               <span>Panel 5: MCP Sandbox</span> <span>→</span>
             </router-link>
-            <a href="https://github.com/666ghj/MiroFish" target="_blank" class="hover:text-blue-400 flex items-center justify-between">
+            <a href="https://github.com/biezz-2/Mirofish-enterprise" target="_blank" class="hover:text-blue-400 flex items-center justify-between">
               <span>Repositori GitHub</span> <span>↗</span>
             </a>
           </div>

@@ -57,7 +57,7 @@
       </div>
       <div class="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
         <span class="text-[10px] text-slate-400 block">DLQ Buffer</span>
-        <span class="text-base font-bold font-mono text-amber-400">{{ dlqItems.length }}</span>
+        <span class="text-base font-bold font-mono text-amber-400">{{ (dlqItems && dlqItems.length) || 0 }}</span>
       </div>
       <div class="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
         <span class="text-[10px] text-slate-400 block">P95 Latency</span>
@@ -75,7 +75,7 @@
     <div class="mt-5">
       <div class="flex items-center justify-between mb-2">
         <h3 class="text-sm font-bold text-slate-200">
-          Daftar Langganan Webhook Aktif ({{ subscriptions.length }})
+          Daftar Langganan Webhook Aktif ({{ (subscriptions && subscriptions.length) || 0 }})
         </h3>
         <span class="text-[11px] font-mono text-slate-400">HMAC-SHA256 Signature Verification</span>
       </div>
@@ -92,7 +92,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-800/60 bg-slate-900/40">
-            <tr v-for="sub in subscriptions" :key="sub.id" class="hover:bg-slate-800/40 transition-colors">
+            <tr v-for="sub in subscriptions" :key="sub.subscription_id || sub.id" class="hover:bg-slate-800/40 transition-colors">
               <td class="py-2.5 px-3 font-mono text-purple-300 break-all select-all">
                 {{ sub.target_url }}
                 <div v-if="sub.description" class="text-[10px] text-slate-400 font-sans mt-0.5">
@@ -120,14 +120,14 @@
               </td>
               <td class="py-2.5 px-3 text-right">
                 <button
-                  @click="deleteSub(sub.id)"
+                  @click="deleteSub(sub.subscription_id || sub.id)"
                   class="px-2 py-1 bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800 rounded text-[11px] cursor-pointer transition-colors"
                 >
                   Hapus
                 </button>
               </td>
             </tr>
-            <tr v-if="subscriptions.length === 0">
+            <tr v-if="!subscriptions || subscriptions.length === 0">
               <td colspan="5" class="py-6 text-center text-slate-500">
                 Belum ada langganan webhook yang terdaftar.
               </td>
@@ -152,7 +152,7 @@
         <div class="flex items-center gap-2">
           <button
             @click="redriveAll"
-            :disabled="dlqItems.length === 0 || redriveRunning"
+            :disabled="!dlqItems || dlqItems.length === 0 || redriveRunning"
             class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition-colors cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
           >
             <span v-if="redriveRunning" class="animate-spin">⟳</span>
@@ -160,7 +160,7 @@
           </button>
           <button
             @click="clearDlq"
-            :disabled="dlqItems.length === 0"
+            :disabled="!dlqItems || dlqItems.length === 0"
             class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors cursor-pointer disabled:opacity-40"
           >
             Bersihkan DLQ
@@ -196,7 +196,7 @@
                 </button>
               </td>
             </tr>
-            <tr v-if="dlqItems.length === 0">
+            <tr v-if="!dlqItems || dlqItems.length === 0">
               <td colspan="6" class="py-6 text-center text-emerald-400 font-sans">
                 ✓ Dead-Letter Queue kosong. Seluruh webhook terkirim dalam SLA.
               </td>
@@ -337,14 +337,17 @@ export default {
           getWebhookDlq()
         ])
 
-        if (subsRes.status === 'fulfilled' && subsRes.value?.subscriptions) {
-          this.subscriptions = subsRes.value.subscriptions
+        if (subsRes.status === 'fulfilled') {
+          const val = subsRes.value
+          this.subscriptions = val?.subscriptions || val?.data?.subscriptions || (Array.isArray(val) ? val : [])
         }
-        if (statsRes.status === 'fulfilled' && statsRes.value?.stats) {
-          this.stats = statsRes.value.stats
+        if (statsRes.status === 'fulfilled') {
+          const val = statsRes.value
+          this.stats = val?.stats || val?.data?.stats || (val && typeof val === 'object' && !val.stats ? val : {})
         }
-        if (dlqRes.status === 'fulfilled' && dlqRes.value?.dlq) {
-          this.dlqItems = dlqRes.value.dlq
+        if (dlqRes.status === 'fulfilled') {
+          const val = dlqRes.value
+          this.dlqItems = val?.dlq || val?.data?.dlq || (Array.isArray(val) ? val : [])
         }
       } catch (err) {
         this.error = err.message || 'Gagal memuat data webhook'

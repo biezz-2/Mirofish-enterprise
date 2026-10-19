@@ -121,6 +121,8 @@ class SimulationStreamResult(BaseModel):
     events: List[Dict[str, Any]]
     current_round: int
     has_more: bool
+    platform_breakdown: Optional[Dict[str, int]] = None
+    runner_status: Optional[str] = None
 
 
 # Tool 8: query_graph_insights

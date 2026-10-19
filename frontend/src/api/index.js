@@ -14,6 +14,11 @@ const service = axios.create({
 service.interceptors.request.use(
   config => {
     config.headers['Accept-Language'] = i18n.global.locale.value
+    if (config.url && !config.url.startsWith('http://') && !config.url.startsWith('https://')) {
+      if (!config.url.startsWith('/api/') && config.url !== '/api') {
+        config.url = '/api' + (config.url.startsWith('/') ? config.url : '/' + config.url)
+      }
+    }
     return config
   },
   error => {

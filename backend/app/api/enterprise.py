@@ -61,6 +61,8 @@ from mcp_server.tools import (
     handle_list_projects,
     handle_get_job_status,
     handle_get_simulation_report,
+    handle_search_knowledge_graph,
+    handle_run_web_research,
 )
 import threading
 
@@ -1153,6 +1155,8 @@ def invoke_mcp_tool():
         'list_projects': handle_list_projects,
         'get_job_status': handle_get_job_status,
         'get_simulation_report': handle_get_simulation_report,
+        'search_knowledge_graph': handle_search_knowledge_graph,
+        'run_web_research': handle_run_web_research,
     }
 
     handler = handlers.get(tool_name)

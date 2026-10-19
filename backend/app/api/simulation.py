@@ -13,19 +13,22 @@ from ..config import Config
 from ..utils.auth import require_auth, require_resource_ownership
 from ..services.zep_entity_reader import ZepEntityReader
 from ..services.oasis_profile_generator import OasisProfileGenerator
-from ..services.simulation_manager import SimulationManager, SimulationStatus
+from ..services.simulation_manager import SimulationManager, SimulationStatus, PLATFORM_ALIASES
 from ..services.simulation_runner import (
     SimulationRunner,
     RunnerStatus,
     SimulationStopPending,
 )
 from ..services.zep_graph_memory_updater import ZepGraphMemoryManager
+from ..services.platform_behaviors import CANONICAL_PLATFORMS, PLATFORM_CHARACTERISTICS
 from ..utils.logger import get_logger
 from ..utils.locale import t, get_locale, set_locale
 from ..utils.zep_lifecycle import get_graph_readers, graph_lifecycle_lock
 from ..models.project import ProjectManager
 
 logger = get_logger('mirofish.api.simulation')
+
+SUPPORTED_INTERVIEW_PLATFORMS = CANONICAL_PLATFORMS + ("x", "facebook")
 
 
 def _get_default_platform(simulation_id: str) -> str:
@@ -254,6 +257,46 @@ def create_simulation():
             }), 400
         
         manager = SimulationManager()
+        web_research = project.metadata.get('web_research') if getattr(project, 'metadata', None) else None
+        # Otomatisasi Hook Step 0: Jika riset web belum ada / gagal sebelumnya, jalankan riset via SearXNG
+        if not web_research or web_research.get('status') == 'OFFLINE_FALLBACK':
+            try:
+                from ..services.web_research_service import WebResearchService, ContentShield
+                from .research import run_async
+                from .graph import _build_grounding_search_query
+                doc_text = ProjectManager.get_extracted_text(project_id) or ""
+                search_query = _build_grounding_search_query(
+                    simulation_requirement=project.simulation_requirement or "",
+                    document_texts=[doc_text[:1000]] if doc_text else [],
+                    project_name=project.name or ""
+                )
+                research_service = WebResearchService()
+                research_report = run_async(
+                    research_service.research(query=search_query, research_type="general", max_results=10)
+                )
+                if research_report.web_results:
+                    grounded_facts_dict = [f.to_dict() for f in research_report.grounded_facts]
+                    if not getattr(project, 'metadata', None):
+                        project.metadata = {}
+                    web_research = {
+                        "query": search_query,
+                        "credibility_score": research_report.credibility_score,
+                        "min_credibility_score": research_report.min_credibility_score,
+                        "verified_claims_count": research_report.verified_claims_count,
+                        "summarized_facts": research_report.summarized_facts,
+                        "grounded_facts": grounded_facts_dict,
+                        "entities_mentioned": research_report.entities_mentioned,
+                        "trends": research_report.trends,
+                        "sources": [r.to_dict() for r in research_report.web_results[:5]],
+                        "status": "COMPLETED",
+                        "generated_at": research_report.generated_at
+                    }
+                    project.metadata['web_research'] = web_research
+                    ProjectManager.save_project(project)
+                    logger.info(f"Auto-hook web research pada create_simulation berhasil ({len(research_report.grounded_facts)} fakta)")
+            except Exception as auto_res_err:
+                logger.warning(f"Auto-hook web research pada create_simulation dilewati: {auto_res_err}")
+
         try:
             state = manager.create_simulation(
                 project_id=project_id,
@@ -261,6 +304,7 @@ def create_simulation():
                 enable_twitter=data.get('enable_twitter', True),
                 enable_reddit=data.get('enable_reddit', True),
                 platforms=data.get('platforms'),
+                web_research=web_research,
             )
         except ValueError as ve:
             return jsonify({
@@ -526,7 +570,27 @@ def prepare_simulation():
         
         # 获取文档文本
         document_text = ProjectManager.get_extracted_text(state.project_id) or ""
-        
+
+        # Perkaya document_text dengan fakta Step 0 Web Research Grounding jika ada
+        project_obj = ProjectManager.get_project(state.project_id)
+        web_res = (state.web_research or (project_obj.metadata.get('web_research') if project_obj and getattr(project_obj, 'metadata', None) else None))
+        if web_res and "=== WEB GROUNDING FACTS" not in document_text:
+            from ..services.web_research_service import ContentShield
+            facts_list = []
+            if web_res.get('grounded_facts'):
+                for gf in web_res['grounded_facts'][:5]:
+                    claim = gf.get('claim', '')
+                    domain = gf.get('domain', 'web')
+                    score = gf.get('credibility_score', 0.5)
+                    status = gf.get('epistemic_status', 'UNVERIFIED')
+                    fenced = ContentShield.isolate_as_evidence(claim, domain, score)
+                    facts_list.append(f"- [{status}] {fenced}")
+            elif web_res.get('summarized_facts'):
+                facts_list = [f"- {ContentShield.sanitize(f)}" for f in web_res['summarized_facts'][:5]]
+            if facts_list:
+                facts_block = "\n".join(facts_list)
+                document_text += f"\n\n=== WEB GROUNDING FACTS (SEARXNG) ===\nTopik: {web_res.get('query', '')}\n{facts_block}"
+
         entity_types_list = data.get('entity_types')
         use_llm_for_profiles = data.get('use_llm_for_profiles', True)
         parallel_profile_count = data.get('parallel_profile_count', 5)
@@ -1146,33 +1210,60 @@ def get_simulation_profiles_realtime(simulation_id: str):
                 "error": t('api.simulationNotFound', id=simulation_id)
             }), 404
         
-        # 确定文件路径
-        if platform == "reddit":
-            profiles_file = os.path.join(sim_dir, "reddit_profiles.json")
-        else:
-            profiles_file = os.path.join(sim_dir, "twitter_profiles.csv")
-        
-        # 检查文件是否存在
-        file_exists = os.path.exists(profiles_file)
+        # 确定文件路径与平台读取逻辑 (支持全部7大平台与 all 模式)
         profiles = []
         file_modified_at = None
-        
-        if file_exists:
-            # 获取文件修改时间
-            file_stat = os.stat(profiles_file)
-            file_modified_at = datetime.fromtimestamp(file_stat.st_mtime).isoformat()
-            
-            try:
-                if platform == "reddit":
-                    with open(profiles_file, 'r', encoding='utf-8') as f:
-                        profiles = json.load(f)
-                else:
-                    with open(profiles_file, 'r', encoding='utf-8') as f:
-                        reader = csv.DictReader(f)
-                        profiles = list(reader)
-            except (json.JSONDecodeError, Exception) as e:
-                logger.warning(f"读取 profiles 文件失败（可能正在写入中）: {e}")
-                profiles = []
+        file_exists = False
+
+        raw_platform = request.args.get('platform')
+        if raw_platform and raw_platform.lower() == 'all':
+            platform = 'all'
+            for p in CANONICAL_PLATFORMS:
+                p_file = os.path.join(sim_dir, "twitter_profiles.csv") if p == "twitter" else os.path.join(sim_dir, f"{p}_profiles.json")
+                if os.path.exists(p_file):
+                    file_exists = True
+                    try:
+                        if p == "twitter":
+                            with open(p_file, 'r', encoding='utf-8') as f:
+                                for r in csv.DictReader(f):
+                                    r['platform'] = p
+                                    profiles.append(r)
+                        else:
+                            with open(p_file, 'r', encoding='utf-8') as f:
+                                p_data = json.load(f)
+                                if isinstance(p_data, list):
+                                    for r in p_data:
+                                        if isinstance(r, dict):
+                                            r['platform'] = p
+                                        profiles.append(r)
+                    except Exception as e:
+                        logger.warning(f"读取 {p} profiles 失败: {e}")
+        else:
+            platform = PLATFORM_ALIASES.get(str(raw_platform).lower().strip(), str(raw_platform).lower().strip()) if raw_platform else _get_default_platform(simulation_id)
+            if platform == "twitter":
+                profiles_file = os.path.join(sim_dir, "twitter_profiles.csv")
+            else:
+                profiles_file = os.path.join(sim_dir, f"{platform}_profiles.json")
+                if not os.path.exists(profiles_file) and platform == "reddit":
+                    profiles_file = os.path.join(sim_dir, "reddit_profiles.json")
+
+            file_exists = os.path.exists(profiles_file)
+            if file_exists:
+                file_stat = os.stat(profiles_file)
+                file_modified_at = datetime.fromtimestamp(file_stat.st_mtime).isoformat()
+                try:
+                    if platform == "twitter":
+                        with open(profiles_file, 'r', encoding='utf-8') as f:
+                            profiles = list(csv.DictReader(f))
+                    else:
+                        with open(profiles_file, 'r', encoding='utf-8') as f:
+                            profiles = json.load(f)
+                    for r in profiles:
+                        if isinstance(r, dict):
+                            r['platform'] = platform
+                except (json.JSONDecodeError, Exception) as e:
+                    logger.warning(f"读取 profiles 文件失败（可能正在写入中）: {e}")
+                    profiles = []
         
         # 检查是否正在生成（通过 state.json 判断）
         is_generating = False
@@ -1549,15 +1640,16 @@ def generate_profiles():
 # ============== 模拟运行控制接口 ==============
 
 @simulation_bp.route('/start', methods=['POST'])
+@simulation_bp.route('/<simulation_id>/start', methods=['POST'])
 @require_auth
-def start_simulation():
+def start_simulation(simulation_id: str = None):
     """
     开始运行模拟
 
     请求（JSON）：
         {
-            "simulation_id": "sim_xxxx",          // 必填，模拟ID
-            "platform": "parallel",                // 可选: twitter / reddit / parallel (默认)
+            "simulation_id": "sim_xxxx",          // 必填（若URL未携带），模拟ID
+            "platform": "parallel",                // 可选: 7大平台或 parallel / all (默认)
             "max_rounds": 100,                     // 可选: 最大模拟轮数，用于截断过长的模拟
             "enable_graph_memory_update": false,   // 可选: 是否将Agent活动动态更新到Zep图谱记忆
             "force": false                         // 可选: 强制重新开始（会停止运行中的模拟并清理日志）
@@ -1591,9 +1683,9 @@ def start_simulation():
         }
     """
     try:
-        data = request.get_json() or {}
+        data = request.get_json(silent=True) or {}
 
-        simulation_id = data.get('simulation_id')
+        simulation_id = simulation_id or data.get('simulation_id')
         if not simulation_id:
             return jsonify({
                 "success": False,
@@ -1630,11 +1722,15 @@ def start_simulation():
                     "error": t('api.maxRoundsInvalid')
                 }), 400
 
-        if platform not in ['twitter', 'reddit', 'parallel']:
+        # 验证平台参数：支持全部7大平台、别名、parallel与all
+        allowed_platforms = set(CANONICAL_PLATFORMS) | set(PLATFORM_ALIASES.keys()) | {'parallel', 'all'}
+        if platform not in allowed_platforms:
             return jsonify({
                 "success": False,
                 "error": t('api.invalidPlatform', platform=platform)
             }), 400
+
+        platform = PLATFORM_ALIASES.get(platform, platform)
 
         # 检查模拟是否已准备好
         manager = SimulationManager()
@@ -1837,16 +1933,17 @@ def start_simulation():
 
 
 @simulation_bp.route('/stop', methods=['POST'])
+@simulation_bp.route('/<simulation_id>/stop', methods=['POST'])
 @require_auth
-def stop_simulation():
+def stop_simulation(simulation_id: str = None):
     """
     停止模拟
-    
+
     请求（JSON）：
         {
-            "simulation_id": "sim_xxxx"  // 必填，模拟ID
+            "simulation_id": "sim_xxxx"  // 必填（若URL未携带），模拟ID
         }
-    
+
     返回：
         {
             "success": true,
@@ -1858,9 +1955,9 @@ def stop_simulation():
         }
     """
     try:
-        data = request.get_json() or {}
-        
-        simulation_id = data.get('simulation_id')
+        data = request.get_json(silent=True) or {}
+
+        simulation_id = simulation_id or data.get('simulation_id')
         if not simulation_id:
             return jsonify({
                 "success": False,
@@ -1944,25 +2041,42 @@ def get_run_status(simulation_id: str):
     """
     try:
         run_state = SimulationRunner.get_run_state(simulation_id)
-        
+
+        manager = SimulationManager()
+        sim_state = manager.get_simulation(simulation_id)
+        configured_platforms = list(sim_state.platforms) if sim_state and sim_state.platforms else list(CANONICAL_PLATFORMS)
+
         if not run_state:
-            return jsonify({
-                "success": True,
-                "data": {
-                    "simulation_id": simulation_id,
-                    "runner_status": "idle",
-                    "current_round": 0,
-                    "total_rounds": 0,
-                    "progress_percent": 0,
-                    "twitter_actions_count": 0,
-                    "reddit_actions_count": 0,
-                    "total_actions_count": 0,
-                }
-            })
-        
+            data = {
+                "simulation_id": simulation_id,
+                "runner_status": "idle",
+                "current_round": 0,
+                "total_rounds": 0,
+                "progress_percent": 0,
+                "twitter_actions_count": 0,
+                "reddit_actions_count": 0,
+                "total_actions_count": 0,
+                "platforms": configured_platforms,
+            }
+        else:
+            data = run_state.to_dict()
+            data["platforms"] = configured_platforms
+
+        for p in configured_platforms:
+            if f"{p}_actions_count" not in data:
+                data[f"{p}_actions_count"] = 0
+            if f"{p}_current_round" not in data:
+                data[f"{p}_current_round"] = data.get("current_round", 0)
+            if f"{p}_simulated_hours" not in data:
+                data[f"{p}_simulated_hours"] = data.get("simulated_hours", 0)
+            if f"{p}_running" not in data:
+                data[f"{p}_running"] = (data.get("runner_status") == "running")
+            if f"{p}_completed" not in data:
+                data[f"{p}_completed"] = (data.get("runner_status") == "completed")
+
         return jsonify({
             "success": True,
-            "data": run_state.to_dict()
+            "data": data
         })
         
     except Exception as e:
@@ -2034,18 +2148,19 @@ def get_run_status_detail(simulation_id: str):
             simulation_id=simulation_id,
             platform=platform_filter
         )
-        
-        # 分平台获取动作
-        twitter_actions = SimulationRunner.get_all_actions(
-            simulation_id=simulation_id,
-            platform="twitter"
-        ) if not platform_filter or platform_filter == "twitter" else []
-        
-        reddit_actions = SimulationRunner.get_all_actions(
-            simulation_id=simulation_id,
-            platform="reddit"
-        ) if not platform_filter or platform_filter == "reddit" else []
-        
+
+        # 分平台获取动作（覆盖所有 canonical 平台）
+        platform_actions_map = {}
+        for p in CANONICAL_PLATFORMS:
+            if not platform_filter or platform_filter == p:
+                p_acts = SimulationRunner.get_all_actions(
+                    simulation_id=simulation_id,
+                    platform=p
+                )
+                platform_actions_map[p] = [a.to_dict() for a in p_acts]
+            else:
+                platform_actions_map[p] = []
+
         # 获取当前轮次的动作（recent_actions 只展示最新一轮）
         current_round = run_state.current_round
         recent_actions = SimulationRunner.get_all_actions(
@@ -2053,16 +2168,36 @@ def get_run_status_detail(simulation_id: str):
             platform=platform_filter,
             round_num=current_round
         ) if current_round > 0 else []
-        
+
         # 获取基础状态信息
         result = run_state.to_dict()
         result["all_actions"] = [a.to_dict() for a in all_actions]
-        result["twitter_actions"] = [a.to_dict() for a in twitter_actions]
-        result["reddit_actions"] = [a.to_dict() for a in reddit_actions]
+        result["twitter_actions"] = platform_actions_map.get("twitter", [])
+        result["reddit_actions"] = platform_actions_map.get("reddit", [])
+        for p in CANONICAL_PLATFORMS:
+            result[f"{p}_actions"] = platform_actions_map.get(p, [])
+        result["platform_actions"] = platform_actions_map
         result["rounds_count"] = len(run_state.rounds)
-        # recent_actions 只展示当前最新一轮两个平台的内容
+        # recent_actions 展示当前最新一轮的内容
         result["recent_actions"] = [a.to_dict() for a in recent_actions]
-        
+
+        # 动态补充7大平台状态字段
+        manager = SimulationManager()
+        sim_state = manager.get_simulation(simulation_id)
+        configured_platforms = list(sim_state.platforms) if sim_state and sim_state.platforms else list(CANONICAL_PLATFORMS)
+        result["platforms"] = configured_platforms
+        for p in configured_platforms:
+            if f"{p}_actions_count" not in result:
+                result[f"{p}_actions_count"] = len(platform_actions_map.get(p, []))
+            if f"{p}_current_round" not in result:
+                result[f"{p}_current_round"] = result.get("current_round", 0)
+            if f"{p}_simulated_hours" not in result:
+                result[f"{p}_simulated_hours"] = result.get("simulated_hours", 0)
+            if f"{p}_running" not in result:
+                result[f"{p}_running"] = (result.get("runner_status") == "running")
+            if f"{p}_completed" not in result:
+                result[f"{p}_completed"] = (result.get("runner_status") == "completed")
+
         return jsonify({
             "success": True,
             "data": result
@@ -2446,19 +2581,20 @@ def interview_agent():
                 "error": t('api.requirePrompt')
             }), 400
         
-        # 验证platform参数
-        if platform and platform not in ("twitter", "reddit"):
+        # 验证platform参数（支持所有 canonical 平台与别名）
+        if platform and platform not in SUPPORTED_INTERVIEW_PLATFORMS:
             return jsonify({
                 "success": False,
                 "error": t('api.invalidInterviewPlatform')
             }), 400
         
-        # 检查环境状态
-        if not SimulationRunner.check_env_alive(simulation_id):
+        # 检查模拟是否存在
+        sim_dir = os.path.join(SimulationRunner.RUN_STATE_DIR, simulation_id)
+        if not os.path.exists(sim_dir):
             return jsonify({
                 "success": False,
-                "error": t('api.envNotRunning')
-            }), 400
+                "error": t('api.simulationNotFound', id=simulation_id)
+            }), 404
         
         # 优化prompt，添加前缀避免Agent调用工具
         optimized_prompt = optimize_interview_prompt(prompt)
@@ -2562,8 +2698,8 @@ def interview_agents_batch():
                 "error": t('api.requireInterviews')
             }), 400
 
-        # 验证platform参数
-        if platform and platform not in ("twitter", "reddit"):
+        # 验证platform参数（支持所有 canonical 平台与别名）
+        if platform and platform not in SUPPORTED_INTERVIEW_PLATFORMS:
             return jsonify({
                 "success": False,
                 "error": t('api.invalidInterviewPlatform')
@@ -2583,18 +2719,19 @@ def interview_agents_batch():
                 }), 400
             # 验证每项的platform（如果有）
             item_platform = interview.get('platform')
-            if item_platform and item_platform not in ("twitter", "reddit"):
+            if item_platform and item_platform not in SUPPORTED_INTERVIEW_PLATFORMS:
                 return jsonify({
                     "success": False,
                     "error": t('api.interviewListInvalidPlatform', index=i+1)
                 }), 400
 
-        # 检查环境状态
-        if not SimulationRunner.check_env_alive(simulation_id):
+        # 检查模拟是否存在
+        sim_dir = os.path.join(SimulationRunner.RUN_STATE_DIR, simulation_id)
+        if not os.path.exists(sim_dir):
             return jsonify({
                 "success": False,
-                "error": t('api.envNotRunning')
-            }), 400
+                "error": t('api.simulationNotFound', id=simulation_id)
+            }), 404
 
         # 优化每个采访项的prompt，添加前缀避免Agent调用工具
         optimized_interviews = []
@@ -2690,19 +2827,20 @@ def interview_all_agents():
                 "error": t('api.requirePrompt')
             }), 400
 
-        # 验证platform参数
-        if platform and platform not in ("twitter", "reddit"):
+        # 验证platform参数（支持所有 canonical 平台与别名）
+        if platform and platform not in SUPPORTED_INTERVIEW_PLATFORMS:
             return jsonify({
                 "success": False,
                 "error": t('api.invalidInterviewPlatform')
             }), 400
 
-        # 检查环境状态
-        if not SimulationRunner.check_env_alive(simulation_id):
+        # 检查模拟是否存在
+        sim_dir = os.path.join(SimulationRunner.RUN_STATE_DIR, simulation_id)
+        if not os.path.exists(sim_dir):
             return jsonify({
                 "success": False,
-                "error": t('api.envNotRunning')
-            }), 400
+                "error": t('api.simulationNotFound', id=simulation_id)
+            }), 404
 
         # 优化prompt，添加前缀避免Agent调用工具
         optimized_prompt = optimize_interview_prompt(prompt)
@@ -2740,19 +2878,20 @@ def interview_all_agents():
         }), 500
 
 
-@simulation_bp.route('/interview/history', methods=['POST'])
+@simulation_bp.route('/interview/history', methods=['GET', 'POST'])
+@simulation_bp.route('/<simulation_id>/interview/history', methods=['GET', 'POST'])
 @require_auth
-def get_interview_history():
+def get_interview_history(simulation_id: str = None):
     """
     获取Interview历史记录
 
     从模拟数据库中读取所有Interview记录
 
-    请求（JSON）：
+    请求（JSON或Query）：
         {
-            "simulation_id": "sim_xxxx",  // 必填，模拟ID
-            "platform": "reddit",          // 可选，平台类型（reddit/twitter）
-                                           // 不指定则返回两个平台的所有历史
+            "simulation_id": "sim_xxxx",  // 必填（若URL未携带），模拟ID
+            "platform": "reddit",          // 可选，平台类型（reddit/twitter等7大平台）
+                                           // 不指定则返回所有支持平台的所有历史
             "agent_id": 0,                 // 可选，只获取该Agent的采访历史
             "limit": 100                   // 可选，返回数量，默认100
         }
@@ -2776,13 +2915,13 @@ def get_interview_history():
         }
     """
     try:
-        data = request.get_json() or {}
-        
-        simulation_id = data.get('simulation_id')
-        platform = data.get('platform')  # 不指定则返回两个平台的历史
-        agent_id = data.get('agent_id')
-        limit = data.get('limit', 100)
-        
+        data = request.get_json(silent=True) or {}
+
+        simulation_id = simulation_id or data.get('simulation_id') or request.args.get('simulation_id')
+        platform = data.get('platform') or request.args.get('platform')  # 不指定则返回所有平台的历史
+        agent_id = data.get('agent_id') or request.args.get('agent_id', type=int)
+        limit = data.get('limit') or request.args.get('limit', 100, type=int)
+
         if not simulation_id:
             return jsonify({
                 "success": False,
@@ -2813,17 +2952,18 @@ def get_interview_history():
         }), 500
 
 
-@simulation_bp.route('/env-status', methods=['POST'])
+@simulation_bp.route('/env-status', methods=['GET', 'POST'])
+@simulation_bp.route('/<simulation_id>/env-status', methods=['GET', 'POST'])
 @require_auth
-def get_env_status():
+def get_env_status(simulation_id: str = None):
     """
     获取模拟环境状态
 
     检查模拟环境是否存活（可以接收Interview命令）
 
-    请求（JSON）：
+    请求（JSON或Query）：
         {
-            "simulation_id": "sim_xxxx"  // 必填，模拟ID
+            "simulation_id": "sim_xxxx"  // 必填（若URL未携带），模拟ID
         }
 
     返回：
@@ -2839,10 +2979,10 @@ def get_env_status():
         }
     """
     try:
-        data = request.get_json() or {}
-        
-        simulation_id = data.get('simulation_id')
-        
+        data = request.get_json(silent=True) or {}
+
+        simulation_id = simulation_id or data.get('simulation_id') or request.args.get('simulation_id')
+
         if not simulation_id:
             return jsonify({
                 "success": False,
@@ -2850,7 +2990,7 @@ def get_env_status():
             }), 400
 
         env_alive = SimulationRunner.check_env_alive(simulation_id)
-        
+
         # 获取更详细的状态信息
         env_status = SimulationRunner.get_env_status_detail(simulation_id)
 
@@ -2859,15 +2999,19 @@ def get_env_status():
         else:
             message = t('api.envNotRunningShort')
 
+        response_data = {
+            "simulation_id": simulation_id,
+            "env_alive": env_alive,
+            "twitter_available": env_status.get("twitter_available", False),
+            "reddit_available": env_status.get("reddit_available", False),
+            "message": message
+        }
+        for p in CANONICAL_PLATFORMS:
+            response_data[f"{p}_available"] = env_status.get(f"{p}_available", False)
+
         return jsonify({
             "success": True,
-            "data": {
-                "simulation_id": simulation_id,
-                "env_alive": env_alive,
-                "twitter_available": env_status.get("twitter_available", False),
-                "reddit_available": env_status.get("reddit_available", False),
-                "message": message
-            }
+            "data": response_data
         })
 
     except Exception as e:
@@ -2880,22 +3024,23 @@ def get_env_status():
 
 
 @simulation_bp.route('/close-env', methods=['POST'])
+@simulation_bp.route('/<simulation_id>/close-env', methods=['POST'])
 @require_auth
-def close_simulation_env():
+def close_simulation_env(simulation_id: str = None):
     """
     关闭模拟环境
-    
+
     向模拟发送关闭环境命令，使其优雅退出等待命令模式。
-    
+
     注意：这不同于 /stop 接口，/stop 会强制终止进程，
     而此接口会让模拟优雅地关闭环境并退出。
-    
+
     请求（JSON）：
         {
-            "simulation_id": "sim_xxxx",  // 必填，模拟ID
+            "simulation_id": "sim_xxxx",  // 必填（若URL未携带），模拟ID
             "timeout": 30                  // 可选，超时时间（秒），默认30
         }
-    
+
     返回：
         {
             "success": true,
@@ -2907,9 +3052,9 @@ def close_simulation_env():
         }
     """
     try:
-        data = request.get_json() or {}
-        
-        simulation_id = data.get('simulation_id')
+        data = request.get_json(silent=True) or {}
+
+        simulation_id = simulation_id or data.get('simulation_id')
         timeout = data.get('timeout', 30)
         
         if not simulation_id:
@@ -2948,3 +3093,50 @@ def close_simulation_env():
             "error": str(e),
             "traceback": traceback.format_exc()
         }), 500
+
+
+@simulation_bp.route('/platforms', methods=['GET'])
+def get_supported_platforms():
+    """
+    获取支持的7大社交媒体平台元数据与算法特征
+    """
+    return jsonify({
+        "success": True,
+        "data": {
+            "canonical_platforms": list(CANONICAL_PLATFORMS),
+            "platform_characteristics": PLATFORM_CHARACTERISTICS,
+            "count": len(CANONICAL_PLATFORMS)
+        }
+    })
+
+
+@simulation_bp.route('/<simulation_id>/stream', methods=['GET'])
+@simulation_bp.route('/<simulation_id>/events/stream', methods=['GET'])
+@simulation_bp.route('/<simulation_id>/log/stream', methods=['GET'])
+def stream_simulation_events(simulation_id: str):
+    """
+    Real-time Server-Sent Events (SSE) stream for simulation actions across 7 canonical platforms.
+    Query params:
+        from_round: int (default 0)
+        timeout: float (default 60.0)
+    """
+    from flask import Response
+    from ..services.simulation_events import simulation_broadcaster
+
+    from_round = request.args.get('from_round', 0, type=int)
+    timeout = request.args.get('timeout', 60.0, type=float)
+
+    return Response(
+        simulation_broadcaster.generate_sse_stream(
+            simulation_id=simulation_id,
+            from_round=from_round,
+            timeout=timeout
+        ),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+            "Access-Control-Allow-Origin": "*",
+        }
+    )

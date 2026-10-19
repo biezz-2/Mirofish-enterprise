@@ -19,20 +19,31 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 
+SUPPORTED_PLATFORMS = (
+    "twitter",
+    "reddit",
+    "tiktok",
+    "instagram",
+    "threads",
+    "linkedin",
+    "youtube",
+)
+
+
 class PlatformActionLogger:
-    """单平台动作日志记录器"""
-    
+    """单平台动作日志记录器 (Mendukung 7 Platform Kanonikal)"""
+
     def __init__(self, platform: str, base_dir: str):
         """
         初始化日志记录器
-        
+
         Args:
-            platform: 平台名称 (twitter/reddit)
+            platform: 平台名称 (twitter, reddit, tiktok, instagram, threads, linkedin, youtube)
             base_dir: 模拟目录的基础路径
         """
-        self.platform = platform
+        self.platform = platform.lower()
         self.base_dir = base_dir
-        self.log_dir = os.path.join(base_dir, platform)
+        self.log_dir = os.path.join(base_dir, self.platform)
         self.log_path = os.path.join(self.log_dir, "actions.jsonl")
         self._ensure_dir()
     
@@ -77,7 +88,7 @@ class PlatformActionLogger:
         with open(self.log_path, 'a', encoding='utf-8') as f:
             f.write(json.dumps(entry, ensure_ascii=False) + '\n')
     
-    def log_round_end(self, round_num: int, actions_count: int):
+    def log_round_end(self, round_num: int, actions_count: int, simulated_hours: Optional[int] = None):
         """记录轮次结束"""
         entry = {
             "round": round_num,
@@ -85,7 +96,9 @@ class PlatformActionLogger:
             "event_type": "round_end",
             "actions_count": actions_count,
         }
-        
+        if simulated_hours is not None:
+            entry["simulated_hours"] = simulated_hours
+
         with open(self.log_path, 'a', encoding='utf-8') as f:
             f.write(json.dumps(entry, ensure_ascii=False) + '\n')
     
@@ -125,27 +138,28 @@ class SimulationLogManager:
     def __init__(self, simulation_dir: str):
         """
         初始化日志管理器
-        
+
         Args:
             simulation_dir: 模拟目录路径
         """
         self.simulation_dir = simulation_dir
+        self._platform_loggers: Dict[str, PlatformActionLogger] = {}
         self.twitter_logger: Optional[PlatformActionLogger] = None
         self.reddit_logger: Optional[PlatformActionLogger] = None
         self._main_logger: Optional[logging.Logger] = None
-        
+
         # 设置主日志
         self._setup_main_logger()
-    
+
     def _setup_main_logger(self):
         """设置主模拟日志"""
         log_path = os.path.join(self.simulation_dir, "simulation.log")
-        
+
         # 创建 logger
         self._main_logger = logging.getLogger(f"simulation.{os.path.basename(self.simulation_dir)}")
         self._main_logger.setLevel(logging.INFO)
         self._main_logger.handlers.clear()
-        
+
         # 文件处理器
         file_handler = logging.FileHandler(log_path, encoding='utf-8', mode='w')
         file_handler.setLevel(logging.INFO)
@@ -154,7 +168,7 @@ class SimulationLogManager:
             datefmt='%Y-%m-%d %H:%M:%S'
         ))
         self._main_logger.addHandler(file_handler)
-        
+
         # 控制台处理器
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
@@ -163,20 +177,48 @@ class SimulationLogManager:
             datefmt='%H:%M:%S'
         ))
         self._main_logger.addHandler(console_handler)
-        
+
         self._main_logger.propagate = False
-    
+
+    def get_platform_logger(self, platform: str) -> PlatformActionLogger:
+        """获取指定平台的动作日志记录器 (Mendukung 7 platform)"""
+        norm_platform = platform.lower().strip()
+        if norm_platform not in self._platform_loggers:
+            logger = PlatformActionLogger(norm_platform, self.simulation_dir)
+            self._platform_loggers[norm_platform] = logger
+            if norm_platform == "twitter":
+                self.twitter_logger = logger
+            elif norm_platform == "reddit":
+                self.reddit_logger = logger
+        return self._platform_loggers[norm_platform]
+
     def get_twitter_logger(self) -> PlatformActionLogger:
         """获取 Twitter 平台日志记录器"""
-        if self.twitter_logger is None:
-            self.twitter_logger = PlatformActionLogger("twitter", self.simulation_dir)
-        return self.twitter_logger
-    
+        return self.get_platform_logger("twitter")
+
     def get_reddit_logger(self) -> PlatformActionLogger:
         """获取 Reddit 平台日志记录器"""
-        if self.reddit_logger is None:
-            self.reddit_logger = PlatformActionLogger("reddit", self.simulation_dir)
-        return self.reddit_logger
+        return self.get_platform_logger("reddit")
+
+    def get_tiktok_logger(self) -> PlatformActionLogger:
+        """获取 TikTok 平台日志记录器"""
+        return self.get_platform_logger("tiktok")
+
+    def get_instagram_logger(self) -> PlatformActionLogger:
+        """获取 Instagram 平台日志记录器"""
+        return self.get_platform_logger("instagram")
+
+    def get_threads_logger(self) -> PlatformActionLogger:
+        """获取 Threads 平台日志记录器"""
+        return self.get_platform_logger("threads")
+
+    def get_linkedin_logger(self) -> PlatformActionLogger:
+        """获取 LinkedIn 平台日志记录器"""
+        return self.get_platform_logger("linkedin")
+
+    def get_youtube_logger(self) -> PlatformActionLogger:
+        """获取 YouTube 平台日志记录器"""
+        return self.get_platform_logger("youtube")
     
     def log(self, message: str, level: str = "info"):
         """记录主日志"""
@@ -251,7 +293,7 @@ class ActionLogger:
         with open(self.log_path, 'a', encoding='utf-8') as f:
             f.write(json.dumps(entry, ensure_ascii=False) + '\n')
     
-    def log_round_end(self, round_num: int, actions_count: int, platform: str):
+    def log_round_end(self, round_num: int, actions_count: int, platform: str, simulated_hours: Optional[int] = None):
         entry = {
             "round": round_num,
             "timestamp": datetime.now().isoformat(),
@@ -259,7 +301,9 @@ class ActionLogger:
             "event_type": "round_end",
             "actions_count": actions_count,
         }
-        
+        if simulated_hours is not None:
+            entry["simulated_hours"] = simulated_hours
+
         with open(self.log_path, 'a', encoding='utf-8') as f:
             f.write(json.dumps(entry, ensure_ascii=False) + '\n')
     

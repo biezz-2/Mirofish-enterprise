@@ -170,6 +170,53 @@ def create_fastmcp_app(
     app.add_route("/oauth/token", oauth_token_wrapper, methods=["POST"])
     app.add_route("/oauth/introspect", oauth_introspect_wrapper, methods=["POST"])
 
+    # Dual-transport: Integrasikan rute SSE dari FastMCP (/sse dan /messages)
+    try:
+        sse_app = fastmcp.sse_app(transport_security=transport_sec)
+        for route in sse_app.routes:
+            app.routes.append(route)
+    except Exception as e:
+        logger.warning(f"Gagal mengaitkan FastMCP SSE sub-app: {e}")
+
+    # Endpoint SSE Streaming Simulasi 7-Platform untuk Consumer Eksternal
+    async def simulation_stream_endpoint(request: Request) -> Response:
+        sim_id = request.path_params.get("simulation_id")
+        try:
+            from_round = int(request.query_params.get("from_round", 0))
+        except (ValueError, TypeError):
+            from_round = 0
+        try:
+            timeout = float(request.query_params.get("timeout", 60.0))
+        except (ValueError, TypeError):
+            timeout = 60.0
+
+        try:
+            from app.services.simulation_events import simulation_broadcaster
+        except ImportError:
+            from backend.app.services.simulation_events import simulation_broadcaster
+
+        async def sse_generator():
+            for chunk in simulation_broadcaster.generate_sse_stream(
+                simulation_id=sim_id,
+                from_round=from_round,
+                timeout=timeout
+            ):
+                yield chunk.encode("utf-8")
+
+        from starlette.responses import StreamingResponse
+        return StreamingResponse(
+            sse_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+                "Access-Control-Allow-Origin": "*",
+            }
+        )
+
+    app.add_route("/simulation/{simulation_id}/stream", simulation_stream_endpoint, methods=["GET"])
+
     # Simpan referensi objek untuk pengujian
     app.state.fastmcp = fastmcp
     app.state.oauth_mgr = oauth_mgr

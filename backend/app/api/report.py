@@ -4,9 +4,11 @@ Report API路由
 """
 
 import os
+import json
+import time
 import traceback
 import threading
-from flask import request, jsonify, send_file
+from flask import request, jsonify, send_file, Response, stream_with_context
 
 from . import report_bp
 from ..config import Config
@@ -974,7 +976,7 @@ def stream_agent_log(report_id: str):
     """
     try:
         logs = ReportManager.get_agent_log_stream(report_id)
-        
+
         return jsonify({
             "success": True,
             "data": {
@@ -982,7 +984,7 @@ def stream_agent_log(report_id: str):
                 "count": len(logs)
             }
         })
-        
+
     except Exception as e:
         logger.error(f"获取Agent日志失败: {str(e)}")
         return jsonify({
@@ -990,6 +992,116 @@ def stream_agent_log(report_id: str):
             "error": str(e),
             "traceback": traceback.format_exc()
         }), 500
+
+
+def generate_agent_log_sse(report_id: str, from_line: int = 0, timeout: float = 300.0, heartbeat_interval: float = 5.0):
+    """
+    Generator SSE untuk streaming agent log penalaran ReportAgent secara real-time.
+    Mengirimkan event connected, log, progress, done / error, dan heartbeat.
+    """
+    current_line = max(0, from_line)
+    start_time = time.time()
+    last_heartbeat = time.time()
+    poll_interval = 0.5
+
+    yield f"event: connected\ndata: {json.dumps({'report_id': report_id, 'from_line': current_line})}\n\n"
+
+    while True:
+        now = time.time()
+        if timeout and (now - start_time > timeout):
+            yield f"event: timeout\ndata: {json.dumps({'report_id': report_id, 'message': 'Stream timeout reached'})}\n\n"
+            break
+
+        try:
+            log_data = ReportManager.get_agent_log(report_id, from_line=current_line)
+            new_logs = log_data.get("logs", [])
+            total_lines = log_data.get("total_lines", current_line)
+
+            if new_logs:
+                for idx, log_entry in enumerate(new_logs):
+                    line_no = current_line + idx
+                    data_json = json.dumps(log_entry, ensure_ascii=False)
+                    yield f"id: {line_no}\nevent: log\ndata: {data_json}\n\n"
+                current_line = total_lines
+                last_heartbeat = now
+
+            progress = ReportManager.get_progress(report_id)
+            report = ReportManager.get_report(report_id)
+
+            is_completed = False
+            is_failed = False
+            status_str = "unknown"
+
+            if progress:
+                status_str = progress.get("status", "")
+                if status_str in ("completed", "success"):
+                    is_completed = True
+                elif status_str in ("failed", "error"):
+                    is_failed = True
+
+            if report:
+                if report.status == ReportStatus.COMPLETED:
+                    is_completed = True
+                    status_str = "completed"
+                elif report.status == ReportStatus.FAILED:
+                    is_failed = True
+                    status_str = "failed"
+
+            if is_completed or is_failed:
+                final_log_data = ReportManager.get_agent_log(report_id, from_line=current_line)
+                for idx, log_entry in enumerate(final_log_data.get("logs", [])):
+                    line_no = current_line + idx
+                    data_json = json.dumps(log_entry, ensure_ascii=False)
+                    yield f"id: {line_no}\nevent: log\ndata: {data_json}\n\n"
+
+                done_event = "done" if is_completed else "error"
+                done_data = {
+                    "report_id": report_id,
+                    "status": status_str,
+                    "epistemic_status": report.epistemic_status if report else "VERIFIED_SUCCESS",
+                    "total_lines": final_log_data.get("total_lines", current_line),
+                    "message": progress.get("message") if progress else "Report generation finished"
+                }
+                yield f"event: {done_event}\ndata: {json.dumps(done_data, ensure_ascii=False)}\n\n"
+                break
+
+            if now - last_heartbeat >= heartbeat_interval:
+                yield f": heartbeat {int(now)}\n\n"
+                last_heartbeat = now
+
+            time.sleep(poll_interval)
+        except GeneratorExit:
+            break
+        except Exception as e:
+            logger.error(f"Error in SSE stream for report {report_id}: {str(e)}")
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+            break
+
+
+@report_bp.route('/<report_id>/agent-log/events', methods=['GET'])
+@require_auth
+@require_resource_ownership('report')
+def stream_agent_log_events(report_id: str):
+    """
+    Server-Sent Events (SSE) streaming endpoint untuk log penalaran Report Agent secara real-time.
+
+    Query params:
+        from_line: int (default 0)
+        timeout: float (default 300.0)
+    """
+    from_line = request.args.get('from_line', 0, type=int)
+    timeout = request.args.get('timeout', 300.0, type=float)
+
+    return Response(
+        stream_with_context(generate_agent_log_sse(report_id=report_id, from_line=from_line, timeout=timeout)),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+            "Access-Control-Allow-Origin": "*",
+        }
+    )
 
 
 # ============== 控制台日志接口 ==============

@@ -90,24 +90,37 @@ def _contains_additional_json_container(content: str) -> bool:
 
 class LLMClient:
     """LLM客户端"""
-    
+
     def __init__(
         self,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
-        model: Optional[str] = None
+        model: Optional[str] = None,
+        fallback_model: Optional[str] = None,
+        fallback_api_key: Optional[str] = None,
+        fallback_base_url: Optional[str] = None,
     ):
         self.api_key = api_key or Config.LLM_API_KEY
         self.base_url = base_url or Config.LLM_BASE_URL
         self.model = model or Config.LLM_MODEL_NAME
-        
+        self.fallback_model = fallback_model or getattr(Config, 'LLM_FALLBACK_MODEL', None)
+        self.fallback_api_key = fallback_api_key or getattr(Config, 'LLM_FALLBACK_API_KEY', None) or self.api_key
+        self.fallback_base_url = fallback_base_url or getattr(Config, 'LLM_FALLBACK_BASE_URL', None) or self.base_url
+
         if not self.api_key:
             raise ValueError("LLM_API_KEY 未配置")
-        
+
         self.client = OpenAI(
             api_key=self.api_key,
             base_url=self.base_url
         )
+        if self.fallback_api_key and self.fallback_base_url:
+            self.fallback_client = OpenAI(
+                api_key=self.fallback_api_key,
+                base_url=self.fallback_base_url
+            )
+        else:
+            self.fallback_client = self.client
 
     def _create_completion(
         self,
@@ -117,16 +130,42 @@ class LLMClient:
         max_tokens: Optional[int],
         response_format: Optional[Dict[str, Any]],
     ) -> Any:
-        """Send one raw Chat Completions request through the compatibility layer."""
-
-        return create_chat_completion(
-            self.client,
-            model=self.model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            response_format=response_format,
-        )
+        """Send one raw Chat Completions request through the compatibility layer with automatic failover."""
+        try:
+            return create_chat_completion(
+                self.client,
+                model=self.model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                response_format=response_format,
+            )
+        except Exception as error:
+            fallback_model = getattr(self, "fallback_model", None)
+            fallback_base_url = getattr(self, "fallback_base_url", None)
+            base_url = getattr(self, "base_url", None)
+            can_fallback = (
+                bool(fallback_model)
+                and (fallback_model != self.model or fallback_base_url != base_url)
+            )
+            if can_fallback:
+                logger.warning(
+                    "Primary LLM model '%s' failed (%s: %s). Failing over to fallback model '%s'...",
+                    self.model,
+                    type(error).__name__,
+                    error,
+                    fallback_model,
+                )
+                fallback_client = getattr(self, "fallback_client", self.client)
+                return create_chat_completion(
+                    fallback_client,
+                    model=fallback_model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    response_format=response_format,
+                )
+            raise
     
     def chat(
         self,

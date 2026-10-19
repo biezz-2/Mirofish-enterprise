@@ -393,7 +393,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick, h, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getAgentLog, getConsoleLog } from '../api/report'
+import { getAgentLog, getConsoleLog, createAgentLogEventSource } from '../api/report'
 import { sanitizeHtml, sanitizeUrl, escapeHtml } from '@/utils/sanitize'
 
 const router = useRouter()
@@ -797,13 +797,14 @@ const parseInterview = (text) => {
         questions: [],
         twitterAnswer: '',
         redditAnswer: '',
+        platformAnswers: {},
         quotes: []
       }
-      
+
       // 提取标题（如 "学生"、"教育从业者" 等）
       const titleMatch = block.match(/^(.+?)\n/)
       if (titleMatch) interview.title = titleMatch[1].trim()
-      
+
       // 提取姓名和角色
       const nameRoleMatch = block.match(/\*\*(.+?)\*\*\s*\((.+?)\)/)
       if (nameRoleMatch) {
@@ -812,13 +813,13 @@ const parseInterview = (text) => {
         // 设置该人的选择理由
         interview.selectionReason = individualReasons[interview.name] || ''
       }
-      
+
       // 提取简介
       const bioMatch = block.match(/_简介:\s*([\s\S]*?)_\n/)
       if (bioMatch) {
         interview.bio = bioMatch[1].trim().replace(/\.\.\.$/, '...')
       }
-      
+
       // 提取问题列表
       const qMatch = block.match(/\*\*Q:\*\*\s*([\s\S]*?)(?=\n\n\*\*A:\*\*|\*\*A:\*\*)/)
       if (qMatch) {
@@ -835,36 +836,39 @@ const parseInterview = (text) => {
           }
         }
       }
-      
-      // 提取回答 - 分Twitter和Reddit
+
+      // 提取回答 - 支持全部 7 大平台（Twitter/X, Reddit, TikTok, Instagram, LinkedIn, Threads, YouTube）
       const answerMatch = block.match(/\*\*A:\*\*\s*([\s\S]*?)(?=\*\*关键引言|$)/)
       if (answerMatch) {
         const answerText = answerMatch[1].trim()
-        
-        // 分离Twitter和Reddit回答
-        const twitterMatch = answerText.match(/【Twitter平台回答】\n?([\s\S]*?)(?=【Reddit平台回答】|$)/)
-        const redditMatch = answerText.match(/【Reddit平台回答】\n?([\s\S]*?)$/)
-        
-        if (twitterMatch) {
-          interview.twitterAnswer = twitterMatch[1].trim()
+        interview.platformAnswers = {}
+
+        const platformRegex = /【([A-Za-z0-9_\u4e00-\u9fa5]+)平台回答】\n?([\s\S]*?)(?=【[A-Za-z0-9_\u4e00-\u9fa5]+平台回答】|$)/g
+        let pMatch
+        let foundAny = false
+        while ((pMatch = platformRegex.exec(answerText)) !== null) {
+          foundAny = true
+          let pRaw = pMatch[1].trim().toLowerCase()
+          let pKey = pRaw
+          if (pKey === 'x') pKey = 'twitter'
+          if (pKey === 'facebook') pKey = 'linkedin'
+          const ans = pMatch[2].trim()
+          interview.platformAnswers[pKey] = ans
+          if (pKey === 'twitter') interview.twitterAnswer = ans
+          if (pKey === 'reddit') interview.redditAnswer = ans
         }
-        if (redditMatch) {
-          interview.redditAnswer = redditMatch[1].trim()
-        }
-        
-        // 平台回退逻辑（兼容旧格式：只有一个平台标记的情况）
-        if (!twitterMatch && redditMatch) {
-          // 只有 Reddit 回答，仅在非占位文本时复制为默认显示
-          if (interview.redditAnswer && interview.redditAnswer !== '（该平台未获得回复）') {
-            interview.twitterAnswer = interview.redditAnswer
-          }
-        } else if (twitterMatch && !redditMatch) {
-          if (interview.twitterAnswer && interview.twitterAnswer !== '（该平台未获得回复）') {
-            interview.redditAnswer = interview.twitterAnswer
-          }
-        } else if (!twitterMatch && !redditMatch) {
-          // 没有分平台标记（极旧格式），整体作为回答
+
+        if (!foundAny) {
           interview.twitterAnswer = answerText
+          interview.platformAnswers['twitter'] = answerText
+        } else {
+          const availableKeys = Object.keys(interview.platformAnswers)
+          if (!interview.twitterAnswer && availableKeys.length > 0) {
+            interview.twitterAnswer = interview.platformAnswers[availableKeys[0]]
+          }
+          if (!interview.redditAnswer && interview.platformAnswers['reddit']) {
+            interview.redditAnswer = interview.platformAnswers['reddit']
+          }
         }
       }
       
@@ -1299,14 +1303,58 @@ const InterviewDisplay = {
     const activeIndex = ref(0)
     const expandedAnswers = ref(new Set())
     // 为每个问题-回答对维护独立的平台选择状态
-    const platformTabs = reactive({}) // { 'agentIdx-qIdx': 'twitter' | 'reddit' }
-    
-    // 获取某个问题的当前平台选择
-    const getPlatformTab = (agentIdx, qIdx) => {
-      const key = `${agentIdx}-${qIdx}`
-      return platformTabs[key] || 'twitter'
+    const platformTabs = reactive({}) // { 'agentIdx-qIdx': 'twitter' | 'reddit' | ... }
+
+    const PLATFORM_META = {
+      twitter: { label: 'Twitter/X', color: '#1DA1F2' },
+      reddit: { label: 'Reddit', color: '#FF4500' },
+      tiktok: { label: 'TikTok', color: '#00F2FE' },
+      instagram: { label: 'Instagram', color: '#E1306C' },
+      linkedin: { label: 'LinkedIn', color: '#0077B5' },
+      threads: { label: 'Threads', color: '#101010' },
+      youtube: { label: 'YouTube', color: '#FF0000' }
     }
-    
+
+    const renderPlatformIcon = (platform) => {
+      switch (platform) {
+        case 'twitter':
+          return h('svg', { class: 'platform-icon', viewBox: '0 0 24 24', width: 12, height: 12, fill: 'currentColor' }, [
+            h('path', { d: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' })
+          ])
+        case 'reddit':
+          return h('svg', { class: 'platform-icon', viewBox: '0 0 24 24', width: 12, height: 12, fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+            h('path', { d: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' })
+          ])
+        case 'tiktok':
+          return h('svg', { class: 'platform-icon', viewBox: '0 0 24 24', width: 12, height: 12, fill: 'currentColor' }, [
+            h('path', { d: 'M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.45 6.3 6.3 0 0 0 1.86-4.48V8.71a8.31 8.31 0 0 0 4.91 1.48v-3.5z' })
+          ])
+        case 'instagram':
+          return h('svg', { class: 'platform-icon', viewBox: '0 0 24 24', width: 12, height: 12, fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+            h('rect', { x: '2', y: '2', width: '20', height: '20', rx: '5', ry: '5' }),
+            h('path', { d: 'M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z' }),
+            h('line', { x1: '17.5', y1: '6.5', x2: '17.51', y2: '6.5' })
+          ])
+        case 'linkedin':
+          return h('svg', { class: 'platform-icon', viewBox: '0 0 24 24', width: 12, height: 12, fill: 'currentColor' }, [
+            h('path', { d: 'M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z' })
+          ])
+        case 'threads':
+          return h('svg', { class: 'platform-icon', viewBox: '0 0 24 24', width: 12, height: 12, fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+            h('circle', { cx: '12', cy: '12', r: '4' }),
+            h('path', { d: 'M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8' })
+          ])
+        case 'youtube':
+          return h('svg', { class: 'platform-icon', viewBox: '0 0 24 24', width: 12, height: 12, fill: 'currentColor' }, [
+            h('path', { d: 'M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z' })
+          ])
+        default:
+          return h('svg', { class: 'platform-icon', viewBox: '0 0 24 24', width: 12, height: 12, fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+            h('circle', { cx: '12', cy: '12', r: '10' })
+          ])
+      }
+    }
+
     // 设置某个问题的平台选择
     const setPlatformTab = (agentIdx, qIdx, platform) => {
       const key = `${agentIdx}-${qIdx}`
@@ -1401,7 +1449,20 @@ const InterviewDisplay = {
     
     // 获取某个问题对应的回答
     const getAnswerForQuestion = (interview, qIdx, platform) => {
-      const answer = platform === 'twitter' ? interview.twitterAnswer : (interview.redditAnswer || interview.twitterAnswer)
+      let answer = ''
+      if (interview?.platformAnswers && interview.platformAnswers[platform]) {
+        answer = interview.platformAnswers[platform]
+      } else if (platform === 'twitter') {
+        answer = interview?.twitterAnswer || ''
+      } else if (platform === 'reddit') {
+        answer = interview?.redditAnswer || interview?.twitterAnswer || ''
+      } else if (interview?.platformAnswers) {
+        const firstKey = Object.keys(interview.platformAnswers)[0]
+        answer = firstKey ? interview.platformAnswers[firstKey] : (interview?.twitterAnswer || '')
+      } else {
+        answer = interview?.twitterAnswer || ''
+      }
+
       if (!answer || isPlaceholderText(answer)) return answer || ''
 
       const questionCount = interview.questions?.length || 1
@@ -1415,14 +1476,41 @@ const InterviewDisplay = {
       // 分割失败：第一个问题返回完整回答，其余返回空
       return qIdx === 0 ? answer : ''
     }
-    
-    // 检查某个问题是否有双平台回答（过滤占位文本）
+
+    // 获取某个问题可用的平台列表（过滤占位文本）
+    const getAvailablePlatformsForQuestion = (interview, qIdx) => {
+      if (!interview) return []
+      const answersMap = interview.platformAnswers || {}
+      const keys = Object.keys(answersMap)
+      if (keys.length === 0) {
+        const legacy = []
+        if (interview.twitterAnswer && !isPlaceholderText(interview.twitterAnswer)) legacy.push('twitter')
+        if (interview.redditAnswer && !isPlaceholderText(interview.redditAnswer)) legacy.push('reddit')
+        return legacy.length > 0 ? legacy : ['twitter']
+      }
+
+      const active = []
+      for (const k of keys) {
+        const a = getAnswerForQuestion(interview, qIdx, k)
+        if (a && !isPlaceholderText(a)) {
+          active.push(k)
+        }
+      }
+      return active.length > 0 ? active : keys
+    }
+
+    // 获取某个问题的当前平台选择
+    const getPlatformTab = (agentIdx, qIdx, interview) => {
+      const key = `${agentIdx}-${qIdx}`
+      if (platformTabs[key]) return platformTabs[key]
+      const avail = getAvailablePlatformsForQuestion(interview, qIdx)
+      return avail.length > 0 ? avail[0] : 'twitter'
+    }
+
+    // 检查某个问题是否有多个平台的回答
     const hasMultiplePlatforms = (interview, qIdx) => {
-      if (!interview.twitterAnswer || !interview.redditAnswer) return false
-      const twitterAnswer = getAnswerForQuestion(interview, qIdx, 'twitter')
-      const redditAnswer = getAnswerForQuestion(interview, qIdx, 'reddit')
-      // 两个平台都有真实回答（非占位文本）且内容不同
-      return !isPlaceholderText(twitterAnswer) && !isPlaceholderText(redditAnswer) && twitterAnswer !== redditAnswer
+      const avail = getAvailablePlatformsForQuestion(interview, qIdx)
+      return avail.length > 1
     }
     
     return () => h('div', { class: 'interview-display' }, [
@@ -1484,9 +1572,10 @@ const InterviewDisplay = {
             : [props.result.interviews[activeIndex.value]?.question || 'No question available']
           ).map((question, qIdx) => {
             const interview = props.result.interviews[activeIndex.value]
-            const currentPlatform = getPlatformTab(activeIndex.value, qIdx)
+            const availPlatforms = getAvailablePlatformsForQuestion(interview, qIdx)
+            const currentPlatform = getPlatformTab(activeIndex.value, qIdx, interview)
             const answerText = getAnswerForQuestion(interview, qIdx, currentPlatform)
-            const hasDualPlatform = hasMultiplePlatforms(interview, qIdx)
+            const hasMultiple = availPlatforms.length > 1
             const expandKey = `${activeIndex.value}-${qIdx}`
             const isExpanded = expandedAnswers.value.has(expandKey)
             const isPlaceholder = isPlaceholderText(answerText)
@@ -1507,29 +1596,22 @@ const InterviewDisplay = {
                 h('div', { class: 'qa-content' }, [
                   h('div', { class: 'qa-answer-header' }, [
                     h('div', { class: 'qa-sender' }, interview?.name || 'Agent'),
-                    // 双平台切换按钮（仅在有真实双平台回答时显示）
-                    hasDualPlatform && h('div', { class: 'platform-switch' }, [
-                      h('button', {
-                        class: ['platform-btn', { active: currentPlatform === 'twitter' }],
-                        onClick: (e) => { e.stopPropagation(); setPlatformTab(activeIndex.value, qIdx, 'twitter') }
-                      }, [
-                        h('svg', { class: 'platform-icon', viewBox: '0 0 24 24', width: 12, height: 12, fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
-                          h('circle', { cx: '12', cy: '12', r: '10' }),
-                          h('line', { x1: '2', y1: '12', x2: '22', y2: '12' }),
-                          h('path', { d: 'M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z' })
-                        ]),
-                        h('span', {}, t('step4.world1'))
-                      ]),
-                      h('button', {
-                        class: ['platform-btn', { active: currentPlatform === 'reddit' }],
-                        onClick: (e) => { e.stopPropagation(); setPlatformTab(activeIndex.value, qIdx, 'reddit') }
-                      }, [
-                        h('svg', { class: 'platform-icon', viewBox: '0 0 24 24', width: 12, height: 12, fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
-                          h('path', { d: 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z' })
-                        ]),
-                        h('span', {}, t('step4.world2'))
-                      ])
-                    ])
+                    // 多平台切换按钮（动态渲染全部7大活跃平台）
+                    hasMultiple && h('div', { class: 'platform-switch' },
+                      availPlatforms.map(p => {
+                        const meta = PLATFORM_META[p] || { name: p.charAt(0).toUpperCase() + p.slice(1), color: '#6366f1' }
+                        const isActive = currentPlatform === p
+                        return h('button', {
+                          key: p,
+                          class: ['platform-btn', { active: isActive }],
+                          style: isActive ? { borderColor: meta.color, color: meta.color, fontWeight: '600' } : {},
+                          onClick: (e) => { e.stopPropagation(); setPlatformTab(activeIndex.value, qIdx, p) }
+                        }, [
+                          renderPlatformIcon(p),
+                          h('span', {}, meta.name)
+                        ])
+                      })
+                    )
                   ]),
                   h('div', {
                     class: ['qa-text', 'answer-text', { 'placeholder-text': isPlaceholder }],
@@ -1939,25 +2021,74 @@ const renderMarkdown = (content) => {
 
   // 处理分隔线
   html = html.replace(/^---$/gm, '<hr class="md-hr">')
-  
+
+  // 处理表格 (Markdown Table)
+  html = html.replace(/(?:(?:^|\n)\|[^\n]+\|\r?\n\|[-: |]+\|\r?\n(?:\|[^\n]+\|\r?\n?)+)/g, (tableBlock) => {
+    const lines = tableBlock.trim().split(/\r?\n/).filter(line => line.trim().startsWith('|'))
+    if (lines.length < 2) return tableBlock
+
+    const headerLine = lines[0]
+    const separatorLine = lines[1]
+    const dataLines = lines.slice(2)
+
+    const parseRow = (line) => {
+      const cells = line.split('|').slice(1, -1)
+      return cells.map(c => c.trim())
+    }
+
+    const alignments = separatorLine.split('|').slice(1, -1).map(cell => {
+      const trimmed = cell.trim()
+      const left = trimmed.startsWith(':')
+      const right = trimmed.endsWith(':')
+      if (left && right) return 'center'
+      if (right) return 'right'
+      if (left) return 'left'
+      return 'left'
+    })
+
+    const headers = parseRow(headerLine)
+    let theadHtml = '<thead><tr>'
+    headers.forEach((h, idx) => {
+      const align = alignments[idx] || 'left'
+      theadHtml += `<th class="md-th text-${align}">${h}</th>`
+    })
+    theadHtml += '</tr></thead>'
+
+    let tbodyHtml = '<tbody>'
+    dataLines.forEach((rowLine) => {
+      const cells = parseRow(rowLine)
+      if (cells.length > 0) {
+        tbodyHtml += '<tr>'
+        cells.forEach((c, idx) => {
+          const align = alignments[idx] || 'left'
+          tbodyHtml += `<td class="md-td text-${align}">${c}</td>`
+        })
+        tbodyHtml += '</tr>'
+      }
+    })
+    tbodyHtml += '</tbody>'
+
+    return `\n<div class="md-table-wrapper"><table class="md-table">${theadHtml}${tbodyHtml}</table></div>\n`
+  })
+
   // 处理换行 - 空行变成段落分隔，单换行变成 <br>
   html = html.replace(/\n\n/g, '</p><p class="md-p">')
   html = html.replace(/\n/g, '<br>')
-  
+
   // 包装在段落中
   html = '<p class="md-p">' + html + '</p>'
-  
+
   // 清理空段落
   html = html.replace(/<p class="md-p"><\/p>/g, '')
   html = html.replace(/<p class="md-p">(<h[2-5])/g, '$1')
   html = html.replace(/(<\/h[2-5]>)<\/p>/g, '$1')
-  html = html.replace(/<p class="md-p">(<ul|<ol|<blockquote|<pre|<hr)/g, '$1')
-  html = html.replace(/(<\/ul>|<\/ol>|<\/blockquote>|<\/pre>)<\/p>/g, '$1')
+  html = html.replace(/<p class="md-p">(<ul|<ol|<blockquote|<pre|<hr|<div class="md-table-wrapper")/g, '$1')
+  html = html.replace(/(<\/ul>|<\/ol>|<\/blockquote>|<\/pre>|<\/div>)<\/p>/g, '$1')
   // 清理块级元素前后的 <br> 标签
-  html = html.replace(/<br>\s*(<ul|<ol|<blockquote)/g, '$1')
-  html = html.replace(/(<\/ul>|<\/ol>|<\/blockquote>)\s*<br>/g, '$1')
+  html = html.replace(/<br>\s*(<ul|<ol|<blockquote|<div class="md-table-wrapper")/g, '$1')
+  html = html.replace(/(<\/ul>|<\/ol>|<\/blockquote>|<\/div>)\s*<br>/g, '$1')
   // 清理 <p><br> 紧跟块级元素的情况（多余空行导致）
-  html = html.replace(/<p class="md-p">(<br>\s*)+(<ul|<ol|<blockquote|<pre|<hr)/g, '$2')
+  html = html.replace(/<p class="md-p">(<br>\s*)+(<ul|<ol|<blockquote|<pre|<hr|<div class="md-table-wrapper")/g, '$2')
   // 清理连续的 <br> 标签
   html = html.replace(/(<br>\s*){2,}/g, '<br>')
   // 清理块级元素后紧跟的段落开始标签前的 <br>
@@ -2033,56 +2164,114 @@ const getLogLevelClass = (log) => {
   return ''
 }
 
-// Polling
+// Polling & SSE
 let agentLogTimer = null
 let consoleLogTimer = null
+let agentLogEventSource = null
+
+const processAgentLog = (log) => {
+  agentLogs.value.push(log)
+
+  if (log.action === 'planning_complete' && log.details?.outline) {
+    reportOutline.value = log.details.outline
+  }
+
+  if (log.action === 'section_start') {
+    currentSectionIndex.value = log.section_index
+  }
+
+  // section_complete - 章节生成完成
+  if (log.action === 'section_complete') {
+    if (log.details?.content) {
+      generatedSections.value[log.section_index] = log.details.content
+      // 自动展开刚生成的章节
+      expandedContent.value.add(log.section_index - 1)
+      currentSectionIndex.value = null
+    }
+  }
+
+  if (log.action === 'report_complete') {
+    isComplete.value = true
+    currentSectionIndex.value = null  // 确保清除 loading 状态
+    emit('update-status', 'completed')
+    stopPolling()
+    closeAgentLogSSE()
+  }
+
+  if (log.action === 'report_start') {
+    startTime.value = new Date(log.timestamp)
+  }
+}
+
+const startAgentLogSSE = () => {
+  if (!props.reportId || agentLogEventSource) return
+
+  try {
+    agentLogEventSource = createAgentLogEventSource(props.reportId, {
+      fromLine: agentLogLine.value,
+      onLog: (log, eventId) => {
+        processAgentLog(log)
+        if (eventId !== undefined && eventId !== null && eventId !== '') {
+          agentLogLine.value = parseInt(eventId, 10) + 1
+        } else {
+          agentLogLine.value += 1
+        }
+        nextTick(() => {
+          if (rightPanel.value) {
+            if (isComplete.value) {
+              rightPanel.value.scrollTop = 0
+            } else {
+              rightPanel.value.scrollTop = rightPanel.value.scrollHeight
+            }
+          }
+        })
+      },
+      onDone: (data) => {
+        isComplete.value = true
+        currentSectionIndex.value = null
+        emit('update-status', 'completed')
+        stopPolling()
+        closeAgentLogSSE()
+      },
+      onError: (err) => {
+        console.warn('SSE agent-log connection warning, fallback to polling:', err)
+        closeAgentLogSSE()
+        if (!agentLogTimer && !isComplete.value) {
+          agentLogTimer = setInterval(fetchAgentLog, 2000)
+        }
+      }
+    })
+  } catch (err) {
+    console.warn('SSE initialization failed, fallback to polling:', err)
+    if (!agentLogTimer && !isComplete.value) {
+      agentLogTimer = setInterval(fetchAgentLog, 2000)
+    }
+  }
+}
+
+const closeAgentLogSSE = () => {
+  if (agentLogEventSource) {
+    agentLogEventSource.close()
+    agentLogEventSource = null
+  }
+}
 
 const fetchAgentLog = async () => {
   if (!props.reportId) return
-  
+
   try {
     const res = await getAgentLog(props.reportId, agentLogLine.value)
-    
+
     if (res.success && res.data) {
       const newLogs = res.data.logs || []
-      
+
       if (newLogs.length > 0) {
         newLogs.forEach(log => {
-          agentLogs.value.push(log)
-          
-          if (log.action === 'planning_complete' && log.details?.outline) {
-            reportOutline.value = log.details.outline
-          }
-          
-          if (log.action === 'section_start') {
-            currentSectionIndex.value = log.section_index
-          }
-
-          // section_complete - 章节生成完成
-          if (log.action === 'section_complete') {
-            if (log.details?.content) {
-              generatedSections.value[log.section_index] = log.details.content
-              // 自动展开刚生成的章节
-              expandedContent.value.add(log.section_index - 1)
-              currentSectionIndex.value = null
-            }
-          }
-          
-          if (log.action === 'report_complete') {
-            isComplete.value = true
-            currentSectionIndex.value = null  // 确保清除 loading 状态
-            emit('update-status', 'completed')
-            stopPolling()
-            // 滚动逻辑统一在循环结束后的 nextTick 中处理
-          }
-          
-          if (log.action === 'report_start') {
-            startTime.value = new Date(log.timestamp)
-          }
+          processAgentLog(log)
         })
-        
+
         agentLogLine.value = res.data.from_line + newLogs.length
-        
+
         nextTick(() => {
           if (rightPanel.value) {
             // 如果任务已完成，滚动到顶部；否则滚动到底部跟随最新日志
@@ -2171,13 +2360,15 @@ const fetchConsoleLog = async () => {
 }
 
 const startPolling = () => {
-  if (agentLogTimer || consoleLogTimer) return
-  
-  fetchAgentLog()
   fetchConsoleLog()
-  
-  agentLogTimer = setInterval(fetchAgentLog, 2000)
-  consoleLogTimer = setInterval(fetchConsoleLog, 1500)
+  if (!consoleLogTimer) {
+    consoleLogTimer = setInterval(fetchConsoleLog, 1500)
+  }
+
+  // Real-time SSE streaming for agent reasoning logs
+  startAgentLogSSE()
+  // Immediate poll once in case report already finished or backlog exists
+  fetchAgentLog()
 }
 
 const stopPolling = () => {
@@ -2189,6 +2380,7 @@ const stopPolling = () => {
     clearInterval(consoleLogTimer)
     consoleLogTimer = null
   }
+  closeAgentLogSSE()
 }
 
 // Lifecycle
@@ -2205,6 +2397,7 @@ onUnmounted(() => {
 
 watch(() => props.reportId, (newId) => {
   if (newId) {
+    stopPolling()
     agentLogs.value = []
     consoleLogs.value = []
     agentLogLine.value = 0
@@ -2217,7 +2410,7 @@ watch(() => props.reportId, (newId) => {
     collapsedSections.value = new Set()
     isComplete.value = false
     startTime.value = null
-    
+
     startPolling()
   }
 }, { immediate: true })
@@ -2560,6 +2753,47 @@ watch(() => props.reportId, (newId) => {
   overflow-x: auto;
   margin: 1em 0;
   border: 1px solid #E5E7EB;
+}
+
+.generated-content :deep(.md-table-wrapper) {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1.5em 0;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.generated-content :deep(.md-table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.generated-content :deep(.md-th) {
+  background: #F9FAFB;
+  color: #111827;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 2px solid #E5E7EB;
+  white-space: nowrap;
+}
+
+.generated-content :deep(.md-td) {
+  padding: 10px 14px;
+  border-bottom: 1px solid #F3F4F6;
+  color: #374151;
+}
+
+.generated-content :deep(.md-table tr:last-child .md-td) {
+  border-bottom: none;
+}
+
+.generated-content :deep(.md-table tr:hover) {
+  background-color: #F9FAFB;
 }
 
 .generated-content :deep(strong) {

@@ -233,7 +233,14 @@
     "roundLabel": "ROUND",
     "timeLabel": "TIME",
     "actsLabel": "ACTS",
-    "availableActions": "Available Actions"
+    "availableActions": "Available Actions",
+    "allPlatforms": "All Platforms",
+    "autoScrollOn": "Auto-Scroll ON",
+    "autoScrollPaused": "Auto-Scroll Paused",
+    "resumeAutoScroll": "Jump to Latest",
+    "streamMode": "Stream",
+    "dualMode": "Dual",
+    "noActionsFiltered": "No actions found for this platform"
   },
   "step4": {
     "generatingSection": "Generating {title}...",

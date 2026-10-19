@@ -362,7 +362,7 @@ export default {
       loading: false,
       error: null,
       platforms: {},
-      selectedPlatformId: 'twitter',
+      selectedPlatformId: 'x',
       // Simulation parameters
       simAlpha: 1.15,
       simEpsilon: 0.08,
@@ -406,24 +406,27 @@ export default {
   },
   methods: {
     getPlatformIcon(id) {
+      const normalizedId = (id || '').toLowerCase()
       const icons = {
+        x: '𝕏',
         twitter: '𝕏',
         reddit: '🤖',
         tiktok: '🎵',
         instagram: '📷',
+        facebook: '👥',
         youtube: '▶️',
         linkedin: '💼',
         threads: '🧵'
       }
-      return icons[id] || '🌐'
+      return icons[normalizedId] || '🌐'
     },
     async fetchPlatforms() {
       this.loading = true
       this.error = null
       try {
         const res = await getPlatformMatrix()
-        const matrixData = res?.matrix || res?.platforms
-        if (matrixData && typeof matrixData === 'object' && !Array.isArray(matrixData)) {
+        const matrixData = res?.matrix || res?.data?.matrix || (res?.platforms && typeof res.platforms === 'object' && !Array.isArray(res.platforms) ? res.platforms : null)
+        if (matrixData && typeof matrixData === 'object') {
           // Normalize API response fields to component expectations
           const normalized = {}
           for (const [key, val] of Object.entries(matrixData)) {
@@ -433,17 +436,23 @@ export default {
               gini: val.gini_coefficient ?? val.gini ?? 0.65,
               halflife_hours: val.halflife_hours ?? 1.0,
               participation: {
-                creator: val.creator_ratio ?? 0.02,
-                contributor: val.contributor_ratio ?? 0.08,
+                creator: val.creator_ratio ?? 0.01,
+                contributor: val.contributor_ratio ?? 0.09,
                 lurker: val.lurker_ratio ?? 0.90
               },
               virality_decay_rate: val.virality_decay_rate ?? 0.75,
               echo_chamber_vulnerability: val.echo_chamber_vulnerability ?? 0.70,
               epsilon: val.recommended_epsilon ?? val.epsilon ?? 0.08,
-              ranking_weights: val.multi_task_weights || { w_dwell: 0.3, w_like: 0.3, w_reply: 0.2, w_share: 0.2 },
+              weights: {
+                dwell: val.multi_task_weights?.w_dwell ?? val.weights?.dwell ?? 0.15,
+                like: val.multi_task_weights?.w_like ?? val.weights?.like ?? 0.25,
+                reply: val.multi_task_weights?.w_reply ?? val.weights?.reply ?? 0.25,
+                share: val.multi_task_weights?.w_share ?? val.weights?.share ?? 0.35
+              },
+              ranking_weights: val.multi_task_weights || { w_dwell: 0.15, w_like: 0.25, w_reply: 0.25, w_share: 0.35 },
               visual_affinity: val.visual_affinity ?? 0.5,
-              top10_share: val.top_10_percent_attention_share ?? 0.60,
-              top1_share: val.top_1_percent_attention_share ?? 0.35
+              top10_share: val.top_10_percent_attention_share ?? val.top_10_percent_share ?? 0.60,
+              top1_share: val.top_1_percent_attention_share ?? val.top_1_percent_share ?? 0.35
             }
           }
           this.platforms = normalized
@@ -475,12 +484,20 @@ export default {
       try {
         const res = await simulatePareto({
           platform: this.selectedPlatformId,
+          n_agents: this.simSampleSize,
+          sample_size: this.simSampleSize,
           alpha: this.simAlpha,
-          epsilon: this.simEpsilon,
-          sample_size: this.simSampleSize
+          epsilon: this.simEpsilon
         })
         if (res && res.simulation) {
-          this.simResult = res.simulation
+          const sim = res.simulation
+          this.simResult = {
+            ...sim,
+            alpha: sim.alpha || this.simAlpha,
+            gini: sim.gini ?? sim.empirical_gini_coefficient ?? sim.theoretical_gini_coefficient ?? 0.65,
+            top_10_percent_share: sim.top_10_percent_share ?? sim.top_10_percent_attention_share ?? 0.60,
+            top_1_percent_share: sim.top_1_percent_share ?? sim.top_1_percent_attention_share ?? 0.35
+          }
         }
       } catch (err) {
         this.error = 'Simulasi Pareto gagal: ' + err.message

@@ -21,8 +21,12 @@
         <select
           v-model="selectedSimId"
           @change="onSimChange"
-          class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-sky-500"
+          :disabled="simulationOptions.length === 0"
+          class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-sky-500 disabled:opacity-50"
         >
+          <option v-if="simulationOptions.length === 0" value="">
+            Tidak ada simulasi
+          </option>
           <option v-for="sim in simulationOptions" :key="sim.id" :value="sim.id">
             {{ sim.name }} ({{ sim.id }})
           </option>
@@ -34,7 +38,7 @@
 
         <button
           @click="fetchSimData"
-          :disabled="loading"
+          :disabled="loading || !selectedSimId"
           class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
         >
           <span :class="{'animate-spin': loading}">⟳</span>
@@ -48,7 +52,30 @@
       {{ error }}
     </div>
 
-    <!-- Playback Controller Bar -->
+    <!-- Empty State -->
+    <div
+      v-if="!loading && (!selectedSimId || simulationOptions.length === 0)"
+      class="mt-4 p-8 rounded-xl bg-slate-950/80 border border-slate-800 text-center flex flex-col items-center justify-center"
+    >
+      <div class="w-12 h-12 rounded-full bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-2xl mb-3">
+        🚀
+      </div>
+      <h3 class="text-sm font-bold text-slate-200">Tidak ada simulasi aktif</h3>
+      <p class="text-xs text-slate-400 max-w-md mt-1 mb-4 leading-relaxed">
+        Belum ada simulasi swarm yang dijalankan atau tersimpan di database. Silakan jalankan simulasi baru melalui wizard Step 3.
+      </p>
+      <router-link
+        to="/?step=3"
+        class="px-3.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-md shadow-sky-500/20"
+      >
+        <span>Mulai Simulasi Baru (Step 3)</span>
+        <span>→</span>
+      </router-link>
+    </div>
+
+    <!-- Active Simulation Content (Playback Bar + Feed Stream) -->
+    <template v-else>
+      <!-- Playback Controller Bar -->
     <div class="mt-4 bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 flex flex-col md:flex-row items-center justify-between gap-4">
       <!-- Media Buttons -->
       <div class="flex items-center gap-2">
@@ -123,26 +150,27 @@
       <!-- Left: Social Feed Stream (8 cols) -->
       <div class="lg:col-span-8 flex flex-col space-y-3">
         <!-- Feed Filter Tabs -->
-        <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-xs">
-          <div class="flex items-center gap-1.5">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-xs gap-2">
+          <div class="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
             <button
-              v-for="tab in ['all', 'twitter', 'reddit']"
+              v-for="tab in getPlatformTabs()"
               :key="tab"
               @click="activePlatformFilter = tab"
               :class="[
-                'px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer',
+                'px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer flex-shrink-0 flex items-center gap-1',
                 activePlatformFilter === tab
                   ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-400 hover:text-slate-200 bg-slate-900/60 border border-transparent'
               ]"
             >
-              {{ tab === 'all' ? 'Semua Platform' : (tab === 'twitter' ? '𝕏 Twitter' : '🤖 Reddit') }}
-              <span class="text-[10px] opacity-75 font-mono ml-1">({{ getPlatformCount(tab) }})</span>
+              <span>{{ getPlatformBadgeIcon(tab) }}</span>
+              <span>{{ getPlatformBadgeLabel(tab) }}</span>
+              <span class="text-[10px] opacity-75 font-mono ml-0.5">({{ getPlatformCount(tab) }})</span>
             </button>
           </div>
 
-          <div class="text-[11px] text-slate-500 font-mono">
-            Showing {{ filteredPosts.length }} items
+          <div class="text-[11px] text-slate-500 font-mono whitespace-nowrap flex-shrink-0">
+            {{ filteredPosts.length }} items
           </div>
         </div>
 
@@ -173,10 +201,11 @@
               <!-- Platform & Sentiment Badge -->
               <div class="flex items-center gap-1.5">
                 <span
-                  class="px-2 py-0.5 rounded text-[10px] font-mono border"
-                  :class="post.platform === 'twitter' ? 'bg-sky-950/60 text-sky-400 border-sky-800' : 'bg-orange-950/60 text-orange-400 border-orange-800'"
+                  class="px-2 py-0.5 rounded text-[10px] font-mono border inline-flex items-center gap-1"
+                  :class="getPlatformBadgeClass(post.platform)"
                 >
-                  {{ post.platform === 'twitter' ? '𝕏 Twitter' : '🤖 Reddit' }}
+                  <span>{{ getPlatformBadgeIcon(post.platform) }}</span>
+                  <span>{{ getPlatformBadgeLabel(post.platform) }}</span>
                 </span>
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-950/60 text-purple-300 border border-purple-800">
                   Polar: -0.74
@@ -255,23 +284,42 @@
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script>
-import { getSimulationPosts, getSimulationAgentStats, getSimulationTimeline } from '../../api/enterprise'
+import { getSimulationList, getSimulationPosts, getSimulationAgentStats, getSimulationTimeline } from '../../api/enterprise'
+
+const PLATFORM_CONFIGS = {
+  all: { label: 'Semua Platform', icon: '🌐', bgClass: 'bg-slate-800 text-slate-300 border-slate-700' },
+  twitter: { label: 'Twitter / X', icon: '𝕏', bgClass: 'bg-sky-950/60 text-sky-400 border-sky-800' },
+  reddit: { label: 'Reddit', icon: '🤖', bgClass: 'bg-orange-950/60 text-orange-400 border-orange-800' },
+  tiktok: { label: 'TikTok', icon: '🎵', bgClass: 'bg-cyan-950/60 text-cyan-400 border-cyan-800' },
+  instagram: { label: 'Instagram', icon: '📸', bgClass: 'bg-pink-950/60 text-pink-400 border-pink-800' },
+  threads: { label: 'Threads', icon: '🧵', bgClass: 'bg-zinc-800/60 text-zinc-300 border-zinc-700' },
+  linkedin: { label: 'LinkedIn', icon: '💼', bgClass: 'bg-blue-950/60 text-blue-400 border-blue-800' },
+  youtube: { label: 'YouTube', icon: '▶️', bgClass: 'bg-red-950/60 text-red-400 border-red-800' }
+}
+
+const CANONICAL_PLATFORM_TABS = ['all', 'twitter', 'reddit', 'tiktok', 'instagram', 'threads', 'linkedin', 'youtube']
 
 export default {
   name: 'Panel3SwarmConsole',
+  props: {
+    initialSimulationId: {
+      type: String,
+      default: ''
+    }
+  },
+  emits: ['select-simulation'],
   data() {
     return {
       loading: false,
       error: null,
-      selectedSimId: 'sim_7608364fe497',
-      simStatus: 'COMPLETED',
-      simulationOptions: [
-        { id: 'sim_7608364fe497', name: 'Aegis-JKN Multi-Agent Swarm Simulation' }
-      ],
+      selectedSimId: this.initialSimulationId || '',
+      simStatus: 'IDLE',
+      simulationOptions: [],
       // Playback
       isPlaying: false,
       playbackTimer: null,
@@ -297,13 +345,95 @@ export default {
       return this.posts.filter(p => p.platform === this.activePlatformFilter)
     }
   },
+  watch: {
+    initialSimulationId(newVal) {
+      if (newVal && newVal !== this.selectedSimId) {
+        this.selectedSimId = newVal
+        if (!this.simulationOptions.some(s => s.id === newVal)) {
+          this.simulationOptions.unshift({
+            id: newVal,
+            name: `Simulasi (${newVal.substring(0, 12)}...)`,
+            status: 'ACTIVE'
+          })
+        }
+        this.fetchSimData()
+      }
+    }
+  },
   mounted() {
-    this.fetchSimData()
+    this.initSimulationOptions()
   },
   beforeUnmount() {
     this.stopPlayback()
   },
   methods: {
+    async initSimulationOptions() {
+      this.loading = true
+      this.error = null
+      try {
+        const res = await getSimulationList()
+        const data = res?.data || res || []
+        const list = (Array.isArray(data) ? data : []).map(s => ({
+          id: s.simulation_id || s.id,
+          name: s.name || s.title || (s.simulation_id ? `Simulasi ${s.simulation_id.substring(0, 12)}` : 'Simulasi'),
+          status: s.status || 'UNKNOWN'
+        })).filter(s => s.id)
+
+        this.simulationOptions = list
+
+        const targetId = this.initialSimulationId || this.$route?.query?.simulation_id
+        if (targetId) {
+          this.selectedSimId = targetId
+          if (!this.simulationOptions.some(s => s.id === targetId)) {
+            this.simulationOptions.unshift({
+              id: targetId,
+              name: `Simulasi (${targetId.substring(0, 12)}...)`,
+              status: 'ACTIVE'
+            })
+          }
+        } else if (this.simulationOptions.length > 0) {
+          this.selectedSimId = this.simulationOptions[0].id
+        } else {
+          this.selectedSimId = ''
+        }
+
+        if (this.selectedSimId) {
+          const sel = this.simulationOptions.find(s => s.id === this.selectedSimId)
+          if (sel?.status) this.simStatus = sel.status
+          this.$emit('select-simulation', this.selectedSimId)
+          await this.fetchSimData()
+        } else {
+          this.simStatus = 'IDLE'
+          this.posts = []
+          this.agentStats = []
+          this.timelineRounds = []
+        }
+      } catch (err) {
+        this.error = err.message || 'Gagal memuat daftar simulasi'
+        this.simulationOptions = []
+        this.selectedSimId = ''
+      } finally {
+        this.loading = false
+      }
+    },
+    onSimChange() {
+      const sel = this.simulationOptions.find(s => s.id === this.selectedSimId)
+      if (sel?.status) this.simStatus = sel.status
+      this.$emit('select-simulation', this.selectedSimId)
+      this.fetchSimData()
+    },
+    getPlatformTabs() {
+      return CANONICAL_PLATFORM_TABS
+    },
+    getPlatformBadgeClass(platform) {
+      return PLATFORM_CONFIGS[platform]?.bgClass || 'bg-slate-800 text-slate-400 border-slate-700'
+    },
+    getPlatformBadgeIcon(platform) {
+      return PLATFORM_CONFIGS[platform]?.icon || '🌐'
+    },
+    getPlatformBadgeLabel(platform) {
+      return PLATFORM_CONFIGS[platform]?.label || (platform ? platform.toUpperCase() : 'UNKNOWN')
+    },
     getPlatformCount(tab) {
       if (tab === 'all') return this.posts.length
       return this.posts.filter(p => p.platform === tab).length
@@ -317,10 +447,13 @@ export default {
       }
       return names[userId] || userId || 'Swarm Agent'
     },
-    onSimChange() {
-      this.fetchSimData()
-    },
     async fetchSimData() {
+      if (!this.selectedSimId) {
+        this.posts = []
+        this.agentStats = []
+        this.timelineRounds = []
+        return
+      }
       this.loading = true
       this.error = null
       try {

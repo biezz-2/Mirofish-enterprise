@@ -25,24 +25,104 @@ from .domain_credibility import (
 
 logger = get_logger('mirofish.web_research')
 
-# Pola pembersih injeksi-prompt
-_INJECTION_PATTERNS = [
-    r"ignore (all )?previous instructions",
-    r"abaikan (semua )?instruksi sebelumnya",
-    r"system\s*prompt",
-    r"you are now",
-    r"<\|.*?\|>",
-    r"\{\{.*?\}\}",
-]
+# Perisai 3-Lapis Anti-Prompt Injection
+class ContentShield:
+    """Perisai 3-lapis Anti-Prompt Injection untuk konten internet tidak tepercaya (Step 0 Grounding)."""
+
+    # Lapis 1: Regex filter pola jailbreak & prompt injection tokens
+    JAILBREAK_PATTERNS = [
+        r"ignore\s+(all\s+)?(previous|prior|past)\s+instructions?",
+        r"abaikan\s+(semua\s+)?instruksi\s+sebelumnya",
+        r"lupakan\s+(semua\s+)?instruksi\s+sebelumnya",
+        r"disregard\s+(all\s+)?(prior|previous)\s+instructions?",
+        r"forget\s+(all\s+)?previous\s+(context|instructions?)",
+        r"system\s*prompt",
+        r"system\s*message",
+        r"pesan\s*sistem",
+        r"you\s+are\s+now",
+        r"anda\s+sekarang\s+adalah",
+        r"mulai\s+sekarang\s+kamu\s+adalah",
+        r"pretend\s+(you\s+are|to\s+be)",
+        r"berpura-puralah",
+        r"dan\s+mode",
+        r"developer\s+mode",
+        r"mode\s+pengembang",
+        r"<\|.*?\|>",
+        r"\{\{.*?\}\}",
+        r"\[system\]",
+        r"\[assistant\]",
+        r"\[INST\]",
+        r"\[/INST\]",
+        r"<system>",
+        r"</system>",
+        r"<prompt>",
+        r"</prompt>",
+        r"<<<.*?>>>",
+    ]
+
+    # Lapis 2: Deteksi semantik injeksi instruksi & perintah imperatif berisiko
+    SEMANTIC_INSTRUCTION_PATTERNS = [
+        r"(print|reveal|output|display|show|leak)\s+(the\s+)?(api[_\s]?key|password|secret|env|token|credential|system\s+prompt)",
+        r"(bocorkan|tampilkan|cetak|beberkan)\s+(rahasia|kunci|kata\s+sandi|token|kredensial)",
+        r"override\s+(all\s+)?rules",
+        r"timpa\s+(semua\s+)?aturan",
+        r"bypass\s+(safety|content|filter|security|guardrails?)",
+        r"bypass\s+keamanan",
+        r"tembus\s+(keamanan|filter)",
+        r"act\s+as\s+an?\s+unrestricted",
+        r"bertindaklah\s+tanpa\s+batasan",
+        r"do\s+not\s+follow\s+(the\s+)?(system|developer|guidelines?|rules?)",
+        r"jangan\s+ikuti\s+(aturan|sistem|pengembang)",
+        r"new\s+(system\s+)?instructions?:",
+        r"instruksi\s+baru:",
+        r"you\s+must\s+(now\s+)?obey",
+        r"kamu\s+harus\s+mematuhi",
+        r"execute\s+the\s+following\s+(command|code|instruction|prompt)",
+        r"jalankan\s+perintah\s+berikut",
+    ]
+
+    @classmethod
+    def sanitize(cls, text: str, max_len: int = 500) -> str:
+        """
+        Menjalankan perisai 3-lapis:
+        - Layer 1: Regex filter pola jailbreak
+        - Layer 2: Deteksi semantik injeksi instruksi & netralisasi
+        - Layer 3: Isolasi tanda kutip aman (safe quote containment) & netralisasi delimiter
+        """
+        t = re.sub(r"\s+", " ", str(text or "")).strip()
+
+        # Lapisan 1: Regex filter pola jailbreak
+        for pat in cls.JAILBREAK_PATTERNS:
+            t = re.sub(pat, "[FILTERED_JAILBREAK]", t, flags=re.IGNORECASE)
+
+        # Lapisan 2: Deteksi semantik injeksi instruksi & netralisasi
+        for pat in cls.SEMANTIC_INSTRUCTION_PATTERNS:
+            t = re.sub(pat, "[BLOCKED_INSTRUCTION]", t, flags=re.IGNORECASE)
+
+        # Lapisan 3: Isolasi tanda kutip aman & netralisasi delimiter
+        t = t.replace("```", "’’’")
+        t = t.replace('"', "”").replace("'", "’").replace("`", "‘")
+        t = re.sub(r"[<>{}]", "", t)
+
+        # Sanitasi PII (UU PDP)
+        t = PIIScrubber.scrub(t)
+        return t[:max_len].strip()
+
+    @classmethod
+    def isolate_as_evidence(cls, text: str, source_domain: str = "web", credibility_score: float = 0.50, max_len: int = 500) -> str:
+        """
+        Lapisan 3 Isolasi Struktural Tingkat Lanjut:
+        Membungkus fakta web yang telah disanitasi ke dalam tanda pagar kutipan aman (safe quotation fencing),
+        menegaskan batas epistemik agar LLM memperlakukannya murni sebagai data observasi empiris, bukan instruksi.
+        """
+        sanitized = cls.sanitize(text, max_len=max_len)
+        return f"«BUKTI_WEB_TERISOLASI [Domain: {source_domain} | S_cred: {credibility_score:.2f}]: {sanitized} AKHIR_BUKTI»"
+
 
 def sanitize_snippet(text: str, max_len: int = 500) -> str:
-    """Sanitasi snippet: lepas instruksi bawaan, PII (UU PDP), markup, dan pangkas."""
-    t = re.sub(r"\s+", " ", str(text or "")).strip()
-    for pat in _INJECTION_PATTERNS:
-        t = re.sub(pat, "[teks disunting]", t, flags=re.IGNORECASE)
-    t = re.sub(r"[<>{}]", "", t)
-    t = PIIScrubber.scrub(t)
-    return t[:max_len]
+    """Sanitasi snippet: 3-lapis Anti-Prompt Injection, PII scrubbing, dan isolasi tanda kutip aman."""
+    return ContentShield.sanitize(text, max_len=max_len)
+    return ContentShield.sanitize(text, max_len=max_len)
 
 
 @dataclass
@@ -159,12 +239,14 @@ class WebResearchService:
             return
 
         grounded_facts = self.epistemic_validator.ground_corpus(report.web_results, max_facts=5)
-        report.grounded_facts = grounded_facts
+        # Filter fakta empiris berkualitas tinggi: seleksi domain kredibilitas S_cred >= 0.40
+        high_quality_facts = [f for f in grounded_facts if f.credibility_score >= 0.40]
+        report.grounded_facts = high_quality_facts if high_quality_facts else grounded_facts
 
-        if grounded_facts:
-            report.summarized_facts = [f.to_formatted_string() for f in grounded_facts]
+        if report.grounded_facts:
+            report.summarized_facts = [f.to_formatted_string() for f in report.grounded_facts]
             report.verified_claims_count = sum(
-                1 for f in grounded_facts if f.epistemic_status == EpistemicStatus.VERIFIED
+                1 for f in report.grounded_facts if f.epistemic_status == EpistemicStatus.VERIFIED
             )
         else:
             # Fallback jika tidak ada konten yang cukup panjang
@@ -199,7 +281,8 @@ class WebResearchService:
     def _evaluate_credibility(self, report: ResearchReport):
         """
         Menghitung skor kredibilitas agregat menggunakan DomainCredibilityScorer.
-        S_cred(k) komposit diintegrasikan di seluruh hasil web.
+        S_cred(k) komposit diintegrasikan di seluruh domain unik independen (Notion Dokumen #4).
+        Mencegah dominasi artifisial oleh domain tunggal berulang atau situs klon.
         """
         if not report.web_results:
             report.credibility_score = 0.0
@@ -207,7 +290,11 @@ class WebResearchService:
 
         scored_sources = self.credibility_scorer.score_batch(report.web_results)
         if scored_sources:
-            avg_score = sum(s.composite_score for s in scored_sources) / len(scored_sources)
+            domain_scores: Dict[str, List[float]] = {}
+            for s in scored_sources:
+                domain_scores.setdefault(s.domain, []).append(s.composite_score)
+            unique_domain_avgs = [sum(scores) / len(scores) for scores in domain_scores.values()]
+            avg_score = sum(unique_domain_avgs) / len(unique_domain_avgs)
             report.credibility_score = round(min(1.0, max(0.0, avg_score)), 2)
         else:
             report.credibility_score = 0.0

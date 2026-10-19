@@ -129,6 +129,8 @@
     "noBio": "暂无简介",
     "dualPlatformConfig": "生成双平台模拟配置",
     "dualPlatformConfigDesc": "LLM 根据模拟需求与现实种子，智能设置世界时间流速、推荐算法、每个个体的活跃时间段、发言频率、事件触发等参数",
+    "multiPlatformConfig": "生成全平台多网络模拟配置",
+    "multiPlatformConfigDesc": "LLM 根据模拟需求与现实种子，智能设置世界时间流速、7大平台推荐算法 (Twitter/X, Reddit, TikTok, Instagram, Threads, LinkedIn, YouTube)、每个个体的活跃时间段、发言频率、事件触发等参数",
     "simulationDuration": "模拟时长",
     "roundDuration": "每轮时长",
     "totalRounds": "总轮次",
@@ -172,6 +174,7 @@
     "customTip": "若首次运行，强烈建议切换至'自定义模式'减少模拟轮数，以便快速预览效果并降低报错风险",
     "backToGraphBuild": "返回图谱构建",
     "startDualWorldSim": "开始双世界并行模拟",
+    "startMultiWorldSim": "开始全平台(7平台)并行模拟",
     "profileModalAge": "事件外显年龄",
     "profileModalGender": "事件外显性别",
     "profileModalCountry": "国家/地区",
@@ -233,7 +236,14 @@
     "roundLabel": "轮次",
     "timeLabel": "时间",
     "actsLabel": "行为数",
-    "availableActions": "可用动作"
+    "availableActions": "可用动作",
+    "allPlatforms": "所有平台",
+    "autoScrollOn": "自动滚动 开启",
+    "autoScrollPaused": "自动滚动 暂停",
+    "resumeAutoScroll": "跳至最新",
+    "streamMode": "信息流",
+    "dualMode": "双轨",
+    "noActionsFiltered": "该平台筛选下暂无动作"
   },
   "step4": {
     "generatingSection": "正在生成{title}...",

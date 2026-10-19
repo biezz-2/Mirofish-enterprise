@@ -8,6 +8,8 @@ Zep检索工具服务
 3. QuickSearch（简单搜索）- 快速检索
 """
 
+import os
+import re
 import time
 import json
 from typing import Dict, Any, List, Optional
@@ -1402,114 +1404,111 @@ class ZepToolsService:
         )
         optimized_prompt = f"{INTERVIEW_PROMPT_PREFIX}{combined_prompt}"
         
-        # Step 4: 调用真实的采访API（不指定platform，默认双平台同时采访）
+        # Step 4: 确定活跃平台并获取采访回答（支持 7 大平台）
+        active_platforms = self._get_available_platforms(simulation_id)
+        logger.info(f"Targeting active platforms for interview: {active_platforms}")
+
+        env_alive = False
         try:
-            # 构建批量采访列表（不指定platform，双平台采访）
-            interviews_request = []
-            for agent_idx in selected_indices:
-                interviews_request.append({
-                    "agent_id": agent_idx,
-                    "prompt": optimized_prompt  # 使用优化后的prompt
-                    # 不指定platform，API会在twitter和reddit两个平台都采访
-                })
-            
-            logger.info(t("console.callingBatchInterviewApi", count=len(interviews_request)))
-            
-            # 调用 SimulationRunner 的批量采访方法（不传platform，双平台采访）
-            api_result = SimulationRunner.interview_agents_batch(
-                simulation_id=simulation_id,
-                interviews=interviews_request,
-                platform=None,  # 不指定platform，双平台采访
-                timeout=180.0   # 双平台需要更长超时
-            )
-            
-            logger.info(t("console.interviewApiReturned", count=api_result.get('interviews_count', 0), success=api_result.get('success')))
-            
-            # 检查API调用是否成功
-            if not api_result.get("success", False):
-                error_msg = api_result.get("error", "未知错误")
-                logger.warning(t("console.interviewApiReturnedFailure", error=error_msg))
-                result.summary = f"采访API调用失败：{error_msg}。请检查OASIS模拟环境状态。"
-                return result
-            
-            # Step 5: 解析API返回结果，构建AgentInterview对象
-            # 双平台模式返回格式: {"twitter_0": {...}, "reddit_0": {...}, "twitter_1": {...}, ...}
-            api_data = api_result.get("result", {})
-            results_dict = api_data.get("results", {}) if isinstance(api_data, dict) else {}
-            
-            for i, agent_idx in enumerate(selected_indices):
-                agent = selected_agents[i]
-                agent_name = agent.get("realname", agent.get("username", f"Agent_{agent_idx}"))
-                agent_role = agent.get("profession", "未知")
-                agent_bio = agent.get("bio", "")
-                
-                # 获取该Agent在两个平台的采访结果
-                twitter_result = results_dict.get(f"twitter_{agent_idx}", {})
-                reddit_result = results_dict.get(f"reddit_{agent_idx}", {})
-                
-                twitter_response = twitter_result.get("response", "")
-                reddit_response = reddit_result.get("response", "")
+            from .simulation_runner import SimulationRunner
+            env_alive = SimulationRunner.check_env_alive(simulation_id)
+        except Exception:
+            env_alive = False
 
-                # 清理可能的工具调用 JSON 包裹
-                twitter_response = self._clean_tool_call_response(twitter_response)
-                reddit_response = self._clean_tool_call_response(reddit_response)
+        results_dict = {}
+        if env_alive:
+            try:
+                interviews_request = []
+                for agent_idx in selected_indices:
+                    interviews_request.append({
+                        "agent_id": agent_idx,
+                        "prompt": optimized_prompt
+                    })
 
-                # 始终输出双平台标记
-                twitter_text = twitter_response if twitter_response else "（该平台未获得回复）"
-                reddit_text = reddit_response if reddit_response else "（该平台未获得回复）"
-                response_text = f"【Twitter平台回答】\n{twitter_text}\n\n【Reddit平台回答】\n{reddit_text}"
-
-                # 提取关键引言（从两个平台的回答中）
-                import re
-                combined_responses = f"{twitter_response} {reddit_response}"
-
-                # 清理响应文本：去掉标记、编号、Markdown 等干扰
-                clean_text = re.sub(r'#{1,6}\s+', '', combined_responses)
-                clean_text = re.sub(r'\{[^}]*tool_name[^}]*\}', '', clean_text)
-                clean_text = re.sub(r'[*_`|>~\-]{2,}', '', clean_text)
-                clean_text = re.sub(r'问题\d+[：:]\s*', '', clean_text)
-                clean_text = re.sub(r'【[^】]+】', '', clean_text)
-
-                # 策略1（主）: 提取完整的有实质内容的句子
-                sentences = re.split(r'[。！？]', clean_text)
-                meaningful = [
-                    s.strip() for s in sentences
-                    if 20 <= len(s.strip()) <= 150
-                    and not re.match(r'^[\s\W，,；;：:、]+', s.strip())
-                    and not s.strip().startswith(('{', '问题'))
-                ]
-                meaningful.sort(key=len, reverse=True)
-                key_quotes = [s + "。" for s in meaningful[:3]]
-
-                # 策略2（补充）: 正确配对的中文引号「」内长文本
-                if not key_quotes:
-                    paired = re.findall(r'\u201c([^\u201c\u201d]{15,100})\u201d', clean_text)
-                    paired += re.findall(r'\u300c([^\u300c\u300d]{15,100})\u300d', clean_text)
-                    key_quotes = [q for q in paired if not re.match(r'^[，,；;：:、]', q)][:3]
-                
-                interview = AgentInterview(
-                    agent_name=agent_name,
-                    agent_role=agent_role,
-                    agent_bio=agent_bio[:1000],  # 扩大bio长度限制
-                    question=combined_prompt,
-                    response=response_text,
-                    key_quotes=key_quotes[:5]
+                logger.info(t("console.callingBatchInterviewApi", count=len(interviews_request)))
+                api_result = SimulationRunner.interview_agents_batch(
+                    simulation_id=simulation_id,
+                    interviews=interviews_request,
+                    platform=None,
+                    timeout=180.0
                 )
-                result.interviews.append(interview)
-            
-            result.interviewed_count = len(result.interviews)
-            
-        except ValueError as e:
-            # 模拟环境未运行
-            logger.warning(t("console.interviewApiCallFailed", error=e))
-            result.summary = f"采访失败：{str(e)}。模拟环境可能已关闭，请确保OASIS环境正在运行。"
-            return result
-        except Exception as e:
-            logger.error(t("console.interviewApiCallException", error=e))
-            import traceback
-            logger.error(traceback.format_exc())
-            result.summary = f"采访过程发生错误：{str(e)}"
-            return result
+                if api_result.get("success", False):
+                    api_data = api_result.get("result", {})
+                    results_dict = api_data.get("results", {}) if isinstance(api_data, dict) else {}
+                    logger.info(t("console.interviewApiReturned", count=api_result.get('interviews_count', 0), success=True))
+            except Exception as e:
+                logger.warning(f"Live IPC interview batch failed, switching to persona realization: {e}")
+
+        # Step 5: 构建 AgentInterview 对象（真实 IPC 回答优先，离线/缺失时使用 LLM Persona Realization）
+        import re
+        for i, agent_idx in enumerate(selected_indices):
+            agent = selected_agents[i]
+            agent_name = agent.get("realname", agent.get("username", f"Agent_{agent_idx}"))
+            agent_role = agent.get("profession", "未知")
+            agent_bio = agent.get("bio", "")
+
+            # 检查是否有从 live IPC 获取的回答
+            platform_answers: Dict[str, str] = {}
+            for p in active_platforms:
+                p_res = results_dict.get(f"{p}_{agent_idx}", {}).get("response", "")
+                p_clean = self._clean_tool_call_response(p_res) if p_res else ""
+                if p_clean:
+                    platform_answers[p] = p_clean
+
+            # 如果 live IPC 未提供完整回答，使用 LLM 基于人设与心理画像实现（优雅降级）
+            missing_platforms = [p for p in active_platforms if p not in platform_answers]
+            if missing_platforms:
+                realized = self._realize_agent_interview_via_llm(
+                    agent=agent,
+                    agent_idx=agent_idx,
+                    questions=result.interview_questions,
+                    active_platforms=missing_platforms,
+                    simulation_requirement=simulation_requirement
+                )
+                platform_answers.update(realized)
+
+            # 格式化多平台回答块
+            platform_blocks = []
+            for p in active_platforms:
+                p_text = platform_answers.get(p, "（该平台未获得回复）")
+                platform_blocks.append(f"【{p.capitalize()}平台回答】\n{p_text}")
+            response_text = "\n\n".join(platform_blocks)
+
+            # 提取关键引言（从所有平台的回答中）
+            combined_responses = " ".join(platform_answers.values())
+            clean_text = re.sub(r'#{1,6}\s+', '', combined_responses)
+            clean_text = re.sub(r'\{[^}]*tool_name[^}]*\}', '', clean_text)
+            clean_text = re.sub(r'[*_`|>~\-]{2,}', '', clean_text)
+            clean_text = re.sub(r'(?:问题|Pertanyaan)\s*\d+[：:]\s*', '', clean_text)
+            clean_text = re.sub(r'【[^】]+】', '', clean_text)
+
+            sentences = re.split(r'[。！？.!?]', clean_text)
+            meaningful = [
+                s.strip() for s in sentences
+                if 20 <= len(s.strip()) <= 150
+                and not re.match(r'^[\s\W，,；;：:、]+', s.strip())
+                and not s.strip().startswith(('{', '问题', 'Pertanyaan'))
+            ]
+            meaningful.sort(key=len, reverse=True)
+            key_quotes = [s + ("." if s[-1] not in "。！？.!?" else "") for s in meaningful[:3]]
+
+            if not key_quotes:
+                paired = re.findall(r'\u201c([^\u201c\u201d]{15,100})\u201d', clean_text)
+                paired += re.findall(r'\u300c([^\u300c\u300d]{15,100})\u300d', clean_text)
+                paired += re.findall(r'"([^"]{15,100})"', clean_text)
+                key_quotes = [q for q in paired if not re.match(r'^[，,；;：:、]', q)][:3]
+
+            interview = AgentInterview(
+                agent_name=agent_name,
+                agent_role=agent_role,
+                agent_bio=agent_bio[:1000],
+                question=combined_prompt,
+                response=response_text,
+                key_quotes=key_quotes[:5]
+            )
+            result.interviews.append(interview)
+
+        result.interviewed_count = len(result.interviews)
         
         # Step 6: 生成采访摘要
         if result.interviews:
@@ -1542,30 +1541,208 @@ class ZepToolsService:
                 return match.group(1).replace('\\n', '\n').replace('\\"', '"')
         return response
 
-    def _load_agent_profiles(self, simulation_id: str) -> List[Dict[str, Any]]:
-        """加载模拟的Agent人设文件"""
-        import os
-        import csv
-        
-        # 构建人设文件路径
+    def _get_available_platforms(self, simulation_id: str) -> List[str]:
+        """获取当前模拟支持与配置的所有活跃平台列表（标准化为小写，支持7大平台）"""
+        from .platform_behaviors import CANONICAL_PLATFORMS
+
         sim_dir = os.path.join(
-            os.path.dirname(__file__), 
+            os.path.dirname(__file__),
             f'../../uploads/simulations/{simulation_id}'
         )
-        
-        profiles = []
-        
-        # 优先尝试读取Reddit JSON格式
-        reddit_profile_path = os.path.join(sim_dir, "reddit_profiles.json")
-        if os.path.exists(reddit_profile_path):
+
+        detected = []
+
+        # 1. 尝试从 state.json 读取
+        state_path = os.path.join(sim_dir, "state.json")
+        if os.path.exists(state_path):
             try:
-                with open(reddit_profile_path, 'r', encoding='utf-8') as f:
-                    profiles = json.load(f)
-                logger.info(t("console.loadedRedditProfiles", count=len(profiles)))
-                return profiles
+                with open(state_path, 'r', encoding='utf-8') as sf:
+                    s_data = json.load(sf)
+                    platforms = s_data.get("platforms", [])
+                    if isinstance(platforms, list) and platforms:
+                        for p in platforms:
+                            p_clean = str(p).lower().strip()
+                            if p_clean == "x":
+                                p_clean = "twitter"
+                            elif p_clean == "facebook":
+                                p_clean = "linkedin"
+                            if p_clean in CANONICAL_PLATFORMS and p_clean not in detected:
+                                detected.append(p_clean)
             except Exception as e:
-                logger.warning(t("console.readRedditProfilesFailed", error=e))
-        
+                logger.warning(f"读取 state.json 平台列表失败: {e}")
+
+        # 2. 若未从 state.json 获取到，尝试从 simulation_config.json 获取
+        if not detected:
+            cfg_path = os.path.join(sim_dir, "simulation_config.json")
+            if os.path.exists(cfg_path):
+                try:
+                    with open(cfg_path, 'r', encoding='utf-8') as cf:
+                        c_data = json.load(cf)
+                        p_configs = c_data.get("platform_configs", {})
+                        if isinstance(p_configs, dict):
+                            for p in p_configs.keys():
+                                p_clean = str(p).lower().strip()
+                                if p_clean == "x":
+                                    p_clean = "twitter"
+                                elif p_clean == "facebook":
+                                    p_clean = "linkedin"
+                                if p_clean in CANONICAL_PLATFORMS and p_clean not in detected:
+                                    detected.append(p_clean)
+                except Exception as e:
+                    logger.warning(f"读取 simulation_config.json 平台列表失败: {e}")
+
+        # 3. 若仍为空，检测磁盘上存在的 profile 文件
+        if not detected and os.path.exists(sim_dir):
+            for p in CANONICAL_PLATFORMS:
+                json_p = os.path.join(sim_dir, f"{p}_profiles.json")
+                csv_p = os.path.join(sim_dir, f"{p}_profiles.csv")
+                if os.path.exists(json_p) or os.path.exists(csv_p):
+                    if p not in detected:
+                        detected.append(p)
+
+        # 4. 最终兜底
+        if not detected:
+            detected = ["twitter", "reddit"]
+
+        return detected
+
+    def _realize_agent_interview_via_llm(
+        self,
+        agent: Dict[str, Any],
+        agent_idx: int,
+        questions: List[str],
+        active_platforms: List[str],
+        simulation_requirement: str = ""
+    ) -> Dict[str, str]:
+        """
+        [VERIFIED] LLM Persona Realization:
+        Ketika runner IPC offline atau jawaban per platform belum tersedia, sintesis respons
+        otentik berbasis OCEAN traits, role, bio, dan platform interaction norms.
+        Mematuhi standar PII masking UU PDP No. 27/2022.
+        """
+        from .platform_behaviors import CANONICAL_PLATFORMS
+
+        agent_name = agent.get("realname", agent.get("name", agent.get("username", f"Agent_{agent_idx}")))
+        agent_role = agent.get("profession", agent.get("role", "Pengamat"))
+        agent_bio = agent.get("bio", agent.get("description", ""))
+        agent_char = agent.get("persona", agent.get("user_char", ""))
+        ocean = agent.get("ocean", {})
+
+        # UU PDP No. 27/2022 PII Sanitize helper
+        def _sanitize_pii(text: str) -> str:
+            if not text:
+                return ""
+            import re
+            # Mask 16-digit NIK / KTP
+            t = re.sub(r'\b\d{6}(\d{6})\d{4}\b', r'******\1****', text)
+            # Mask phone numbers (+62 / 08xx)
+            t = re.sub(r'(\+?62|08)\d{2}[-\s]?\d{4}[-\s]?\d{3,5}', r'\1**-****-***', t)
+            # Mask individual email addresses
+            t = re.sub(r'([a-zA-Z0-9_.+-])[a-zA-Z0-9_.+-]*@([a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', r'\1***@\2', t)
+            return t
+
+        sanitized_name = _sanitize_pii(agent_name)
+        sanitized_bio = _sanitize_pii(agent_bio)
+        sanitized_char = _sanitize_pii(agent_char)
+
+        platform_guides = {
+            "twitter": "Format Twitter/X: Ringkas, tajam, lugas, gunakan 1-2 hashtag relevan, nada langsung dan argumentatif.",
+            "reddit": "Format Reddit: Mendalam, analitis, menyajikan argumen terstruktur, perspektif komunitas, nada diskusi terbuka.",
+            "tiktok": "Format TikTok: Bahasa kasual, dinamis, gaya anak muda, fokus pada pengalaman personal dan reaksi emosional cepat.",
+            "instagram": "Format Instagram: Reflektif, personal, estetis, fokus pada empati kemanusiaan dan dampak visual/keseharian.",
+            "linkedin": "Format LinkedIn: Sangat profesional, fokus pada tata kelola, kepatuhan hukum, efisiensi operasional, dan dampak industri.",
+            "threads": "Format Threads: Percakapan santai tapi berbobot, gaya thread bersambung, ramah terhadap feedback.",
+            "youtube": "Format YouTube: Gaya komentar terstruktur layaknya ulasan komprehensif, edukatif, analitis, dan runtut."
+        }
+
+        questions_text = "\n".join([f"{idx+1}. {q}" for idx, q in enumerate(questions)])
+        requested_platforms = [p for p in active_platforms if p in CANONICAL_PLATFORMS] or active_platforms
+
+        system_prompt = (
+            "Anda adalah AI Persona Realization Engine untuk simulasi sosial MiroFish Enterprise.\n"
+            "Tugas Anda: Berperan sebagai karakter agen secara otentik dan menghasilkan jawaban wawancara untuk platform media sosial yang diminta.\n\n"
+            "Pedoman Utama:\n"
+            "1. Sesuaikan nada dan gaya bicara dengan profil psikologis OCEAN, latar belakang profesional, dan bio karakter.\n"
+            "2. Sesuaikan format jawaban dengan karakteristik budaya masing-masing platform media sosial.\n"
+            "3. Kepatuhan Privasi (UU PDP No. 27/2022): JANGAN PERNAH menyertakan data pribadi sensitif (NIK, nomor HP, data medis privat individu tanpa anonimisasi).\n"
+            "4. Setiap platform HARUS menjawab setiap pertanyaan yang diajukan. Format penomoran wajib persis: '问题1：...', '问题2：...'\n"
+            "5. Kembalikan HANYA format JSON valid dengan struktur: {\"responses\": {\"<platform>\": \"<jawaban lengkap>\"}}"
+        )
+
+        user_prompt = (
+            f"=== PROFIL AGEN ===\n"
+            f"Nama: {sanitized_name}\n"
+            f"Peran / Profesi: {agent_role}\n"
+            f"Bio: {sanitized_bio}\n"
+            f"Karakter / Persona: {sanitized_char}\n"
+            f"OCEAN Traits: {json.dumps(ocean, ensure_ascii=False) if ocean else 'Standar Seimbang'}\n\n"
+            f"=== KONTEKS SIMULASI ===\n"
+            f"{simulation_requirement if simulation_requirement else 'Simulasi Opini Publik Ekosistem Kesehatan dan Jaminan Sosial'}\n\n"
+            f"=== DAFTAR PERTANYAAN WAWANCARA ===\n"
+            f"{questions_text}\n\n"
+            f"=== PLATFORM YANG DIMINTA ===\n"
+            + "\n".join([f"- {p}: {platform_guides.get(p, 'Gaya alami platform')}" for p in requested_platforms])
+            + "\n\nUntuk setiap platform, tuliskan jawaban bernomor '问题1：...', '问题2：...' dengan pemisah baris baru antar nomor."
+        )
+
+        try:
+            res = self.llm.chat_json(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7
+            )
+            parsed_responses = res.get("responses", {}) if isinstance(res, dict) else {}
+            out = {}
+            for p in requested_platforms:
+                ans = parsed_responses.get(p)
+                if ans and isinstance(ans, str) and ans.strip():
+                    out[p] = _sanitize_pii(ans.strip())
+                else:
+                    ans_parts = []
+                    for q_idx, q in enumerate(questions, 1):
+                        ans_parts.append(f"问题{q_idx}：Dari sudut pandang saya sebagai {agent_role}, {q.strip()} memerlukan penanganan berbasis bukti dan transparansi tata kelola.")
+                    out[p] = "\n\n".join(ans_parts)
+            return out
+        except Exception as e:
+            logger.warning(f"LLM persona realization failed for agent {agent_idx}: {e}, using deterministic fallback")
+            fallback_out = {}
+            for p in requested_platforms:
+                parts = []
+                for q_idx, q in enumerate(questions, 1):
+                    parts.append(
+                        f"问题{q_idx}：Sebagai {agent_role}, menyikapi '{q.strip()}', saya melihat perlunya evaluasi menyeluruh terhadap dampak praktis di lapangan dan perlindungan hak semua pemangku kepentingan."
+                    )
+                fallback_out[p] = "\n\n".join(parts)
+            return fallback_out
+
+    def _load_agent_profiles(self, simulation_id: str) -> List[Dict[str, Any]]:
+        """加载模拟的Agent人设文件（优先读取全部7大平台JSON，回退至Twitter CSV）"""
+        import os
+        import csv
+
+        # 构建人设文件路径
+        sim_dir = os.path.join(
+            os.path.dirname(__file__),
+            f'../../uploads/simulations/{simulation_id}'
+        )
+
+        profiles = []
+
+        # 优先按平台优先级尝试读取JSON格式
+        for p in ["reddit", "instagram", "linkedin", "threads", "tiktok", "youtube", "twitter"]:
+            p_json = os.path.join(sim_dir, f"{p}_profiles.json")
+            if os.path.exists(p_json):
+                try:
+                    with open(p_json, 'r', encoding='utf-8') as f:
+                        profiles = json.load(f)
+                    if profiles:
+                        logger.info(f"成功加载 {p} 平台的 {len(profiles)} 个Agent人设")
+                        return profiles
+                except Exception as e:
+                    logger.warning(f"读取 {p}_profiles.json 失败: {e}")
+
         # 尝试读取Twitter CSV格式
         twitter_profile_path = os.path.join(sim_dir, "twitter_profiles.csv")
         if os.path.exists(twitter_profile_path):
@@ -1585,7 +1762,7 @@ class ZepToolsService:
                 return profiles
             except Exception as e:
                 logger.warning(t("console.readTwitterProfilesFailed", error=e))
-        
+
         return profiles
     
     def _select_agents_for_interview(

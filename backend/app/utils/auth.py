@@ -131,6 +131,8 @@ def require_auth(f):
     def decorated(*args, **kwargs):
         auth_required = current_app.config.get('AUTH_REQUIRED', False)
         auth_header = request.headers.get('Authorization')
+        if not auth_header and request.args.get('token'):
+            auth_header = f"Bearer {request.args.get('token')}"
 
         if not auth_required and not auth_header:
             return f(*args, **kwargs)

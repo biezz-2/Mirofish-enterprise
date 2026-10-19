@@ -56,6 +56,7 @@
           :maxRounds="maxRounds"
           :minutesPerRound="minutesPerRound"
           :projectData="projectData"
+          :simulationData="simulationData"
           :graphData="graphData"
           :systemLogs="systemLogs"
           @go-back="handleGoBack"
@@ -96,6 +97,7 @@ const currentSimulationId = ref(route.params.simulationId)
 const maxRounds = ref(route.query.maxRounds ? parseInt(route.query.maxRounds) : null)
 const minutesPerRound = ref(30) // 默认每轮30分钟
 const projectData = ref(null)
+const simulationData = ref(null)
 const graphData = ref(null)
 const graphLoading = ref(false)
 const systemLogs = ref([])
@@ -212,6 +214,7 @@ const loadSimulationData = async () => {
     const simRes = await getSimulation(currentSimulationId.value)
     if (simRes.success && simRes.data) {
       const simData = simRes.data
+      simulationData.value = simData
       
       // 获取 simulation config 以获取 minutes_per_round
       try {
@@ -436,10 +439,12 @@ onUnmounted(() => {
   display: flex;
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 
 .panel-wrapper {
   height: 100%;
+  min-width: 0;
   overflow: hidden;
   transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, transform 0.3s ease;
   will-change: width, opacity, transform;
@@ -447,6 +452,14 @@ onUnmounted(() => {
 
 .panel-wrapper.left {
   border-right: 1px solid #EAEAEA;
+}
+
+.panel-wrapper.right {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
 }
 </style>
 

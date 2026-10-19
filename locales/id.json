@@ -233,7 +233,14 @@
     "roundLabel": "RONDE",
     "timeLabel": "WAKTU",
     "actsLabel": "AKSI",
-    "availableActions": "Aksi yang Tersedia"
+    "availableActions": "Aksi yang Tersedia",
+    "allPlatforms": "Semua Platform",
+    "autoScrollOn": "Auto-Scroll Aktif",
+    "autoScrollPaused": "Auto-Scroll Jeda",
+    "resumeAutoScroll": "Ke Aksi Terbaru",
+    "streamMode": "Aliran",
+    "dualMode": "Ganda",
+    "noActionsFiltered": "Tidak ada aksi pada filter platform ini"
   },
   "step4": {
     "generatingSection": "Sedang menyusun {title}...",

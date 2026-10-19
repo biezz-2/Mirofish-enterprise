@@ -186,3 +186,14 @@ export const interviewAgents = (data) => {
 export const getSimulationHistory = (limit = 20) => {
   return service.get('/api/simulation/history', { params: { limit } })
 }
+
+/**
+ * Dapatkan URL endpoint SSE streaming real-time untuk 7 platform kanonikal
+ * @param {string} simulationId
+ * @param {number} fromRound
+ * @returns {string}
+ */
+export const getSimulationStreamUrl = (simulationId, fromRound = 0) => {
+  return `/api/simulation/${simulationId}/stream?from_round=${fromRound}`
+}
+

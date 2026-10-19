@@ -505,7 +505,7 @@ OPENAPI_310_SPEC: Dict[str, Any] = {
         ),
         "contact": {
             "name": "MiroFish Enterprise Core Engineering",
-            "url": "https://github.com/666ghj/MiroFish"
+            "url": "https://github.com/biezz-2/Mirofish-enterprise"
         },
         "license": {
             "name": "Apache-2.0",

@@ -28,6 +28,9 @@ from ..services.simulation_manager import SimulationManager
 from ..services.simulation_runner import SimulationRunner, RunnerStatus
 from ..services.zep_graph_memory_updater import ZepGraphMemoryManager
 from ..utils.llm_client import LLMResponseError
+from ..services.web_research_service import WebResearchService, ContentShield
+from ..services.pii_scrubber import PIIScrubber
+from .research import run_async
 
 # 获取日志器
 logger = get_logger('mirofish.api')
@@ -127,6 +130,37 @@ def allowed_file(filename: str) -> bool:
         return False
     ext = os.path.splitext(filename)[1].lower().lstrip('.')
     return ext in Config.ALLOWED_EXTENSIONS
+
+
+def _build_grounding_search_query(simulation_requirement: str, document_texts: list[str], project_name: str = "") -> str:
+    """
+    Membangun query pencarian cerdas untuk Step 0 Web Grounding.
+    Prioritas:
+    1. Ringkasan topik dari simulation_requirement
+    2. Nama project jika deskriptif
+    3. Ringkasan awal teks dokumen
+    Format ramah mesin pencari, bebas PII, max 150 karakter.
+    """
+    raw_topic = ""
+    req = (simulation_requirement or "").strip()
+    if req:
+        first_line = req.split("\n")[0].strip()
+        first_sentence = re.split(r"[.!?。！？]", first_line)[0].strip()
+        raw_topic = first_sentence if len(first_sentence) >= 5 else req[:120]
+    elif project_name and project_name != "Unnamed Project":
+        raw_topic = project_name
+    elif document_texts and document_texts[0]:
+        first_doc = document_texts[0].strip()
+        raw_topic = first_doc[:100]
+
+    cleaned = re.sub(r"\s+", " ", raw_topic).strip()
+    if not any(cleaned.lower().startswith(p) for p in ["isu", "topik", "kasus", "berita", "perkembangan", "peristiwa"]):
+        query = f"Isu terkini terkait {cleaned}"
+    else:
+        query = cleaned
+
+    query = PIIScrubber.scrub(query)
+    return query[:150].strip()
 
 
 # ============== 项目管理接口 ==============
@@ -361,25 +395,109 @@ def generate_ontology():
                 "error": t('api.noDocProcessed')
             }), 400
         
-        # 保存提取的文本
-        project.total_text_length = len(all_text)
-        ProjectManager.save_extracted_text(project.project_id, all_text)
-        logger.info(f"文本提取完成，共 {len(all_text)} 字符")
-        
+        # Jalankan automated deep web grounding (Step 0) via SearXNG sebelum membuat ontologi & graf
+        search_query = _build_grounding_search_query(
+            simulation_requirement=simulation_requirement,
+            document_texts=document_texts,
+            project_name=project_name
+        )
+        logger.info(f"Menjalankan automated deep web grounding via SearXNG: '{search_query}'")
+
+        web_grounding_context = ""
+        try:
+            research_service = WebResearchService()
+            research_report = run_async(
+                research_service.research(
+                    query=search_query,
+                    research_type="general",
+                    max_results=10
+                )
+            )
+
+            # Simpan metadata riset web di project.metadata
+            grounded_facts_dict = [f.to_dict() for f in research_report.grounded_facts]
+            project.metadata['web_research'] = {
+                "query": search_query,
+                "credibility_score": research_report.credibility_score,
+                "min_credibility_score": research_report.min_credibility_score,
+                "verified_claims_count": research_report.verified_claims_count,
+                "summarized_facts": research_report.summarized_facts,
+                "grounded_facts": grounded_facts_dict,
+                "entities_mentioned": research_report.entities_mentioned,
+                "trends": research_report.trends,
+                "sources": [r.to_dict() for r in research_report.web_results[:5]],
+                "status": "COMPLETED",
+                "generated_at": research_report.generated_at
+            }
+
+            # Format fakta terverifikasi dengan isolasi tanda kutip aman (ContentShield Lapis 3)
+            isolated_facts_list = []
+            if research_report.grounded_facts:
+                for gf in research_report.grounded_facts[:5]:
+                    fenced = ContentShield.isolate_as_evidence(
+                        text=gf.claim,
+                        source_domain=gf.domain,
+                        credibility_score=gf.credibility_score
+                    )
+                    status_label = getattr(gf.epistemic_status, "value", str(gf.epistemic_status))
+                    isolated_facts_list.append(f"- [{status_label}] {fenced}")
+            facts_list = "\n".join(isolated_facts_list) if isolated_facts_list else (
+                "\n".join(f"- {f}" for f in research_report.summarized_facts[:5]) if research_report.summarized_facts else "- Tidak ada klaim spesifik"
+            )
+            entities_list = "\n".join(f"- {e.get('name')} ({e.get('type')})" for e in research_report.entities_mentioned[:8]) if research_report.entities_mentioned else "- Tidak ada entitas spesifik"
+
+            web_grounding_context = (
+                f"### Hasil Riset Internet Terkini (SearXNG Step 0 Grounding):\n"
+                f"Kueri: {search_query}\n"
+                f"Skor Kredibilitas Sumber: {research_report.credibility_score:.2f}\n"
+                f"Fakta Terverifikasi:\n{facts_list}\n"
+                f"Entitas & Aktor Nyata Terkait:\n{entities_list}"
+            )
+            logger.info(
+                f"Web grounding selesai: {len(research_report.summarized_facts)} fakta, "
+                f"{len(research_report.entities_mentioned)} entitas, skor={research_report.credibility_score}"
+            )
+        except Exception as research_error:
+            logger.warning(f"SearXNG web research offline atau gagal (failover aktif): {research_error}")
+            project.metadata['web_research'] = {
+                "query": search_query,
+                "status": "OFFLINE_FALLBACK",
+                "error": str(research_error),
+                "message": "Riset web dilewati karena SearXNG offline / uncontactable; melanjutkan dengan teks dokumen murni"
+            }
+
+        # Gabungkan temuan riset web ke dalam additional_context
+        effective_additional_context = additional_context or ""
+        if web_grounding_context:
+            if effective_additional_context:
+                effective_additional_context = f"{effective_additional_context}\n\n{web_grounding_context}"
+            else:
+                effective_additional_context = web_grounding_context
+
+        # Simpan teks ekstraksi lengkap (termasuk ringkasan grounding jika ada)
+        if web_grounding_context:
+            all_text_with_grounding = f"{all_text}\n\n=== WEB GROUNDING FACTS (SEARXNG) ===\n{web_grounding_context}"
+        else:
+            all_text_with_grounding = all_text
+
+        project.total_text_length = len(all_text_with_grounding)
+        ProjectManager.save_extracted_text(project.project_id, all_text_with_grounding)
+        logger.info(f"文本提取与Web Grounding完成，共 {len(all_text_with_grounding)} 字符")
+
         # 生成本体
         logger.info("调用 LLM 生成本体定义...")
         generator = OntologyGenerator()
         ontology = generator.generate(
             document_texts=document_texts,
             simulation_requirement=simulation_requirement,
-            additional_context=additional_context if additional_context else None
+            additional_context=effective_additional_context if effective_additional_context else None
         )
-        
+
         # 保存本体到项目
         entity_count = len(ontology.get("entity_types", []))
         edge_count = len(ontology.get("edge_types", []))
         logger.info(f"本体生成完成: {entity_count} 个实体类型, {edge_count} 个关系类型")
-        
+
         project.ontology = {
             "entity_types": ontology.get("entity_types", []),
             "edge_types": ontology.get("edge_types", [])
@@ -388,7 +506,7 @@ def generate_ontology():
         project.status = ProjectStatus.ONTOLOGY_GENERATED
         ProjectManager.save_project(project)
         logger.info(f"=== 本体生成完成 === 项目ID: {project.project_id}")
-        
+
         return jsonify({
             "success": True,
             "data": {
@@ -397,7 +515,8 @@ def generate_ontology():
                 "ontology": project.ontology,
                 "analysis_summary": project.analysis_summary,
                 "files": project.files,
-                "total_text_length": project.total_text_length
+                "total_text_length": project.total_text_length,
+                "web_research": project.metadata.get("web_research")
             }
         })
         
@@ -613,6 +732,55 @@ def _build_graph_impl():
                 "success": False,
                 "error": t('api.textNotFound')
             }), 400
+
+        # Automated Hook Step 0: Pastikan korpus diperkaya fakta web jika belum dilakukan pada tahap ontologi
+        existing_web_res = project.metadata.get('web_research') if getattr(project, 'metadata', None) else None
+        if not existing_web_res or existing_web_res.get('status') == 'OFFLINE_FALLBACK' or '=== WEB GROUNDING FACTS' not in text:
+            try:
+                search_query = _build_grounding_search_query(
+                    simulation_requirement=project.simulation_requirement or "",
+                    document_texts=[text[:1000]],
+                    project_name=project.name or ""
+                )
+                research_service = WebResearchService()
+                research_report = run_async(
+                    research_service.research(query=search_query, research_type="general", max_results=10)
+                )
+                if research_report.web_results:
+                    grounded_facts_dict = [f.to_dict() for f in research_report.grounded_facts]
+                    if not getattr(project, 'metadata', None):
+                        project.metadata = {}
+                    project.metadata['web_research'] = {
+                        "query": search_query,
+                        "credibility_score": research_report.credibility_score,
+                        "min_credibility_score": research_report.min_credibility_score,
+                        "verified_claims_count": research_report.verified_claims_count,
+                        "summarized_facts": research_report.summarized_facts,
+                        "grounded_facts": grounded_facts_dict,
+                        "entities_mentioned": research_report.entities_mentioned,
+                        "trends": research_report.trends,
+                        "sources": [r.to_dict() for r in research_report.web_results[:5]],
+                        "status": "COMPLETED",
+                        "generated_at": research_report.generated_at
+                    }
+                    isolated_facts_list = [
+                        f"- [{getattr(gf.epistemic_status, 'value', str(gf.epistemic_status))}] {ContentShield.isolate_as_evidence(gf.claim, gf.domain, gf.credibility_score)}"
+                        for gf in research_report.grounded_facts[:5]
+                    ] if research_report.grounded_facts else [f"- {f}" for f in research_report.summarized_facts[:5]]
+                    facts_list = "\n".join(isolated_facts_list) if isolated_facts_list else "- Tidak ada klaim spesifik"
+                    web_grounding_block = (
+                        f"\n\n=== WEB GROUNDING FACTS (SEARXNG) ===\n"
+                        f"Kueri: {search_query}\n"
+                        f"Skor Kredibilitas Sumber: {research_report.credibility_score:.2f}\n"
+                        f"Fakta Terverifikasi:\n{facts_list}\n"
+                    )
+                    text = f"{text}{web_grounding_block}"
+                    project.total_text_length = len(text)
+                    ProjectManager.save_extracted_text(project_id, text)
+                    ProjectManager.save_project(project)
+                    logger.info(f"Auto-hook web research pada inisialisasi graph berhasil memperkaya korpus ({len(research_report.grounded_facts)} fakta)")
+            except Exception as auto_res_err:
+                logger.warning(f"Auto-hook web research pada inisialisasi graph dilewati: {auto_res_err}")
         
         # 获取本体
         ontology = project.ontology

@@ -507,6 +507,7 @@ def test_searxng_and_web_research_offline_and_mock():
     async def run_offline_search_test():
         svc = SearchXNGService()
         svc.searchxng_url = "http://127.0.0.1:59999"  # Port tidak aktif
+        svc.get_candidate_endpoints = lambda: ["http://127.0.0.1:59999"]
         svc.timeout = 1
 
         rep = await svc.search("kebijakan privasi", category="general")

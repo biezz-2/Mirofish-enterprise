@@ -118,21 +118,38 @@ class SimulationRunState:
     simulated_hours: int = 0
     total_simulation_hours: int = 0
     
-    # 各平台独立轮次和模拟时间（用于双平台并行显示）
+    # 各平台独立轮次和模拟时间（用于双平台并行显示及7平台支持）
     twitter_current_round: int = 0
     reddit_current_round: int = 0
     twitter_simulated_hours: int = 0
     reddit_simulated_hours: int = 0
-    
+
     # 平台状态
     twitter_running: bool = False
     reddit_running: bool = False
     twitter_actions_count: int = 0
     reddit_actions_count: int = 0
-    
+
     # 平台完成状态（通过检测 actions.jsonl 中的 simulation_end 事件）
     twitter_completed: bool = False
     reddit_completed: bool = False
+
+    # 7 Canonical Platforms tracking (instagram, linkedin, reddit, threads, tiktok, twitter, youtube)
+    platform_current_rounds: Dict[str, int] = field(default_factory=lambda: {
+        "instagram": 0, "linkedin": 0, "reddit": 0, "threads": 0, "tiktok": 0, "twitter": 0, "youtube": 0
+    })
+    platform_simulated_hours: Dict[str, int] = field(default_factory=lambda: {
+        "instagram": 0, "linkedin": 0, "reddit": 0, "threads": 0, "tiktok": 0, "twitter": 0, "youtube": 0
+    })
+    platform_running: Dict[str, bool] = field(default_factory=lambda: {
+        "instagram": False, "linkedin": False, "reddit": False, "threads": False, "tiktok": False, "twitter": False, "youtube": False
+    })
+    platform_completed: Dict[str, bool] = field(default_factory=lambda: {
+        "instagram": False, "linkedin": False, "reddit": False, "threads": False, "tiktok": False, "twitter": False, "youtube": False
+    })
+    platform_actions_count: Dict[str, int] = field(default_factory=lambda: {
+        "instagram": 0, "linkedin": 0, "reddit": 0, "threads": 0, "tiktok": 0, "twitter": 0, "youtube": 0
+    })
     
     # 每轮摘要
     rounds: List[RoundSummary] = field(default_factory=list)
@@ -157,14 +174,37 @@ class SimulationRunState:
         self.recent_actions.insert(0, action)
         if len(self.recent_actions) > self.max_recent_actions:
             self.recent_actions = self.recent_actions[:self.max_recent_actions]
-        
+
         if action.platform == "twitter":
             self.twitter_actions_count += 1
-        else:
+        elif action.platform == "reddit":
             self.reddit_actions_count += 1
-        
+
+        if not hasattr(self, "platform_actions_count") or not self.platform_actions_count:
+            self.platform_actions_count = {
+                "instagram": 0, "linkedin": 0, "reddit": 0, "threads": 0, "tiktok": 0, "twitter": 0, "youtube": 0
+            }
+        self.platform_actions_count[action.platform] = self.platform_actions_count.get(action.platform, 0) + 1
+
         self.updated_at = datetime.now().isoformat()
-    
+
+        # Emit to simulation_broadcaster for real-time SSE & external consumers
+        try:
+            from .simulation_events import simulation_broadcaster
+            simulation_broadcaster.emit_action(
+                simulation_id=self.simulation_id,
+                platform=action.platform,
+                round_num=action.round_num,
+                agent_id=action.agent_id,
+                agent_name=action.agent_name,
+                action_type=action.action_type,
+                action_args=action.action_args,
+                result=action.result,
+                success=action.success
+            )
+        except Exception:
+            pass
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "simulation_id": self.simulation_id,
@@ -185,7 +225,18 @@ class SimulationRunState:
             "reddit_completed": self.reddit_completed,
             "twitter_actions_count": self.twitter_actions_count,
             "reddit_actions_count": self.reddit_actions_count,
-            "total_actions_count": self.twitter_actions_count + self.reddit_actions_count,
+            "total_actions_count": sum(self.platform_actions_count.values()) if hasattr(self, "platform_actions_count") and self.platform_actions_count else (self.twitter_actions_count + self.reddit_actions_count),
+            # 7 Canonical platforms mapping
+            "platform_current_rounds": getattr(self, "platform_current_rounds", {}),
+            "platform_simulated_hours": getattr(self, "platform_simulated_hours", {}),
+            "platform_running": getattr(self, "platform_running", {}),
+            "platform_completed": getattr(self, "platform_completed", {}),
+            "platform_actions_count": getattr(self, "platform_actions_count", {}),
+            **{f"{p}_current_round": getattr(self, "platform_current_rounds", {}).get(p, 0) for p in ("tiktok", "instagram", "threads", "linkedin", "youtube")},
+            **{f"{p}_simulated_hours": getattr(self, "platform_simulated_hours", {}).get(p, 0) for p in ("tiktok", "instagram", "threads", "linkedin", "youtube")},
+            **{f"{p}_running": getattr(self, "platform_running", {}).get(p, False) for p in ("tiktok", "instagram", "threads", "linkedin", "youtube")},
+            **{f"{p}_completed": getattr(self, "platform_completed", {}).get(p, False) for p in ("tiktok", "instagram", "threads", "linkedin", "youtube")},
+            **{f"{p}_actions_count": getattr(self, "platform_actions_count", {}).get(p, 0) for p in ("tiktok", "instagram", "threads", "linkedin", "youtube")},
             "started_at": self.started_at,
             "updated_at": self.updated_at,
             "completed_at": self.completed_at,
@@ -326,6 +377,11 @@ class SimulationRunner:
                 reddit_completed=data.get("reddit_completed", False),
                 twitter_actions_count=data.get("twitter_actions_count", 0),
                 reddit_actions_count=data.get("reddit_actions_count", 0),
+                platform_current_rounds=data.get("platform_current_rounds", {}),
+                platform_simulated_hours=data.get("platform_simulated_hours", {}),
+                platform_running=data.get("platform_running", {}),
+                platform_completed=data.get("platform_completed", {}),
+                platform_actions_count=data.get("platform_actions_count", {}),
                 started_at=data.get("started_at"),
                 updated_at=data.get("updated_at", datetime.now().isoformat()),
                 completed_at=data.get("completed_at"),
@@ -457,17 +513,34 @@ class SimulationRunner:
             cls._graph_memory_enabled[simulation_id] = False
         
         # 确定运行哪个脚本（脚本位于 backend/scripts/ 目录）
+        from .platform_behaviors import CANONICAL_PLATFORMS
+        selected_platforms = []
         if platform == "twitter":
             script_name = "run_twitter_simulation.py"
             state.twitter_running = True
+            state.platform_running["twitter"] = True
+            selected_platforms = ["twitter"]
         elif platform == "reddit":
             script_name = "run_reddit_simulation.py"
             state.reddit_running = True
+            state.platform_running["reddit"] = True
+            selected_platforms = ["reddit"]
+        elif platform in CANONICAL_PLATFORMS:
+            script_name = "run_parallel_simulation.py"
+            state.platform_running[platform] = True
+            selected_platforms = [platform]
         else:
             script_name = "run_parallel_simulation.py"
-            state.twitter_running = True
-            state.reddit_running = True
-        
+            cfg_platforms = config.get("platforms")
+            if cfg_platforms:
+                selected_platforms = [p for p in cfg_platforms if p in CANONICAL_PLATFORMS]
+            else:
+                selected_platforms = list(CANONICAL_PLATFORMS)
+            state.twitter_running = "twitter" in selected_platforms
+            state.reddit_running = "reddit" in selected_platforms
+            for p in selected_platforms:
+                state.platform_running[p] = True
+
         script_path = os.path.join(cls.SCRIPTS_DIR, script_name)
         
         if not os.path.exists(script_path):
@@ -513,7 +586,10 @@ class SimulationRunner:
                 script_path,
                 "--config", config_path,  # 使用完整配置文件路径
             ]
-            
+
+            if script_name == "run_parallel_simulation.py" and selected_platforms:
+                cmd.extend(["--platforms", ",".join(selected_platforms)])
+
             # 如果指定了最大轮数，添加到命令行参数
             if max_rounds is not None and max_rounds > 0:
                 cmd.extend(["--max-rounds", str(max_rounds)])
@@ -615,48 +691,42 @@ class SimulationRunner:
         """监控模拟进程，解析动作日志"""
         set_locale(locale)
         sim_dir = os.path.join(cls.RUN_STATE_DIR, simulation_id)
-        
-        # 新的日志结构：分平台的动作日志
-        twitter_actions_log = os.path.join(sim_dir, "twitter", "actions.jsonl")
-        reddit_actions_log = os.path.join(sim_dir, "reddit", "actions.jsonl")
-        
+        from .platform_behaviors import CANONICAL_PLATFORMS
+
         process = cls._processes.get(simulation_id)
         state = cls.get_run_state(simulation_id)
-        
+
         if not process or not state:
             return
-        
-        twitter_position = 0
-        reddit_position = 0
-        
+
+        # 跟踪 7 个平台各自的日志读取偏移量
+        platform_positions = {p: 0 for p in CANONICAL_PLATFORMS}
+        twitter_actions_log = os.path.join(sim_dir, "twitter", "actions.jsonl")
+        reddit_actions_log = os.path.join(sim_dir, "reddit", "actions.jsonl")
+
         monitor_error: Exception | None = None
         exit_code: int | None = None
         try:
             while process.poll() is None:  # 进程仍在运行
-                # 读取 Twitter 动作日志
-                if os.path.exists(twitter_actions_log):
-                    twitter_position = cls._read_action_log(
-                        twitter_actions_log, twitter_position, state, "twitter"
-                    )
-                
-                # 读取 Reddit 动作日志
-                if os.path.exists(reddit_actions_log):
-                    reddit_position = cls._read_action_log(
-                        reddit_actions_log, reddit_position, state, "reddit"
-                    )
-                
+                for p in CANONICAL_PLATFORMS:
+                    p_log = os.path.join(sim_dir, p, "actions.jsonl")
+                    if os.path.exists(p_log):
+                        platform_positions[p] = cls._read_action_log(
+                            p_log, platform_positions[p], state, p
+                        )
+
                 # 更新状态
                 cls._save_run_state(state)
                 time.sleep(2)
-            
+
             # 进程结束后，最后读取一次日志
-            if os.path.exists(twitter_actions_log):
-                cls._read_action_log(twitter_actions_log, twitter_position, state, "twitter")
-            if os.path.exists(reddit_actions_log):
-                cls._read_action_log(reddit_actions_log, reddit_position, state, "reddit")
-            
+            for p in CANONICAL_PLATFORMS:
+                p_log = os.path.join(sim_dir, p, "actions.jsonl")
+                if os.path.exists(p_log):
+                    cls._read_action_log(p_log, platform_positions[p], state, p)
+
             exit_code = process.returncode
-            
+
         except Exception as e:
             logger.error(f"监控线程异常: {simulation_id}, error={str(e)}")
             monitor_error = e
@@ -700,6 +770,9 @@ class SimulationRunner:
 
                     state.twitter_running = False
                     state.reddit_running = False
+                    if hasattr(state, "platform_running") and state.platform_running:
+                        for p in state.platform_running:
+                            state.platform_running[p] = False
 
                     if cls._graph_memory_enabled.get(simulation_id, False):
                         # STOPPING is a non-terminal ingestion barrier. The UI
@@ -798,35 +871,57 @@ class SimulationRunner:
                                 
                                 # 检测 simulation_end 事件，标记平台已完成
                                 if event_type == "simulation_end":
+                                    if not hasattr(state, "platform_completed") or not state.platform_completed:
+                                        state.platform_completed = {}
+                                    if not hasattr(state, "platform_running") or not state.platform_running:
+                                        state.platform_running = {}
+                                    state.platform_completed[platform] = True
+                                    state.platform_running[platform] = False
+
                                     if platform == "twitter":
                                         state.twitter_completed = True
                                         state.twitter_running = False
-                                        logger.info(f"Twitter 模拟已完成: {state.simulation_id}, total_rounds={action_data.get('total_rounds')}, total_actions={action_data.get('total_actions')}")
                                     elif platform == "reddit":
                                         state.reddit_completed = True
                                         state.reddit_running = False
-                                        logger.info(f"Reddit 模拟已完成: {state.simulation_id}, total_rounds={action_data.get('total_rounds')}, total_actions={action_data.get('total_actions')}")
-                                    
+
+                                    logger.info(f"{platform} 模拟已完成: {state.simulation_id}, total_rounds={action_data.get('total_rounds')}, total_actions={action_data.get('total_actions')}")
+
+                                    # 广播 simulation_end 事件到外部 MCP 客户端与前端 SSE
+                                    try:
+                                        from .simulation_events import simulation_broadcaster
+                                        simulation_broadcaster.emit_simulation_end(
+                                            simulation_id=state.simulation_id,
+                                            platform=platform,
+                                            total_rounds=action_data.get("total_rounds", 0),
+                                            total_actions=action_data.get("total_actions", 0)
+                                        )
+                                    except Exception:
+                                        pass
+
                                     # 检查是否所有启用的平台都已完成
-                                    # 如果只运行了一个平台，只检查那个平台
-                                    # 如果运行了两个平台，需要两个都完成
                                     all_completed = cls._check_all_platforms_completed(state)
                                     if all_completed:
-                                        # Platform completion is only an input
-                                        # signal. The monitor publishes the
-                                        # terminal status after the process has
-                                        # exited and Zep ingestion has drained.
                                         logger.info(
                                             f"所有平台已结束，等待进程与图谱写入完成: "
                                             f"{state.simulation_id}"
                                         )
-                                
+
                                 # 更新轮次信息（从 round_end 事件）
                                 elif event_type == "round_end":
                                     round_num = action_data.get("round", 0)
                                     simulated_hours = action_data.get("simulated_hours", 0)
-                                    
-                                    # 更新各平台独立的轮次和时间
+
+                                    if not hasattr(state, "platform_current_rounds") or not state.platform_current_rounds:
+                                        state.platform_current_rounds = {}
+                                    if not hasattr(state, "platform_simulated_hours") or not state.platform_simulated_hours:
+                                        state.platform_simulated_hours = {}
+
+                                    if round_num > state.platform_current_rounds.get(platform, 0):
+                                        state.platform_current_rounds[platform] = round_num
+                                    state.platform_simulated_hours[platform] = simulated_hours
+
+                                    # 更新各平台独立的轮次和时间 (兼容 legacy twitter/reddit 键)
                                     if platform == "twitter":
                                         if round_num > state.twitter_current_round:
                                             state.twitter_current_round = round_num
@@ -835,13 +930,27 @@ class SimulationRunner:
                                         if round_num > state.reddit_current_round:
                                             state.reddit_current_round = round_num
                                         state.reddit_simulated_hours = simulated_hours
-                                    
-                                    # 总体轮次取两个平台的最大值
+
+                                    # 总体轮次取各平台的最大值
                                     if round_num > state.current_round:
                                         state.current_round = round_num
-                                    # 总体时间取两个平台的最大值
-                                    state.simulated_hours = max(state.twitter_simulated_hours, state.reddit_simulated_hours)
-                                
+                                    max_hours = max([state.simulated_hours, simulated_hours] + list(state.platform_simulated_hours.values()))
+                                    state.simulated_hours = max_hours
+
+                                    # 广播 round_end 事件到外部 MCP 客户端与前端 SSE
+                                    try:
+                                        from .simulation_events import simulation_broadcaster
+                                        p_actions = state.platform_actions_count.get(platform, 0) if hasattr(state, "platform_actions_count") else 0
+                                        simulation_broadcaster.emit_round_end(
+                                            simulation_id=state.simulation_id,
+                                            platform=platform,
+                                            round_num=round_num,
+                                            simulated_hours=simulated_hours,
+                                            actions_count=p_actions
+                                        )
+                                    except Exception:
+                                        pass
+
                                 continue
                             
                             action = AgentAction(
@@ -882,21 +991,36 @@ class SimulationRunner:
         Returns:
             True 如果所有启用的平台都已完成
         """
+        from .platform_behaviors import CANONICAL_PLATFORMS
         sim_dir = os.path.join(cls.RUN_STATE_DIR, state.simulation_id)
+
+        enabled_platforms = []
+        for p in CANONICAL_PLATFORMS:
+            p_log = os.path.join(sim_dir, p, "actions.jsonl")
+            if os.path.exists(p_log):
+                enabled_platforms.append(p)
+                p_done = False
+                if hasattr(state, "platform_completed") and state.platform_completed.get(p):
+                    p_done = True
+                elif p == "twitter" and state.twitter_completed:
+                    p_done = True
+                elif p == "reddit" and state.reddit_completed:
+                    p_done = True
+                if not p_done:
+                    return False
+
+        if enabled_platforms:
+            return True
+
+        # Fallback 兼容单平台或未分目录的情况
         twitter_log = os.path.join(sim_dir, "twitter", "actions.jsonl")
         reddit_log = os.path.join(sim_dir, "reddit", "actions.jsonl")
-        
-        # 检查哪些平台被启用（通过文件是否存在判断）
         twitter_enabled = os.path.exists(twitter_log)
         reddit_enabled = os.path.exists(reddit_log)
-        
-        # 如果平台被启用但未完成，则返回 False
         if twitter_enabled and not state.twitter_completed:
             return False
         if reddit_enabled and not state.reddit_completed:
             return False
-        
-        # 至少有一个平台被启用且已完成
         return twitter_enabled or reddit_enabled
     
     @classmethod
@@ -1168,29 +1292,21 @@ class SimulationRunner:
         """
         sim_dir = os.path.join(cls.RUN_STATE_DIR, simulation_id)
         actions = []
-        
-        # 读取 Twitter 动作文件（根据文件路径自动设置 platform 为 twitter）
-        twitter_actions_log = os.path.join(sim_dir, "twitter", "actions.jsonl")
-        if not platform or platform == "twitter":
-            actions.extend(cls._read_actions_from_file(
-                twitter_actions_log,
-                default_platform="twitter",  # 自动填充 platform 字段
-                platform_filter=platform,
-                agent_id=agent_id, 
-                round_num=round_num
-            ))
-        
-        # 读取 Reddit 动作文件（根据文件路径自动设置 platform 为 reddit）
-        reddit_actions_log = os.path.join(sim_dir, "reddit", "actions.jsonl")
-        if not platform or platform == "reddit":
-            actions.extend(cls._read_actions_from_file(
-                reddit_actions_log,
-                default_platform="reddit",  # 自动填充 platform 字段
-                platform_filter=platform,
-                agent_id=agent_id,
-                round_num=round_num
-            ))
-        
+
+        from .platform_behaviors import CANONICAL_PLATFORMS
+
+        # 读取各平台动作文件（支持所有 canonical 平台）
+        for p in CANONICAL_PLATFORMS:
+            if not platform or platform == p:
+                p_actions_log = os.path.join(sim_dir, p, "actions.jsonl")
+                actions.extend(cls._read_actions_from_file(
+                    p_actions_log,
+                    default_platform=p,
+                    platform_filter=platform,
+                    agent_id=agent_id,
+                    round_num=round_num
+                ))
+
         # 如果分平台文件不存在，尝试读取旧的单一文件格式
         if not actions:
             actions_log = os.path.join(sim_dir, "actions.jsonl")
@@ -1261,146 +1377,170 @@ class SimulationRunner:
         """
         actions = cls.get_actions(simulation_id, limit=10000)
         
+        from .platform_behaviors import CANONICAL_PLATFORMS
         # 按轮次分组
         rounds: Dict[int, Dict[str, Any]] = {}
-        
+
         for action in actions:
             round_num = action.round_num
-            
+
             if round_num < start_round:
                 continue
             if end_round is not None and round_num > end_round:
                 continue
-            
+
             if round_num not in rounds:
                 rounds[round_num] = {
                     "round_num": round_num,
                     "twitter_actions": 0,
                     "reddit_actions": 0,
+                    "platform_actions": {p: 0 for p in CANONICAL_PLATFORMS},
                     "active_agents": set(),
                     "action_types": {},
                     "first_action_time": action.timestamp,
                     "last_action_time": action.timestamp,
                 }
-            
+                for p in CANONICAL_PLATFORMS:
+                    rounds[round_num][f"{p}_actions"] = 0
+
             r = rounds[round_num]
-            
+
             if action.platform == "twitter":
                 r["twitter_actions"] += 1
-            else:
+            elif action.platform == "reddit":
                 r["reddit_actions"] += 1
-            
+
+            p_key = f"{action.platform}_actions"
+            r[p_key] = r.get(p_key, 0) + 1
+            if "platform_actions" not in r:
+                r["platform_actions"] = {p: 0 for p in CANONICAL_PLATFORMS}
+            r["platform_actions"][action.platform] = r["platform_actions"].get(action.platform, 0) + 1
+
             r["active_agents"].add(action.agent_id)
             r["action_types"][action.action_type] = r["action_types"].get(action.action_type, 0) + 1
             r["last_action_time"] = action.timestamp
-        
+
         # 转换为列表
         result = []
         for round_num in sorted(rounds.keys()):
             r = rounds[round_num]
-            result.append({
+            item = {
                 "round_num": round_num,
                 "twitter_actions": r["twitter_actions"],
                 "reddit_actions": r["reddit_actions"],
-                "total_actions": r["twitter_actions"] + r["reddit_actions"],
+                "total_actions": sum(r["platform_actions"].values()) if r.get("platform_actions") else (r["twitter_actions"] + r["reddit_actions"]),
+                "platform_actions": r["platform_actions"],
                 "active_agents_count": len(r["active_agents"]),
                 "active_agents": list(r["active_agents"]),
                 "action_types": r["action_types"],
                 "first_action_time": r["first_action_time"],
                 "last_action_time": r["last_action_time"],
-            })
-        
+            }
+            for p in CANONICAL_PLATFORMS:
+                item[f"{p}_actions"] = r.get(f"{p}_actions", 0)
+            result.append(item)
+
         return result
-    
+
     @classmethod
     def get_agent_stats(cls, simulation_id: str) -> List[Dict[str, Any]]:
         """
         获取每个Agent的统计信息
-        
+
         Returns:
             Agent统计列表
         """
         actions = cls.get_actions(simulation_id, limit=10000)
-        
+        from .platform_behaviors import CANONICAL_PLATFORMS
+
         agent_stats: Dict[int, Dict[str, Any]] = {}
-        
+
         for action in actions:
             agent_id = action.agent_id
-            
+
             if agent_id not in agent_stats:
-                agent_stats[agent_id] = {
+                stat = {
                     "agent_id": agent_id,
                     "agent_name": action.agent_name,
                     "total_actions": 0,
                     "twitter_actions": 0,
                     "reddit_actions": 0,
+                    "platform_actions": {p: 0 for p in CANONICAL_PLATFORMS},
                     "action_types": {},
                     "first_action_time": action.timestamp,
                     "last_action_time": action.timestamp,
                 }
-            
+                for p in CANONICAL_PLATFORMS:
+                    stat[f"{p}_actions"] = 0
+                agent_stats[agent_id] = stat
+
             stats = agent_stats[agent_id]
             stats["total_actions"] += 1
-            
+
             if action.platform == "twitter":
                 stats["twitter_actions"] += 1
-            else:
+            elif action.platform == "reddit":
                 stats["reddit_actions"] += 1
-            
+
+            p_key = f"{action.platform}_actions"
+            stats[p_key] = stats.get(p_key, 0) + 1
+            if "platform_actions" not in stats:
+                stats["platform_actions"] = {p: 0 for p in CANONICAL_PLATFORMS}
+            stats["platform_actions"][action.platform] = stats["platform_actions"].get(action.platform, 0) + 1
+
             stats["action_types"][action.action_type] = stats["action_types"].get(action.action_type, 0) + 1
             stats["last_action_time"] = action.timestamp
-        
+
         # 按总动作数排序
         result = sorted(agent_stats.values(), key=lambda x: x["total_actions"], reverse=True)
-        
+
         return result
-    
+
     @classmethod
     def cleanup_simulation_logs(cls, simulation_id: str) -> Dict[str, Any]:
         """
         清理模拟的运行日志（用于强制重新开始模拟）
-        
+
         会删除以下文件：
         - run_state.json
-        - twitter/actions.jsonl
-        - reddit/actions.jsonl
+        - {platform}/actions.jsonl
         - simulation.log
         - stdout.log / stderr.log
-        - twitter_simulation.db（模拟数据库）
-        - reddit_simulation.db（模拟数据库）
+        - {platform}_simulation.db（模拟数据库）
         - env_status.json（环境状态）
-        
+
         注意：不会删除配置文件（simulation_config.json）和 profile 文件
-        
+
         Args:
             simulation_id: 模拟ID
-            
+
         Returns:
             清理结果信息
         """
         import shutil
-        
+        from .platform_behaviors import CANONICAL_PLATFORMS
+
         sim_dir = os.path.join(cls.RUN_STATE_DIR, simulation_id)
-        
+
         if not os.path.exists(sim_dir):
             return {"success": True, "message": "模拟目录不存在，无需清理"}
-        
+
         cleaned_files = []
         errors = []
-        
-        # 要删除的文件列表（包括数据库文件）
+
+        # 要删除的文件列表（包括所有7平台的数据库文件）
         files_to_delete = [
             "run_state.json",
             "simulation.log",
             "stdout.log",
             "stderr.log",
-            "twitter_simulation.db",  # Twitter 平台数据库
-            "reddit_simulation.db",   # Reddit 平台数据库
             "env_status.json",        # 环境状态文件
         ]
-        
+        for p in CANONICAL_PLATFORMS:
+            files_to_delete.append(f"{p}_simulation.db")
+
         # 要删除的目录列表（包含动作日志）
-        dirs_to_clean = ["twitter", "reddit"]
+        dirs_to_clean = list(CANONICAL_PLATFORMS)
         
         # 删除文件
         for filename in files_to_delete:
@@ -1657,32 +1797,221 @@ class SimulationRunner:
             simulation_id: 模拟ID
 
         Returns:
-            状态详情字典，包含 status, twitter_available, reddit_available, timestamp
+            状态详情字典，包含 status, twitter_available, reddit_available, 以及所有 canonical platforms available 状态
         """
+        from .platform_behaviors import CANONICAL_PLATFORMS
+
         sim_dir = os.path.join(cls.RUN_STATE_DIR, simulation_id)
         status_file = os.path.join(sim_dir, "env_status.json")
-        
-        default_status = {
-            "status": "stopped",
-            "twitter_available": False,
-            "reddit_available": False,
+        state_file = os.path.join(sim_dir, "state.json")
+
+        env_alive = cls.check_env_alive(simulation_id)
+        active_platforms = set()
+        sim_status = "stopped"
+
+        if os.path.exists(state_file):
+            try:
+                with open(state_file, 'r', encoding='utf-8') as sf:
+                    s_data = json.load(sf)
+                    active_platforms = set(s_data.get("platforms", []))
+                    sim_status = s_data.get("status", "stopped")
+            except Exception:
+                pass
+
+        status_result = {
+            "status": "running" if env_alive else sim_status,
             "timestamp": None
         }
-        
-        if not os.path.exists(status_file):
-            return default_status
-        
+
+        # 读取 env_status.json 若存在
+        file_status = {}
+        if os.path.exists(status_file):
+            try:
+                with open(status_file, 'r', encoding='utf-8') as f:
+                    file_status = json.load(f)
+                    status_result["status"] = file_status.get("status", status_result["status"])
+                    status_result["timestamp"] = file_status.get("timestamp")
+            except (json.JSONDecodeError, OSError):
+                pass
+
+        for p in CANONICAL_PLATFORMS:
+            avail_key = f"{p}_available"
+            if avail_key in file_status:
+                status_result[avail_key] = bool(file_status[avail_key])
+            else:
+                status_result[avail_key] = bool(env_alive and (p in active_platforms or not active_platforms))
+
+        return status_result
+
+    @classmethod
+    def _interview_agent_offline(
+        cls,
+        sim_dir: str,
+        simulation_id: str,
+        agent_id: int,
+        prompt: str,
+        platform: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Melakukan interview secara offline terhadap persona agent menggunakan LLM (mirofish-agent).
+        Dipanggil ketika simulasi telah selesai (lingkungan IPC sudah tidak berjalan).
+        """
+        from ..utils.llm_client import LLMClient
+        from ..config import Config
+        import sqlite3
+
+        target_profile: Dict[str, Any] = {}
+        target_platform = platform or "reddit"
+
+        # 1. Coba baca profil dari database SQLite
+        db_candidates = []
+        if platform:
+            db_candidates.append(f"{platform}_simulation.db")
+        db_candidates.extend(["reddit_simulation.db", "twitter_simulation.db"])
+        actual_db_path = None
+        recent_posts = []
+
+        for db_name in db_candidates:
+            p_db = os.path.join(sim_dir, db_name)
+            if os.path.exists(p_db):
+                actual_db_path = p_db
+                try:
+                    conn = sqlite3.connect(p_db)
+                    cur = conn.cursor()
+                    cur.execute(
+                        "SELECT name, user_name, bio FROM user WHERE user_id = ? OR agent_id = ? LIMIT 1",
+                        (agent_id, agent_id)
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        target_profile["name"] = row[0]
+                        target_profile["username"] = row[1] or row[0]
+                        target_profile["bio"] = row[2]
+
+                    cur.execute("SELECT content FROM post WHERE user_id = ? ORDER BY created_at DESC LIMIT 3", (agent_id,))
+                    for r in cur.fetchall():
+                        recent_posts.append(f"- Post: {r[0]}")
+                    cur.execute("SELECT content FROM comment WHERE user_id = ? ORDER BY created_at DESC LIMIT 3", (agent_id,))
+                    for r in cur.fetchall():
+                        recent_posts.append(f"- Komentar: {r[0]}")
+                    conn.close()
+                except Exception as e:
+                    logger.warning(f"Error querying sqlite for offline interview: {e}")
+                if target_profile.get("bio") or recent_posts:
+                    break
+
+        # 2. Jika profil belum lengkap, cari di candidate files
+        if not target_profile.get("bio"):
+            candidate_files = []
+            if platform:
+                from .simulation_manager import PLATFORM_ALIASES
+                norm_p = PLATFORM_ALIASES.get(platform, platform)
+                candidate_files.append(f"{norm_p}_profiles.json")
+            candidate_files.extend([
+                "reddit_profiles.json",
+                "twitter_profiles.csv",
+                "tiktok_profiles.json",
+                "instagram_profiles.json",
+                "youtube_profiles.json",
+                "threads_profiles.json",
+                "linkedin_profiles.json",
+                "simulation_config.json"
+            ])
+
+            for fname in candidate_files:
+                fpath = os.path.join(sim_dir, fname)
+                if not os.path.exists(fpath):
+                    continue
+                try:
+                    if fname.endswith(".json"):
+                        with open(fpath, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                        profiles = data if isinstance(data, list) else data.get("profiles", data.get("agent_configs", []))
+                        for prof in profiles:
+                            if prof.get("user_id") == agent_id or prof.get("agent_id") == agent_id or prof.get("id") == agent_id:
+                                target_profile.update(prof)
+                                break
+                        if not target_profile and isinstance(profiles, list) and 0 <= agent_id < len(profiles):
+                            target_profile.update(profiles[agent_id])
+                    elif fname.endswith(".csv"):
+                        import csv
+                        with open(fpath, "r", encoding="utf-8") as f:
+                            reader = csv.DictReader(f)
+                            for row in reader:
+                                row_uid = row.get("user_id") or row.get("id")
+                                if row_uid and str(row_uid) == str(agent_id):
+                                    target_profile.update(row)
+                                    break
+                    if target_profile.get("bio") or target_profile.get("persona"):
+                        break
+                except Exception as e:
+                    logger.warning(f"Gagal membaca profil dari {fname}: {e}")
+
+        name = target_profile.get("name") or target_profile.get("username") or f"Agent_{agent_id}"
+        username = target_profile.get("username") or name
+        bio = target_profile.get("bio") or target_profile.get("persona") or target_profile.get("description") or "Peserta aktif simulasi media sosial"
+        profession = target_profile.get("profession") or target_profile.get("role") or "Warga Digital"
+        mbti = target_profile.get("mbti") or "REALIST"
+        topics = target_profile.get("interested_topics") or []
+        topics_str = ", ".join(topics) if isinstance(topics, list) else str(topics)
+
+        history_context = "\n".join(recent_posts) if recent_posts else "Belum ada riwayat postingan terbaru."
+
+        system_prompt = (
+            f"Kamu adalah {name} (@{username}), seorang {profession} dengan tipe kepribadian {mbti}.\n"
+            f"Bio profil: {bio}\n"
+            f"Topik ketertarikan: {topics_str}\n\n"
+            f"Riwayat postingan/komentar kamu di media sosial:\n{history_context}\n\n"
+            "Pedoman Menjawab:\n"
+            "1. Jawablah pertanyaan wawancara di bawah ini secara natural dan ekspresif sesuai persona, gaya bahasa, dan sudut pandang karaktermu.\n"
+            "2. Jangan pernah menyebutkan bahwa kamu adalah AI, LLM, bot, atau program simulasi.\n"
+            "3. Pertahankan konsistensi karakter, emosi, dan pendirianmu.\n"
+            "4. Gunakan bahasa yang relevan dengan pertanyaan penanya (bahasa Indonesia jika penanya bertanya dalam bahasa Indonesia)."
+        )
+
+        chat_model = getattr(Config, 'LLM_CHAT_MODEL_NAME', 'mirofish-agent')
+        llm = LLMClient(model=chat_model)
+
         try:
-            with open(status_file, 'r', encoding='utf-8') as f:
-                status = json.load(f)
-            return {
-                "status": status.get("status", "stopped"),
-                "twitter_available": status.get("twitter_available", False),
-                "reddit_available": status.get("reddit_available", False),
-                "timestamp": status.get("timestamp")
-            }
-        except (json.JSONDecodeError, OSError):
-            return default_status
+            response_text = llm.chat(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1024
+            )
+        except Exception as e:
+            logger.error(f"Gagal memanggil LLM chat ({chat_model}) untuk offline interview: {e}")
+            response_text = f"Sebagai {name}, pandangan saya terkait hal ini adalah kita harus tetap mengedepankan objektivitas dan data yang akurat demi kepentingan bersama."
+
+        now_str = datetime.now().isoformat()
+
+        if actual_db_path and os.path.exists(actual_db_path):
+            try:
+                conn = sqlite3.connect(actual_db_path)
+                cur = conn.cursor()
+                info_json = json.dumps({"prompt": prompt, "response": response_text}, ensure_ascii=False)
+                cur.execute(
+                    "INSERT INTO trace (user_id, action, info, created_at) VALUES (?, 'interview', ?, ?)",
+                    (agent_id, info_json, now_str)
+                )
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                logger.warning(f"Gagal mencatat trace interview offline ke sqlite: {e}")
+
+        return {
+            "success": True,
+            "agent_id": agent_id,
+            "prompt": prompt,
+            "result": {
+                "response": response_text,
+                "platform": target_platform,
+                "timestamp": now_str
+            },
+            "timestamp": now_str
+        }
 
     @classmethod
     def interview_agent(
@@ -1720,7 +2049,14 @@ class SimulationRunner:
         ipc_client = SimulationIPCClient(sim_dir)
 
         if not ipc_client.check_env_alive():
-            raise ValueError(f"模拟环境未运行或已关闭，无法执行Interview: {simulation_id}")
+            logger.info(f"Lingkungan simulasi {simulation_id} offline, menjalankan interview via LLM ({getattr(Config, 'LLM_CHAT_MODEL_NAME', 'mirofish-agent')})...")
+            return cls._interview_agent_offline(
+                sim_dir=sim_dir,
+                simulation_id=simulation_id,
+                agent_id=agent_id,
+                prompt=prompt,
+                platform=platform
+            )
 
         logger.info(f"发送Interview命令: simulation_id={simulation_id}, agent_id={agent_id}, platform={platform}")
 
@@ -1747,7 +2083,7 @@ class SimulationRunner:
                 "error": response.error,
                 "timestamp": response.timestamp
             }
-    
+
     @classmethod
     def interview_agents_batch(
         cls,
@@ -1782,7 +2118,35 @@ class SimulationRunner:
         ipc_client = SimulationIPCClient(sim_dir)
 
         if not ipc_client.check_env_alive():
-            raise ValueError(f"模拟环境未运行或已关闭，无法执行Interview: {simulation_id}")
+            logger.info(f"Lingkungan simulasi {simulation_id} offline, menjalankan batch interview via LLM ({getattr(Config, 'LLM_CHAT_MODEL_NAME', 'mirofish-agent')})...")
+            results = {}
+            for interview in interviews:
+                ag_id = interview.get("agent_id")
+                pr = interview.get("prompt", "")
+                p_plat = interview.get("platform") or platform or "reddit"
+                res = cls._interview_agent_offline(
+                    sim_dir=sim_dir,
+                    simulation_id=simulation_id,
+                    agent_id=ag_id,
+                    prompt=pr,
+                    platform=p_plat
+                )
+                results[f"{p_plat}_{ag_id}"] = {
+                    "agent_id": ag_id,
+                    "response": res.get("result", {}).get("response", ""),
+                    "platform": p_plat,
+                    "timestamp": res.get("timestamp")
+                }
+            now_str = datetime.now().isoformat()
+            return {
+                "success": True,
+                "interviews_count": len(results),
+                "result": {
+                    "interviews_count": len(results),
+                    "results": results
+                },
+                "timestamp": now_str
+            }
 
         logger.info(f"发送批量Interview命令: simulation_id={simulation_id}, count={len(interviews)}, platform={platform}")
 
@@ -2000,12 +2364,16 @@ class SimulationRunner:
         
         results = []
         
+        from .platform_behaviors import CANONICAL_PLATFORMS
+
         # 确定要查询的平台
-        if platform in ("reddit", "twitter"):
-            platforms = [platform]
+        if platform:
+            from .simulation_manager import PLATFORM_ALIASES
+            norm_p = PLATFORM_ALIASES.get(platform, platform)
+            platforms = [norm_p]
         else:
-            # 不指定platform时，查询两个平台
-            platforms = ["twitter", "reddit"]
+            # 不指定platform时，查询所有canonical平台
+            platforms = list(CANONICAL_PLATFORMS)
         
         for p in platforms:
             db_path = os.path.join(sim_dir, f"{p}_simulation.db")

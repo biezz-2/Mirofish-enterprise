@@ -23,22 +23,22 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.BACKEND_URL || 'http://localhost:5001',
         changeOrigin: true,
         secure: false
       },
       '/health': {
-        target: 'http://localhost:8000',
+        target: process.env.BACKEND_URL || 'http://localhost:5001',
         changeOrigin: true,
         secure: false
       },
       '/openapi.json': {
-        target: 'http://localhost:8000',
+        target: process.env.BACKEND_URL || 'http://localhost:5001',
         changeOrigin: true,
         secure: false
       },
       '/openapi.yaml': {
-        target: 'http://localhost:8000',
+        target: process.env.BACKEND_URL || 'http://localhost:5001',
         changeOrigin: true,
         secure: false
       }

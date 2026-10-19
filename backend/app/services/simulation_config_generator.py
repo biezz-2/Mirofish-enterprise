@@ -26,27 +26,32 @@ from .zep_entity_reader import EntityNode, ZepEntityReader
 
 logger = get_logger('mirofish.simulation_config')
 
-# 中国作息时间配置（北京时间）
-CHINA_TIMEZONE_CONFIG = {
-    # 深夜时段（几乎无人活动）
+# Konfigurasi ritme aktivitas harian netizen Indonesia (WIB - UTC+7)
+INDONESIA_WIB_TIMEZONE_CONFIG = {
+    # Jam sepi / istirahat malam (dead hours)
     "dead_hours": [0, 1, 2, 3, 4, 5],
-    # 早间时段（逐渐醒来）
+    # Jam santai / bangun pagi (morning leisure)
     "morning_hours": [6, 7, 8],
-    # 工作时段
-    "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-    # 晚间高峰（最活跃）
+    # Jam kerja / aktivitas pagi-sore
+    "work_hours": [9, 10, 11, 14, 15, 16, 17, 18],
+    # Jam istirahat makan siang (lunch break)
+    "lunch_hours": [12, 13],
+    # Jam aktif puncak malam (peak hours)
     "peak_hours": [19, 20, 21, 22],
-    # 夜间时段（活跃度下降）
+    # Jam malam menjelang tidur
     "night_hours": [23],
-    # 活跃度系数
+    # Pengali aktivitas
     "activity_multipliers": {
-        "dead": 0.05,      # 凌晨几乎无人
-        "morning": 0.4,    # 早间逐渐活跃
-        "work": 0.7,       # 工作时段中等
-        "peak": 1.5,       # 晚间高峰
-        "night": 0.5       # 深夜下降
+        "dead": 0.05,      # Dini hari minim aktivitas
+        "morning": 0.4,    # Pagi hari mulai santai bersosmed
+        "work": 0.6,       # Jam kerja/kuliah aktivitas moderat
+        "lunch": 1.1,      # Istirahat siang naik
+        "peak": 1.6,       # Puncak interaksi malam
+        "night": 0.5       # Menjelang tengah malam menurun
     }
 }
+# Backward compatibility alias
+CHINA_TIMEZONE_CONFIG = INDONESIA_WIB_TIMEZONE_CONFIG
 
 
 @dataclass
@@ -579,20 +584,18 @@ class SimulationConfigGenerator:
 请生成时间配置JSON。
 
 ### 基本原则（仅供参考，需根据具体事件和参与群体灵活调整）：
-- 请根据模拟场景推断目标用户群体所在时区和作息习惯，以下为东八区(UTC+8)的参考示例
-- 凌晨0-5点几乎无人活动（活跃度系数0.05）
-- 早上6-8点逐渐活跃（活跃度系数0.4）
-- 工作时间9-18点中等活跃（活跃度系数0.7）
-- 晚间19-22点是高峰期（活跃度系数1.5）
-- 23点后活跃度下降（活跃度系数0.5）
-- 一般规律：凌晨低活跃、早间渐增、工作时段中等、晚间高峰
-- **重要**：以下示例值仅供参考，你需要根据事件性质、参与群体特点来调整具体时段
-  - 例如：学生群体高峰可能是21-23点；媒体全天活跃；官方机构只在工作时间
-  - 例如：突发热点可能导致深夜也有讨论，off_peak_hours 可适当缩短
+- Konfigurasi ritme harian netizen Indonesia: Zona waktu WIB (UTC+7)
+- Dini hari 00:00 - 05:00 minim aktivitas / dead hours (koefisien 0.05)
+- Pagi hari 06:00 - 08:00 jam santai menjelang beraktivitas (koefisien 0.4)
+- Jam kerja/sekolah 09:00 - 11:00 dan 14:00 - 18:00 aktivitas moderat (koefisien 0.6)
+- Istirahat makan siang 12:00 - 13:00 lonjakan aktivitas netizen (koefisien 1.1)
+- Malam hari 19:00 - 22:00 adalah jam aktif puncak (peak hours, koefisien 1.6)
+- Menjelang larut malam 23:00 aktivitas menurun (koefisien 0.5)
+- **Catatan Penting**: Nilai berikut merupakan acuan standar, sesuaikan dengan target entitas (misal mahasiswa lebih aktif larut malam, institusi formal aktif jam kerja).
 
-### 返回JSON格式（不要markdown）
+### Format JSON Output (tanpa markdown wrapper):
 
-示例：
+Contoh:
 {{
     "total_simulation_hours": 72,
     "minutes_per_round": 60,
@@ -601,22 +604,24 @@ class SimulationConfigGenerator:
     "peak_hours": [19, 20, 21, 22],
     "off_peak_hours": [0, 1, 2, 3, 4, 5],
     "morning_hours": [6, 7, 8],
-    "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-    "reasoning": "针对该事件的时间配置说明"
+    "lunch_hours": [12, 13],
+    "work_hours": [9, 10, 11, 14, 15, 16, 17, 18],
+    "reasoning": "Konfigurasi jadwal netizen Indonesia WIB (UTC+7)"
 }}
 
-字段说明：
-- total_simulation_hours (int): 模拟总时长，24-168小时，突发事件短、持续话题长
-- minutes_per_round (int): 每轮时长，30-120分钟，建议60分钟
-- agents_per_hour_min (int): 每小时最少激活Agent数（取值范围: 1-{max_agents_allowed}）
-- agents_per_hour_max (int): 每小时最多激活Agent数（取值范围: 1-{max_agents_allowed}）
-- peak_hours (int数组): 高峰时段，根据事件参与群体调整
-- off_peak_hours (int数组): 低谷时段，通常深夜凌晨
-- morning_hours (int数组): 早间时段
-- work_hours (int数组): 工作时段
-- reasoning (string): 简要说明为什么这样配置"""
+Deskripsi Kolom:
+- total_simulation_hours (int): Total jam simulasi (24-168)
+- minutes_per_round (int): Durasi virtual per ronde (rekomendasi 60 menit)
+- agents_per_hour_min (int): Minimum agen aktif per jam (1-{max_agents_allowed})
+- agents_per_hour_max (int): Maksimum agen aktif per jam (1-{max_agents_allowed})
+- peak_hours (int array): Jam puncak aktivitas ([19, 20, 21, 22])
+- off_peak_hours (int array): Jam sepi aktivitas ([0, 1, 2, 3, 4, 5])
+- morning_hours (int array): Jam santai pagi ([6, 7, 8])
+- lunch_hours (int array): Jam istirahat makan siang ([12, 13])
+- work_hours (int array): Jam kerja aktif ([9, 10, 11, 14, 15, 16, 17, 18])
+- reasoning (string): Alasan pengaturan waktu"""
 
-        system_prompt = "你是社交媒体模拟专家。返回纯JSON格式，时间配置需符合模拟场景中目标用户群体的作息习惯。"
+        system_prompt = "Anda adalah pakar simulasi media sosial. Hasilkan format JSON murni yang mencerminkan ritme aktivitas netizen Indonesia (WIB UTC+7)."
         system_prompt = f"{system_prompt}\n\n{get_language_instruction()}"
 
         try:
@@ -624,19 +629,20 @@ class SimulationConfigGenerator:
         except Exception as e:
             logger.warning(f"时间配置LLM生成失败: {e}, 使用默认配置")
             return self._get_default_time_config(num_entities)
-    
+
     def _get_default_time_config(self, num_entities: int) -> Dict[str, Any]:
-        """获取默认时间配置（中国人作息）"""
+        """获取默认时间配置（印尼网民作息 WIB UTC+7）"""
         return {
             "total_simulation_hours": 72,
-            "minutes_per_round": 60,  # 每轮1小时，加快时间流速
+            "minutes_per_round": 60,  # 1 jam per ronde
             "agents_per_hour_min": max(1, num_entities // 15),
             "agents_per_hour_max": max(5, num_entities // 5),
             "peak_hours": [19, 20, 21, 22],
             "off_peak_hours": [0, 1, 2, 3, 4, 5],
             "morning_hours": [6, 7, 8],
-            "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-            "reasoning": "使用默认中国人作息配置（每轮1小时）"
+            "lunch_hours": [12, 13],
+            "work_hours": [9, 10, 11, 14, 15, 16, 17, 18],
+            "reasoning": "Menggunakan konfigurasi jadwal netizen Indonesia WIB (UTC+7): puncak 19-22, istirahat siang 12-13, santai pagi 06-08, dead hours 00-05"
         }
     
     def _parse_time_config(self, result: Dict[str, Any], num_entities: int) -> TimeSimulationConfig:

@@ -11,8 +11,8 @@ module.exports = {
       instances: 1,
       exec_mode: 'fork',
       env: {
-        FLASK_PORT: 8000,
-        PORT: 8000,
+        FLASK_PORT: 5001,
+        PORT: 5001,
         FLASK_HOST: '0.0.0.0',
         PYTHONPATH: '.:backend'
       }

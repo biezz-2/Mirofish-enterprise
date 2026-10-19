@@ -233,7 +233,14 @@
     "roundLabel": "轮次",
     "timeLabel": "时间",
     "actsLabel": "行为数",
-    "availableActions": "可用动作"
+    "availableActions": "可用动作",
+    "allPlatforms": "所有平台",
+    "autoScrollOn": "自动滚动 开启",
+    "autoScrollPaused": "自动滚动 暂停",
+    "resumeAutoScroll": "跳至最新",
+    "streamMode": "信息流",
+    "dualMode": "双轨",
+    "noActionsFiltered": "该平台筛选下暂无动作"
   },
   "step4": {
     "generatingSection": "正在生成{title}...",

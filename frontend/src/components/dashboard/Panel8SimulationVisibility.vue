@@ -19,7 +19,18 @@
       </div>
     </div>
 
-    <div class="mt-5 grid gap-4 lg:grid-cols-2">
+    <!-- Empty state if no simulation available -->
+    <div v-if="!activeSimulationId" class="mt-5 rounded-xl border border-slate-800 bg-slate-950/70 p-8 text-center flex flex-col items-center justify-center">
+      <div class="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-2xl mb-3">
+        🔎
+      </div>
+      <h3 class="text-sm font-bold text-slate-200">Belum ada simulasi yang dipilih</h3>
+      <p class="text-xs text-slate-400 max-w-md mt-1 leading-relaxed">
+        Pilih simulasi aktif pada Panel 3 (Swarm Console) atau muat simulasi melalui parameter query URL (?simulation_id=...) untuk memantau visibilitas runtime platform.
+      </p>
+    </div>
+
+    <div v-else class="mt-5 grid gap-4 lg:grid-cols-2">
       <!-- Platform states -->
       <div class="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
         <h3 class="font-semibold text-slate-200">Platform states</h3>
@@ -96,9 +107,8 @@ import {
   getSimulationHistory,
   getEnvStatus
 } from '../../api/simulation'
+import { getSimulationList } from '../../api/enterprise'
 
-const SIMULATION_ID = 'sim_b839625f8ac2'
-const PROJECT_ID = 'proj_5e996d7cdf4b'
 const CANONICAL_PLATFORMS = ['instagram', 'linkedin', 'reddit', 'threads', 'tiktok', 'twitter', 'youtube']
 
 const value = (data, key, fallback = 'Unavailable') => data && data[key] !== undefined && data[key] !== null && data[key] !== '' ? data[key] : fallback
@@ -106,14 +116,39 @@ const dataOf = response => response?.data || {}
 
 export default {
   name: 'Panel8SimulationVisibility',
-  data: () => ({
-    simulation: {}, run: {}, env: {}, timeline: [], actions: [], posts: [], history: [], errors: [], lastRefresh: '', polling: false, timer: null, refreshSequence: 0
-  }),
+  props: {
+    simulationId: {
+      type: String,
+      default: ''
+    },
+    projectId: {
+      type: String,
+      default: ''
+    }
+  },
+  data() {
+    return {
+      activeSimulationId: this.simulationId || '',
+      activeProjectId: this.projectId || '',
+      simulation: {},
+      run: {},
+      env: {},
+      timeline: [],
+      actions: [],
+      posts: [],
+      history: [],
+      errors: [],
+      lastRefresh: '',
+      polling: false,
+      timer: null,
+      refreshSequence: 0
+    }
+  },
   computed: {
     summary() {
       return [
-        { label: 'Simulation', value: SIMULATION_ID },
-        { label: 'Project', value: PROJECT_ID },
+        { label: 'Simulation', value: this.activeSimulationId || 'Unavailable' },
+        { label: 'Project', value: this.activeProjectId || value(this.simulation, 'project_id', 'Unavailable') },
         { label: 'Graph', value: value(this.simulation, 'graph_id') },
         { label: 'Task', value: value(this.simulation, 'task_id', 'Not present in API state') },
         { label: 'Status', value: value(this.simulation, 'status') },
@@ -137,23 +172,86 @@ export default {
     postItems() { return this.posts.slice(0, 20).map(item => JSON.stringify(item)) },
     historyItems() { return this.history.slice(0, 20).map(item => JSON.stringify(item)) }
   },
-  mounted() { this.polling = true; this.refresh() },
-  beforeUnmount() { this.polling = false; window.clearTimeout(this.timer) },
+  watch: {
+    simulationId(newVal) {
+      if (newVal !== this.activeSimulationId) {
+        this.activeSimulationId = newVal || ''
+        if (this.activeSimulationId) {
+          this.refresh()
+        }
+      }
+    },
+    projectId(newVal) {
+      if (newVal) {
+        this.activeProjectId = newVal
+      }
+    }
+  },
+  mounted() {
+    this.polling = true
+    this.timer = setInterval(this.refresh, 10000)
+    this.refresh()
+  },
+  beforeUnmount() {
+    this.polling = false
+    if (this.timer) clearInterval(this.timer)
+  },
   methods: {
-    scheduleRefresh() {
-      window.clearTimeout(this.timer)
-      if (this.polling) this.timer = window.setTimeout(() => this.refresh(), 10000)
+    async resolveLatestSimulation() {
+      if (this.activeSimulationId) return
+      try {
+        const histRes = await getSimulationHistory(1)
+        const histData = histRes?.data
+        const items = Array.isArray(histData) ? histData : (Array.isArray(histData?.history) ? histData.history : [])
+        if (items.length > 0 && (items[0].simulation_id || items[0].id)) {
+          this.activeSimulationId = items[0].simulation_id || items[0].id
+          if (!this.activeProjectId && items[0].project_id) {
+            this.activeProjectId = items[0].project_id
+          }
+          return
+        }
+      } catch (e) {
+        // Fallback to getSimulationList
+      }
+
+      try {
+        const listRes = await getSimulationList()
+        const listData = listRes?.data || listRes || []
+        const list = Array.isArray(listData) ? listData : []
+        if (list.length > 0) {
+          const first = list[0]
+          this.activeSimulationId = first.simulation_id || first.id || ''
+          if (!this.activeProjectId && first.project_id) {
+            this.activeProjectId = first.project_id
+          }
+        }
+      } catch (e) {
+        // No simulation found
+      }
     },
     async refresh() {
       const sequence = ++this.refreshSequence
+      if (!this.polling) return
+
+      if (!this.activeSimulationId) {
+        await this.resolveLatestSimulation()
+      }
+
+      if (!this.activeSimulationId) {
+        this.errors = []
+        this.lastRefresh = new Date().toLocaleTimeString()
+        return
+      }
+
+      const simId = this.activeSimulationId
       const requests = [
-        ['simulation', getSimulation(SIMULATION_ID)],
-        ['run status', getRunStatus(SIMULATION_ID)],
-        ['timeline', getSimulationTimeline(SIMULATION_ID)],
-        ['actions', getSimulationActions(SIMULATION_ID, { limit: 50 })],
-        ['posts', getSimulationPosts(SIMULATION_ID, null, 50)],
+        ['simulation', getSimulation(simId)],
+        ['run status', getRunStatus(simId)],
+        ['timeline', getSimulationTimeline(simId)],
+        ['actions', getSimulationActions(simId, { limit: 50 })],
+        ['posts', getSimulationPosts(simId, null, 50)],
         ['history', getSimulationHistory(20)],
-        ['platform environment', getEnvStatus({ simulation_id: SIMULATION_ID })]
+        ['platform environment', getEnvStatus({ simulation_id: simId })]
       ]
       const results = await Promise.allSettled(requests.map(([, request]) => request))
       if (sequence !== this.refreshSequence || !this.polling) return
@@ -181,7 +279,6 @@ export default {
         if (label === 'platform environment') this.env = data
       })
       this.lastRefresh = new Date().toLocaleTimeString()
-      this.scheduleRefresh()
     }
   }
 }

@@ -222,7 +222,10 @@ class SimulationState:
     
     # 错误信息
     error: Optional[str] = None
-    
+
+    # Step 0 Web Research Grounding Metadata
+    web_research: Optional[Dict[str, Any]] = None
+
     def __post_init__(self):
         # 保持 platforms 和 enable_twitter / enable_reddit 逻辑同步
         if self.platforms is None:
@@ -272,6 +275,7 @@ class SimulationState:
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "error": self.error,
+            "web_research": self.web_research,
         }
     
     def get_default_platform(self) -> str:
@@ -303,6 +307,7 @@ class SimulationState:
             "config_generated": self.config_generated,
             "platform_statuses": self.platform_statuses,
             "error": self.error,
+            "web_research": self.web_research,
         }
 
 class SimulationManager:
@@ -403,6 +408,7 @@ class SimulationManager:
             created_at=data.get("created_at", datetime.now().isoformat()),
             updated_at=data.get("updated_at", datetime.now().isoformat()),
             error=data.get("error"),
+            web_research=data.get("web_research"),
         )
         
         self._simulations[simulation_id] = state
@@ -415,23 +421,25 @@ class SimulationManager:
         enable_twitter: bool = True,
         enable_reddit: bool = True,
         platforms: Optional[List[str]] = None,
+        web_research: Optional[Dict[str, Any]] = None,
     ) -> SimulationState:
         """
         创建新的模拟
-        
+
         Args:
             project_id: 项目ID
             graph_id: Zep图谱ID
             enable_twitter: 是否启用Twitter模拟
             enable_reddit: 是否启用Reddit模拟
             platforms: 显式指定的平台列表 (可选)
-            
+            web_research: Step 0 Web Research Grounding metadata (可选)
+
         Returns:
             SimulationState
         """
         import uuid
         simulation_id = f"sim_{uuid.uuid4().hex[:12]}"
-        
+
         resolved_platforms = normalize_platforms(platforms, enable_twitter, enable_reddit)
         resolved_twitter = "twitter" in resolved_platforms
         resolved_reddit = "reddit" in resolved_platforms
@@ -451,6 +459,7 @@ class SimulationManager:
             platform_states=platform_states,
             twitter_status=platform_statuses.get("twitter", "not_started" if resolved_twitter else "disabled"),
             reddit_status=platform_statuses.get("reddit", "not_started" if resolved_reddit else "disabled"),
+            web_research=web_research,
         )
         
         self._save_simulation_state(state)

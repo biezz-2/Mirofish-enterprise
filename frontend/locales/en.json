@@ -129,6 +129,8 @@
     "noBio": "No bio available",
     "dualPlatformConfig": "Generate Dual-Platform Config",
     "dualPlatformConfigDesc": "LLM intelligently sets world time flow, recommendation algorithms, each individual's active hours, posting frequency, event triggers, and more based on requirements and reality seeds",
+    "multiPlatformConfig": "Multi-Platform Simulation Configuration",
+    "multiPlatformConfigDesc": "LLM intelligently sets world time flow, 7-platform recommendation algorithms (Twitter/X, Reddit, TikTok, Instagram, Threads, LinkedIn, YouTube), each individual's active hours, posting frequency, event triggers, and more based on requirements and reality seeds",
     "simulationDuration": "Simulation Duration",
     "roundDuration": "Round Duration",
     "totalRounds": "Total Rounds",
@@ -172,6 +174,7 @@
     "customTip": "For first-time runs, we strongly recommend switching to 'Custom Mode' to reduce rounds for a quick preview and lower error risk",
     "backToGraphBuild": "Back to Graph Build",
     "startDualWorldSim": "Start Dual-World Parallel Simulation",
+    "startMultiWorldSim": "Start Multi-Platform (7-Platform) Parallel Simulation",
     "profileModalAge": "Apparent Age",
     "profileModalGender": "Apparent Gender",
     "profileModalCountry": "Country/Region",
@@ -233,7 +236,14 @@
     "roundLabel": "ROUND",
     "timeLabel": "TIME",
     "actsLabel": "ACTS",
-    "availableActions": "Available Actions"
+    "availableActions": "Available Actions",
+    "allPlatforms": "All Platforms",
+    "autoScrollOn": "Auto-Scroll ON",
+    "autoScrollPaused": "Auto-Scroll Paused",
+    "resumeAutoScroll": "Jump to Latest",
+    "streamMode": "Stream",
+    "dualMode": "Dual",
+    "noActionsFiltered": "No actions found for this platform"
   },
   "step4": {
     "generatingSection": "Generating {title}...",

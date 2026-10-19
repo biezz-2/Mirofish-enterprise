@@ -267,7 +267,7 @@ class OntologyGenerator:
         
         if additional_context:
             message += f"""
-## 额外说明
+## 额外说明与互联网实时研究 (Additional Context & Web Research Grounding)
 
 {additional_context}
 """

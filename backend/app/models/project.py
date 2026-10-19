@@ -53,7 +53,10 @@ class Project:
     
     # 错误信息
     error: Optional[str] = None
-    
+
+    # 元数据信息（包含Step 0 Web Research, audit trail, dll）
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
@@ -73,16 +76,17 @@ class Project:
             "simulation_requirement": self.simulation_requirement,
             "chunk_size": self.chunk_size,
             "chunk_overlap": self.chunk_overlap,
-            "error": self.error
+            "error": self.error,
+            "metadata": self.metadata or {}
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Project':
         """从字典创建"""
         status = data.get('status', 'created')
         if isinstance(status, str):
             status = ProjectStatus(status)
-        
+
         return cls(
             project_id=data['project_id'],
             name=data.get('name', 'Unnamed Project'),
@@ -100,7 +104,8 @@ class Project:
             simulation_requirement=data.get('simulation_requirement'),
             chunk_size=data.get('chunk_size', 500),
             chunk_overlap=data.get('chunk_overlap', 50),
-            error=data.get('error')
+            error=data.get('error'),
+            metadata=data.get('metadata') if isinstance(data.get('metadata'), dict) else {}
         )
 
 
@@ -172,12 +177,37 @@ class ProjectManager:
     
     @classmethod
     def save_project(cls, project: Project) -> None:
-        """保存项目元数据"""
+        """保存项目元数据 (Dual-Persistence: File + Relational DB)"""
         project.updated_at = datetime.now().isoformat()
         meta_path = cls._get_project_meta_path(project.project_id)
-        
+
         with open(meta_path, 'w', encoding='utf-8') as f:
             json.dump(project.to_dict(), f, ensure_ascii=False, indent=2)
+
+        # Dual-persistence hook to relational database (ACID)
+        try:
+            from .db_session import get_db_session
+            from .entities import ProjectModel
+            with get_db_session() as session:
+                pm = session.query(ProjectModel).filter_by(id=project.project_id).first()
+                status_str = project.status.value if hasattr(project.status, 'value') else str(project.status)
+                if not pm:
+                    created_dt = datetime.fromisoformat(project.created_at) if isinstance(project.created_at, str) else datetime.utcnow()
+                    pm = ProjectModel(
+                        id=project.project_id,
+                        name=project.name,
+                        description=getattr(project, 'description', '') or "",
+                        status=status_str,
+                        created_at=created_dt
+                    )
+                    session.add(pm)
+                else:
+                    pm.name = project.name
+                    pm.description = getattr(project, 'description', '') or ""
+                    pm.status = status_str
+        except Exception:
+            # File storage is primary and authoritative; DB sync is fail-safe
+            pass
     
     @classmethod
     def get_project(cls, project_id: str) -> Optional[Project]:
@@ -238,19 +268,31 @@ class ProjectManager:
     def delete_project(cls, project_id: str) -> bool:
         """
         删除项目及其所有文件
-        
+
         Args:
             project_id: 项目ID
-            
+
         Returns:
             是否删除成功
         """
         project_dir = cls._get_project_dir(project_id)
-        
+
         if not os.path.exists(project_dir):
             return False
-        
+
         shutil.rmtree(project_dir)
+
+        # Dual-persistence cleanup in relational database
+        try:
+            from .db_session import get_db_session
+            from .entities import ProjectModel
+            with get_db_session() as session:
+                pm = session.query(ProjectModel).filter_by(id=project_id).first()
+                if pm:
+                    session.delete(pm)
+        except Exception:
+            pass
+
         return True
     
     @classmethod

@@ -54,6 +54,9 @@ def create_chat_completion(
         else:
             kwargs["max_tokens"] = max_tokens
 
+    if model and ("mirofish-agent" in model.lower() or "nemotron" in model.lower()):
+        kwargs["reasoning_effort"] = "low"
+
     return client.chat.completions.create(**kwargs)
 
 

@@ -233,7 +233,7 @@ export default {
       execResult: null,
       execLatency: 0,
       categories: [
-        { id: 'all', name: 'Semua (22)' },
+        { id: 'all', name: 'Semua' },
         { id: 'simulation', name: 'Simulasi Swarm' },
         { id: 'research', name: 'Research & Graph' },
         { id: 'recsys', name: 'RecSys Kalibrasi' },
@@ -289,8 +289,9 @@ export default {
       this.error = null
       try {
         const res = await getMcpTools()
-        if (res && res.tools) {
-          this.tools = res.tools
+        const toolsList = res?.tools || res?.data?.tools || (Array.isArray(res) ? res : [])
+        if (toolsList && toolsList.length > 0) {
+          this.tools = toolsList
           if (!this.selectedTool && this.tools.length > 0) {
             this.selectTool(this.tools[0])
           }
@@ -330,10 +331,74 @@ export default {
         query_graph_insights: {
           graph_id: 'mirofish_aegis_jkn_graph',
           query: 'Siapa dokter dan entitas yang terhubung dengan klaim PCI?'
+        },
+        create_simulation_project: {
+          title: 'Simulasi Kasus Klaim JKN',
+          domain: 'healthcare_policy'
+        },
+        trigger_web_research: {
+          query: 'Regulasi BPJS Kesehatan tindakan PCI stent koroner',
+          max_results: 5
+        },
+        build_knowledge_graph: {
+          project_id: 'proj_default'
+        },
+        generate_agent_profiles: {
+          count: 50,
+          distribution: 'pareto_90_9_1'
+        },
+        execute_parallel_simulation: {
+          project_id: 'proj_default',
+          rounds: 3
+        },
+        generate_executive_report: {
+          project_id: 'proj_default',
+          format: 'markdown'
+        },
+        interview_simulation_agent: {
+          agent_id: 'agent_01',
+          question: 'Bagaimana tanggapan Anda mengenai kebijakan verifikasi klaim ini?'
+        },
+        bettafish_generate_c_level_report: {
+          target_entity: 'RS Aegis Medika A',
+          simulation_id: 'sim_default'
+        },
+        list_projects: {},
+        get_job_status: {
+          job_id: 'job_001'
+        },
+        get_simulation_report: {
+          simulation_id: 'sim_default'
         }
       }
-      const sample = samples[name] || {}
-      this.payloadJson = JSON.stringify(sample, null, 2)
+
+      if (samples[name]) {
+        this.payloadJson = JSON.stringify(samples[name], null, 2)
+        return
+      }
+
+      const schema = this.selectedTool.inputSchema || this.selectedTool.parameters
+      if (schema && schema.properties) {
+        const generated = {}
+        for (const [key, prop] of Object.entries(schema.properties)) {
+          if (prop.default !== undefined) {
+            generated[key] = prop.default
+          } else if (prop.type === 'string') {
+            generated[key] = prop.example || 'sample_value'
+          } else if (prop.type === 'number' || prop.type === 'integer') {
+            generated[key] = prop.example || 1
+          } else if (prop.type === 'boolean') {
+            generated[key] = true
+          } else if (prop.type === 'array') {
+            generated[key] = []
+          } else {
+            generated[key] = {}
+          }
+        }
+        this.payloadJson = JSON.stringify(generated, null, 2)
+      } else {
+        this.payloadJson = '{}'
+      }
     },
     async executeTool() {
       if (!this.selectedTool) return

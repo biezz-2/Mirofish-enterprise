@@ -125,6 +125,8 @@ try:
         ManualAction,
         generate_twitter_agent_graph
     )
+    from oasis.social_platform.platform import Platform
+    from oasis.social_platform.channel import Channel
 except ImportError as e:
     print(f"错误: 缺少依赖 {e}")
     print("请先安装: pip install oasis-ai camel-ai")
@@ -440,7 +442,7 @@ class TwitterSimulationRunner:
         
         # 如果 .env 中没有，则使用 config 作为备用
         if not llm_model:
-            llm_model = self.config.get("llm_model", "gpt-4o-mini")
+            llm_model = self.config.get("llm_model", "mirofish-agent")
         
         # 设置 camel-ai 所需的环境变量
         if llm_api_key:
@@ -588,12 +590,21 @@ class TwitterSimulationRunner:
             print(f"已删除旧数据库: {db_path}")
         
         # 创建环境
-        print("创建OASIS环境...")
+        print("创建OASIS环境 (Patch recsys_type='random' bypass twhin-bert)...")
+        adaptive_semaphore = min(30, max(4, (os.cpu_count() or 2) * 2))
+        twitter_platform = Platform(
+            db_path=db_path,
+            channel=Channel(),
+            recsys_type="random",
+            refresh_rec_post_count=2,
+            max_rec_post_len=2,
+            following_post_count=3,
+        )
         self.env = oasis.make(
             agent_graph=self.agent_graph,
-            platform=oasis.DefaultPlatformType.TWITTER,
+            platform=twitter_platform,
             database_path=db_path,
-            semaphore=30,  # 限制最大并发 LLM 请求数，防止 API 过载
+            semaphore=adaptive_semaphore,
         )
         
         await self.env.reset()

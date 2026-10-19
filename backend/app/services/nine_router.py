@@ -180,7 +180,7 @@ class NineRouterGateway:
                 name="openai-primary",
                 base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
                 api_key=os.environ.get("OPENAI_API_KEY", "[REDACTED]"),
-                model=os.environ.get("LLM_MODEL_NAME", "gpt-4o"),
+                model=os.environ.get("LLM_MODEL_NAME", "mirofish-agent"),
                 priority=1,
                 timeout_seconds=25.0
             )

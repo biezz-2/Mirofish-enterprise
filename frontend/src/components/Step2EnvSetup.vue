@@ -113,12 +113,12 @@
         </div>
       </div>
 
-      <!-- Step 03: 生成双平台模拟配置 -->
+      <!-- Step 03: 生成多平台/双平台模拟配置 -->
       <div class="step-card" :class="{ 'active': phase === 2, 'completed': phase > 2 }">
         <div class="card-header">
           <div class="step-info">
             <span class="step-num">03</span>
-            <span class="step-title">{{ $t('step2.dualPlatformConfig') }}</span>
+            <span class="step-title">{{ activePlatformCount > 2 ? $t('step2.multiPlatformConfig') : $t('step2.dualPlatformConfig') }}</span>
           </div>
           <div class="step-status">
             <span v-if="phase > 2" class="badge success">{{ $t('common.completed') }}</span>
@@ -130,7 +130,7 @@
         <div class="card-content">
           <p class="api-note">POST /api/simulation/prepare</p>
           <p class="description">
-            {{ $t('step2.dualPlatformConfigDesc') }}
+            {{ activePlatformCount > 2 ? $t('step2.multiPlatformConfigDesc') : $t('step2.dualPlatformConfigDesc') }}
           </p>
           
           <!-- Config Preview -->
@@ -270,57 +270,35 @@
                 <span class="config-block-title">{{ $t('step2.recommendAlgoConfig') }}</span>
               </div>
               <div class="platforms-grid">
-                <div v-if="simulationConfig.twitter_config" class="platform-card">
-                  <div class="platform-card-header">
-                    <span class="platform-name">{{ $t('step2.platform1Name') }}</span>
+                <div
+                  v-for="(cfg, platformKey) in activePlatformConfigs"
+                  :key="platformKey"
+                  class="platform-card"
+                  :class="platformKey"
+                >
+                  <div class="platform-card-header" :style="{ borderLeftColor: getPlatformColor(platformKey) }">
+                    <span class="platform-name" :style="{ color: getPlatformColor(platformKey) }">{{ getPlatformDisplayName(platformKey) }}</span>
                   </div>
                   <div class="platform-params">
                     <div class="param-row">
                       <span class="param-label">{{ $t('step2.recencyWeight') }}</span>
-                      <span class="param-value">{{ simulationConfig.twitter_config.recency_weight }}</span>
+                      <span class="param-value">{{ cfg.recency_weight ?? '-' }}</span>
                     </div>
                     <div class="param-row">
                       <span class="param-label">{{ $t('step2.popularityWeight') }}</span>
-                      <span class="param-value">{{ simulationConfig.twitter_config.popularity_weight }}</span>
+                      <span class="param-value">{{ cfg.popularity_weight ?? '-' }}</span>
                     </div>
                     <div class="param-row">
                       <span class="param-label">{{ $t('step2.relevanceWeight') }}</span>
-                      <span class="param-value">{{ simulationConfig.twitter_config.relevance_weight }}</span>
+                      <span class="param-value">{{ cfg.relevance_weight ?? '-' }}</span>
                     </div>
                     <div class="param-row">
                       <span class="param-label">{{ $t('step2.viralThreshold') }}</span>
-                      <span class="param-value">{{ simulationConfig.twitter_config.viral_threshold }}</span>
+                      <span class="param-value">{{ cfg.viral_threshold ?? '-' }}</span>
                     </div>
                     <div class="param-row">
                       <span class="param-label">{{ $t('step2.echoChamberStrength') }}</span>
-                      <span class="param-value">{{ simulationConfig.twitter_config.echo_chamber_strength }}</span>
-                    </div>
-                  </div>
-                </div>
-                <div v-if="simulationConfig.reddit_config" class="platform-card">
-                  <div class="platform-card-header">
-                    <span class="platform-name">{{ $t('step2.platform2Name') }}</span>
-                  </div>
-                  <div class="platform-params">
-                    <div class="param-row">
-                      <span class="param-label">{{ $t('step2.recencyWeight') }}</span>
-                      <span class="param-value">{{ simulationConfig.reddit_config.recency_weight }}</span>
-                    </div>
-                    <div class="param-row">
-                      <span class="param-label">{{ $t('step2.popularityWeight') }}</span>
-                      <span class="param-value">{{ simulationConfig.reddit_config.popularity_weight }}</span>
-                    </div>
-                    <div class="param-row">
-                      <span class="param-label">{{ $t('step2.relevanceWeight') }}</span>
-                      <span class="param-value">{{ simulationConfig.reddit_config.relevance_weight }}</span>
-                    </div>
-                    <div class="param-row">
-                      <span class="param-label">{{ $t('step2.viralThreshold') }}</span>
-                      <span class="param-value">{{ simulationConfig.reddit_config.viral_threshold }}</span>
-                    </div>
-                    <div class="param-row">
-                      <span class="param-label">{{ $t('step2.echoChamberStrength') }}</span>
-                      <span class="param-value">{{ simulationConfig.reddit_config.echo_chamber_strength }}</span>
+                      <span class="param-value">{{ cfg.echo_chamber_strength ?? '-' }}</span>
                     </div>
                   </div>
                 </div>
@@ -521,7 +499,7 @@
               :disabled="phase < 4"
               @click="handleStartSimulation"
             >
-              {{ $t('step2.startDualWorldSim') }} ➝
+              {{ activePlatformCount > 2 ? $t('step2.startMultiWorldSim') : $t('step2.startDualWorldSim') }} ➝
             </button>
           </div>
         </div>
@@ -734,6 +712,40 @@ const totalTopicsCount = computed(() => {
     return sum + (p.interested_topics?.length || 0)
   }, 0)
 })
+
+// 7大平台元数据与配置
+const PLATFORM_INFO = {
+  twitter: { name: 'Twitter / X', color: '#1DA1F2' },
+  reddit: { name: 'Reddit', color: '#FF4500' },
+  tiktok: { name: 'TikTok', color: '#00f2fe' },
+  instagram: { name: 'Instagram', color: '#E1306C' },
+  linkedin: { name: 'LinkedIn', color: '#0A66C2' },
+  threads: { name: 'Threads', color: '#71717a' },
+  youtube: { name: 'YouTube', color: '#FF0000' }
+}
+
+const activePlatformConfigs = computed(() => {
+  if (!simulationConfig.value) return {}
+  if (simulationConfig.value.platform_configs && Object.keys(simulationConfig.value.platform_configs).length > 0) {
+    return simulationConfig.value.platform_configs
+  }
+  const fallback = {}
+  if (simulationConfig.value.twitter_config) fallback.twitter = simulationConfig.value.twitter_config
+  if (simulationConfig.value.reddit_config) fallback.reddit = simulationConfig.value.reddit_config
+  return fallback
+})
+
+const activePlatformCount = computed(() => {
+  return Object.keys(activePlatformConfigs.value).length
+})
+
+const getPlatformDisplayName = (platform) => {
+  return PLATFORM_INFO[platform]?.name || platform.toUpperCase()
+}
+
+const getPlatformColor = (platform) => {
+  return PLATFORM_INFO[platform]?.color || '#6366f1'
+}
 
 // Methods
 const addLog = (msg) => {

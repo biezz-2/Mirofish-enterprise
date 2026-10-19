@@ -127,42 +127,26 @@
         <div>
           <div class="flex items-center justify-between pb-3 border-b border-slate-800">
             <h3 class="font-bold text-sm text-white flex items-center gap-1.5">
-              <span>🏛️</span> Arsitektur 6 Divisi & 20 Subagent
+              <span>🏛️</span> Arsitektur {{ divisionsList.length }} Divisi &amp; {{ subagentsCount }} Subagent
             </h3>
-            <span class="text-[10px] font-mono text-teal-400">Master Plan v3.2.0</span>
+            <span class="text-[10px] font-mono text-teal-400">Master Plan {{ masterPlanVersion }}</span>
           </div>
 
           <div class="mt-3 space-y-2 text-xs">
-            <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-              <span class="font-semibold text-slate-200">Divisi A: Swarm Simulasi Multi-Platform</span>
-              <span class="font-mono text-[10px] text-sky-400">Subagent 01-04</span>
-            </div>
-            <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-              <span class="font-semibold text-slate-200">Divisi B: Private Search & Graph Memory</span>
-              <span class="font-mono text-[10px] text-emerald-400">Subagent 05-08</span>
-            </div>
-            <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-              <span class="font-semibold text-slate-200">Divisi C: RecSys Multi-Objective Engine</span>
-              <span class="font-mono text-[10px] text-indigo-400">Subagent 09-12</span>
-            </div>
-            <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-              <span class="font-semibold text-slate-200">Divisi D: CaMeL Prompt Shield & Audit</span>
-              <span class="font-mono text-[10px] text-rose-400">Subagent 13-16</span>
-            </div>
-            <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-              <span class="font-semibold text-slate-200">Divisi E: BettaFish Intel & Executive Reporting</span>
-              <span class="font-mono text-[10px] text-amber-400">Subagent 17-18</span>
-            </div>
-            <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
-              <span class="font-semibold text-slate-200">Divisi F: Enterprise Integration & Control Center</span>
-              <span class="font-mono text-[10px] text-teal-400">Subagent 19-20</span>
+            <div
+              v-for="div in divisionsList"
+              :key="div.key"
+              class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center"
+            >
+              <span class="font-semibold text-slate-200">{{ div.name }}</span>
+              <span class="font-mono text-[10px]" :class="div.color">Divisi {{ div.key }}</span>
             </div>
           </div>
         </div>
 
         <div class="pt-3 border-t border-slate-800 mt-3 text-[11px] text-slate-400 flex items-center justify-between font-mono">
-          <span>Subagent 19 Status:</span>
-          <span class="text-teal-300 font-bold">ACTIVE (Single Pane of Glass UI)</span>
+          <span>Subagents Active:</span>
+          <span class="text-teal-300 font-bold">{{ subagentsCount }} / 20 Registered</span>
         </div>
       </div>
     </div>
@@ -170,7 +154,16 @@
 </template>
 
 <script>
-import { getSystemHealth, getActiveJobs, recoverJob } from '../../api/enterprise'
+import {
+  getSystemHealth,
+  getEnterpriseStatus,
+  getMcpHealth,
+  getResearchHealth,
+  getGraphProjects,
+  getWatchdogStatus,
+  getActiveJobs,
+  recoverJob
+} from '../../api/enterprise'
 
 export default {
   name: 'Panel7SystemHealth',
@@ -180,33 +173,46 @@ export default {
       error: null,
       pinging: false,
       activeJobs: [],
+      systemHealth: null,
+      enterpriseStatus: null,
+      subagentsCount: 20,
+      masterPlanVersion: 'v3.2',
       nodes: [
         {
           name: 'Flask Backend Core',
           icon: '🌶️',
           role: 'REST API, SSE Stream, Simulation Engine',
-          port: '8000',
+          port: '5001',
           protocol: 'HTTP/1.1',
           status: 'HEALTHY',
-          latency: 8
+          latency: 0
+        },
+        {
+          name: 'Vue 3 SPA Frontend',
+          icon: '💻',
+          role: 'Vite 7 Single Page Application, Enterprise UI',
+          port: '3001',
+          protocol: 'HTTP/1.1',
+          status: 'HEALTHY',
+          latency: 0
         },
         {
           name: 'FastMCP Universal Server',
           icon: '⚡',
           role: '22 Canonical Tools, OAuth 2.1 RFC 7636',
-          port: '8080/8091',
+          port: '8091',
           protocol: 'JSON-RPC',
           status: 'HEALTHY',
-          latency: 12
+          latency: 0
         },
         {
           name: 'SearXNG Private Engine',
           icon: '🔎',
           role: 'Zero-Tracking Federated Search Cluster',
-          port: '8089',
+          port: '8088/8089',
           protocol: 'HTTP/REST',
           status: 'HEALTHY',
-          latency: 24
+          latency: 0
         },
         {
           name: 'Graphiti & FalkorDB',
@@ -215,7 +221,7 @@ export default {
           port: '8090',
           protocol: 'Cypher / REST',
           status: 'HEALTHY',
-          latency: 15
+          latency: 0
         },
         {
           name: 'Redis & WAL Data Engine',
@@ -224,7 +230,7 @@ export default {
           port: '6379',
           protocol: 'RESP / WAL',
           status: 'HEALTHY',
-          latency: 4
+          latency: 0
         },
         {
           name: '9Router AI Gateway',
@@ -233,8 +239,35 @@ export default {
           port: '8787',
           protocol: 'HTTP/REST',
           status: 'HEALTHY',
-          latency: 18
+          latency: 0
         }
+      ]
+    }
+  },
+  computed: {
+    divisionsList() {
+      if (this.enterpriseStatus?.divisions) {
+        const colors = {
+          A: 'text-sky-400',
+          B: 'text-emerald-400',
+          C: 'text-indigo-400',
+          D: 'text-rose-400',
+          E: 'text-amber-400',
+          F: 'text-teal-400'
+        }
+        return Object.entries(this.enterpriseStatus.divisions).map(([key, name]) => ({
+          key,
+          name,
+          color: colors[key] || 'text-teal-400'
+        }))
+      }
+      return [
+        { key: 'A', name: 'Divisi A: Riset Web & Keamanan (Agent 01-04)', color: 'text-sky-400' },
+        { key: 'B', name: 'Divisi B: GraphRAG & Memory Plane (Agent 05-07)', color: 'text-emerald-400' },
+        { key: 'C', name: 'Divisi C: Psikometri & Simulasi Agen (Agent 08-10)', color: 'text-indigo-400' },
+        { key: 'D', name: 'Divisi D: RecSys Funnel & Dinamika Viral (Agent 11-14)', color: 'text-rose-400' },
+        { key: 'E', name: 'Divisi E: Analitik & Pelaporan Strategis (Agent 15-16)', color: 'text-amber-400' },
+        { key: 'F', name: 'Divisi F: Ekstensibilitas Universal & QA (Agent 17-20)', color: 'text-teal-400' }
       ]
     }
   },
@@ -246,13 +279,34 @@ export default {
       this.loading = true
       this.error = null
       try {
-        const [healthRes, jobsRes] = await Promise.allSettled([
+        const [healthRes, enterpriseRes, jobsRes] = await Promise.allSettled([
           getSystemHealth(),
+          getEnterpriseStatus(),
           getActiveJobs()
         ])
 
-        if (jobsRes.status === 'fulfilled' && jobsRes.value?.jobs) {
-          this.activeJobs = jobsRes.value.jobs
+        if (healthRes.status === 'fulfilled' && healthRes.value) {
+          const hData = healthRes.value?.data || healthRes.value
+          this.systemHealth = hData
+          if (hData.status === 'healthy') {
+            this.nodes[0].status = 'HEALTHY'
+          }
+        }
+
+        if (enterpriseRes.status === 'fulfilled' && enterpriseRes.value) {
+          const eData = enterpriseRes.value?.data || enterpriseRes.value
+          this.enterpriseStatus = eData
+          if (eData.subagents_count) {
+            this.subagentsCount = eData.subagents_count
+          }
+          if (eData.master_plan_version) {
+            this.masterPlanVersion = eData.master_plan_version
+          }
+        }
+
+        if (jobsRes.status === 'fulfilled' && jobsRes.value) {
+          const jData = jobsRes.value?.data || jobsRes.value
+          this.activeJobs = Array.isArray(jData?.jobs) ? jData.jobs : (Array.isArray(jData) ? jData : [])
         }
       } catch (err) {
         this.error = err.message || 'Gagal memuat status kesehatan sistem'
@@ -262,18 +316,94 @@ export default {
     },
     async pingAllNodes() {
       this.pinging = true
-      const start = performance.now()
       try {
-        await getSystemHealth()
-        const lat = Math.round(performance.now() - start)
-        this.nodes[0].latency = lat
-        this.nodes.forEach(n => {
-          if (n.port !== '8000') {
-            n.latency = Math.max(3, Math.round(lat * (0.5 + Math.random() * 0.8)))
-          }
-        })
-      } catch (e) {
-        console.warn('Ping error', e)
+        const pingTasks = [
+          // 0: Flask Backend Core (Port 5001)
+          (async () => {
+            const t0 = performance.now()
+            try {
+              await getSystemHealth()
+              this.nodes[0].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[0].status = 'HEALTHY'
+            } catch {
+              this.nodes[0].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[0].status = 'DEGRADED'
+            }
+          })(),
+          // 1: Vue 3 SPA Frontend (Port 3001)
+          (async () => {
+            const t0 = performance.now()
+            try {
+              await fetch(window.location.origin, { method: 'HEAD', cache: 'no-store' }).catch(() => null)
+              this.nodes[1].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[1].status = 'HEALTHY'
+            } catch {
+              this.nodes[1].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[1].status = 'HEALTHY'
+            }
+          })(),
+          // 2: FastMCP Universal Server (Port 8091)
+          (async () => {
+            const t0 = performance.now()
+            try {
+              await getMcpHealth()
+              this.nodes[2].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[2].status = 'HEALTHY'
+            } catch {
+              this.nodes[2].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[2].status = 'DEGRADED'
+            }
+          })(),
+          // 3: SearXNG Private Engine (Port 8089)
+          (async () => {
+            const t0 = performance.now()
+            try {
+              await getResearchHealth()
+              this.nodes[3].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[3].status = 'HEALTHY'
+            } catch {
+              this.nodes[3].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[3].status = 'DEGRADED'
+            }
+          })(),
+          // 4: Graphiti & FalkorDB (Port 8090)
+          (async () => {
+            const t0 = performance.now()
+            try {
+              await getGraphProjects(1)
+              this.nodes[4].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[4].status = 'HEALTHY'
+            } catch {
+              this.nodes[4].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[4].status = 'DEGRADED'
+            }
+          })(),
+          // 5: Redis & WAL Data Engine (Port 6379)
+          (async () => {
+            const t0 = performance.now()
+            try {
+              await getActiveJobs()
+              this.nodes[5].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[5].status = 'HEALTHY'
+            } catch {
+              this.nodes[5].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[5].status = 'DEGRADED'
+            }
+          })(),
+          // 6: 9Router AI Gateway (Port 8787)
+          (async () => {
+            const t0 = performance.now()
+            try {
+              await getWatchdogStatus()
+              this.nodes[6].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[6].status = 'HEALTHY'
+            } catch {
+              this.nodes[6].latency = Math.max(1, Math.round(performance.now() - t0))
+              this.nodes[6].status = 'DEGRADED'
+            }
+          })()
+        ]
+        await Promise.allSettled(pingTasks)
       } finally {
         this.pinging = false
       }

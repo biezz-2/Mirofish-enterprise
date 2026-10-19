@@ -21,8 +21,12 @@
         <select
           v-model="selectedGraphId"
           @change="onGraphSelectChange"
-          class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500"
+          :disabled="graphOptions.length === 0"
+          class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 disabled:opacity-50"
         >
+          <option v-if="graphOptions.length === 0" value="">
+            Tidak ada graph tersedia
+          </option>
           <option v-for="g in graphOptions" :key="g.id" :value="g.id">
             {{ g.name }} ({{ g.id }})
           </option>
@@ -38,7 +42,7 @@
 
         <button
           @click="fetchGraph"
-          :disabled="loading"
+          :disabled="loading || !selectedGraphId"
           class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
         >
           <span :class="{'animate-spin': loading}">⟳</span>
@@ -99,6 +103,27 @@
         <div v-if="loading" class="absolute inset-0 bg-slate-950/80 flex items-center justify-center gap-2 text-xs text-emerald-400">
           <span class="animate-spin text-lg">⟳</span>
           <span>Memuat relasi graf bitemporal...</span>
+        </div>
+
+        <!-- Empty State Overlay -->
+        <div
+          v-if="!loading && (!selectedGraphId || (rawNodes.length === 0 && rawEdges.length === 0))"
+          class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center z-10"
+        >
+          <div class="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-2xl mb-3">
+            🕸️
+          </div>
+          <h4 class="text-sm font-bold text-slate-200">Belum ada Knowledge Graph yang dibangun</h4>
+          <p class="text-xs text-slate-400 max-w-md mt-1 mb-4 leading-relaxed">
+            Belum ada Knowledge Graph yang dibangun. Mulai dari Step 1 untuk mengunggah dokumen dan mengekstraksi entitas bitemporal.
+          </p>
+          <router-link
+            to="/?step=1"
+            class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
+          >
+            <span>Mulai dari Step 1</span>
+            <span>→</span>
+          </router-link>
         </div>
 
         <!-- Canvas Controls Hint -->
@@ -242,16 +267,19 @@ import { getGraphProjects, getGraphData } from '../../api/enterprise'
 
 export default {
   name: 'Panel2GraphExplorer',
+  props: {
+    initialGraphId: {
+      type: String,
+      default: ''
+    }
+  },
+  emits: ['select-graph'],
   data() {
     return {
       loading: false,
       error: null,
-      selectedGraphId: 'mirofish_aegis_jkn_graph',
-      graphOptions: [
-        { id: 'mirofish_aegis_jkn_graph', name: 'Aegis-JKN Fraud Detection Graph' },
-        { id: 'mirofish_a78d6fc490674dd9', name: 'Knowledge Graph Alpha' },
-        { id: 'mirofish_f70fe5dc4e094252', name: 'Knowledge Graph Beta' }
-      ],
+      selectedGraphId: this.initialGraphId || '',
+      graphOptions: [],
       rawNodes: [],
       rawEdges: [],
       selectedNode: null,
@@ -262,13 +290,24 @@ export default {
     }
   },
   watch: {
+    initialGraphId(newVal) {
+      if (newVal && newVal !== this.selectedGraphId) {
+        this.selectedGraphId = newVal
+        if (!this.graphOptions.some(g => g.id === newVal)) {
+          this.graphOptions.unshift({
+            id: newVal,
+            name: `Graph (${newVal.substring(0, 12)}...)`
+          })
+        }
+        this.fetchGraph()
+      }
+    },
     searchQuery() {
       this.updateHighlight()
     }
   },
   mounted() {
     this.initGraphOptions()
-    this.fetchGraph()
     window.addEventListener('resize', this.onResize)
   },
   beforeUnmount() {
@@ -279,24 +318,52 @@ export default {
   },
   methods: {
     async initGraphOptions() {
+      this.loading = true
       try {
         const res = await getGraphProjects()
-        if (res && res.data && res.data.length > 0) {
-          const list = res.data
-            .filter(p => p.graph_id)
-            .map(p => ({
-              id: p.graph_id,
-              name: p.name || p.graph_id
-            }))
-          if (list.length > 0) {
-            this.graphOptions = list
+        const projects = (res && res.data) ? res.data : []
+        const list = projects
+          .filter(p => p.graph_id || p.project_id)
+          .map(p => ({
+            id: p.graph_id || p.project_id,
+            name: p.name || p.graph_id || p.project_id
+          }))
+        this.graphOptions = list
+
+        const target = this.initialGraphId || this.$route?.query?.graph_id || this.$route?.query?.project_id
+        if (target) {
+          this.selectedGraphId = target
+          if (!this.graphOptions.some(g => g.id === target)) {
+            this.graphOptions.unshift({
+              id: target,
+              name: `Graph (${target.substring(0, 12)}...)`
+            })
           }
+        } else if (this.graphOptions.length > 0) {
+          this.selectedGraphId = this.graphOptions[0].id
+        } else {
+          this.selectedGraphId = ''
+        }
+
+        if (this.selectedGraphId) {
+          this.$emit('select-graph', this.selectedGraphId)
+          await this.fetchGraph()
+        } else {
+          this.rawNodes = []
+          this.rawEdges = []
+          this.loading = false
         }
       } catch (e) {
-        console.warn('Failed to fetch projects list, using default graph options', e)
+        console.warn('Failed to fetch projects list', e)
+        this.graphOptions = []
+        this.selectedGraphId = ''
+        this.rawNodes = []
+        this.rawEdges = []
+        this.loading = false
       }
     },
     onGraphSelectChange() {
+      this.$emit('select-graph', this.selectedGraphId)
       this.fetchGraph()
     },
     getNodeColor(node) {
@@ -310,6 +377,12 @@ export default {
       return '#64748b' // slate
     },
     async fetchGraph() {
+      if (!this.selectedGraphId) {
+        this.rawNodes = []
+        this.rawEdges = []
+        this.loading = false
+        return
+      }
       this.loading = true
       this.error = null
       this.selectedNode = null
@@ -320,9 +393,16 @@ export default {
           this.rawNodes = res.data.nodes || []
           this.rawEdges = res.data.edges || []
           this.renderD3Graph()
+        } else {
+          this.rawNodes = []
+          this.rawEdges = []
         }
       } catch (err) {
-        this.error = err.message || 'Gagal memuat data graf'
+        this.rawNodes = []
+        this.rawEdges = []
+        if (err.message && !err.message.includes('404')) {
+          this.error = err.message || 'Gagal memuat data graf'
+        }
       } finally {
         this.loading = false
       }

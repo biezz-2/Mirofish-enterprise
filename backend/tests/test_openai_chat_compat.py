@@ -74,6 +74,29 @@ def test_legacy_model_preserves_original_request_shape():
     ]
 
 
+def test_mirofish_agent_includes_low_reasoning_effort():
+    recorder = CompletionRecorder()
+    messages = [{"role": "user", "content": "halo"}]
+
+    create_chat_completion(
+        client_for(recorder),
+        model="mirofish-agent",
+        messages=messages,
+        temperature=0.5,
+        max_tokens=100,
+    )
+
+    assert recorder.calls == [
+        {
+            "model": "mirofish-agent",
+            "messages": messages,
+            "temperature": 0.5,
+            "max_tokens": 100,
+            "reasoning_effort": "low",
+        }
+    ]
+
+
 def test_provider_error_is_propagated_without_guessing_or_retrying():
     provider_error = RuntimeError("unsupported max_tokens due to a server outage")
     recorder = CompletionRecorder(error=provider_error)
