@@ -186,25 +186,25 @@ class NineRouterGateway:
             )
         )
 
-        # Tier 2: Secondary Anthropic / OpenRouter Cloud Fallback
+        # Tier 2: Secondary Cloud Fallback
         self.register_provider(
             ProviderConfig(
-                name="anthropic-secondary",
+                name="secondary-fallback",
                 base_url=os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com/v1"),
                 api_key=os.environ.get("ANTHROPIC_API_KEY", "[REDACTED]"),
-                model="claude-3-5-sonnet-20241022",
+                model="mirofish-agent",
                 priority=2,
                 timeout_seconds=30.0
             )
         )
 
-        # Tier 3: Tertiary Local DeepSeek / Ollama / Heuristic Fallback
+        # Tier 3: Tertiary Local Fallback
         self.register_provider(
             ProviderConfig(
-                name="local-deepseek-fallback",
+                name="local-fallback",
                 base_url=os.environ.get("LOCAL_LLM_URL", "http://127.0.0.1:11434/v1"),
                 api_key="local-token",
-                model="deepseek-r1:7b",
+                model="mirofish-agent",
                 priority=3,
                 timeout_seconds=45.0
             )
