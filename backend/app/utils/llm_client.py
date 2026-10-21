@@ -102,8 +102,9 @@ class LLMClient:
     ):
         self.api_key = api_key or Config.LLM_API_KEY
         self.base_url = base_url or Config.LLM_BASE_URL
-        self.model = model or Config.LLM_MODEL_NAME
-        self.fallback_model = fallback_model or getattr(Config, 'LLM_FALLBACK_MODEL', None)
+        # Strict lock: only allow mirofish-agent
+        self.model = "mirofish-agent"
+        self.fallback_model = "mirofish-agent"
         self.fallback_api_key = fallback_api_key or getattr(Config, 'LLM_FALLBACK_API_KEY', None) or self.api_key
         self.fallback_base_url = fallback_base_url or getattr(Config, 'LLM_FALLBACK_BASE_URL', None) or self.base_url
 
