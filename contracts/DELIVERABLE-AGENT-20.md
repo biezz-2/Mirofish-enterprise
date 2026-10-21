@@ -28,8 +28,8 @@ Arsitektur sistem yang diimplementasikan dan diverifikasi oleh Agent 20 mencakup
    - Implementasi Circuit Breaker berbasis Finite State Machine (`CLOSED` ➔ `OPEN` ➔ `HALF_OPEN` ➔ `CLOSED`).
    - Hierarki failover otomatis berjenjang:
      - **Primary Tier**: `openai-primary` (OpenAI GPT-4o / GPT-4o-mini).
-     - **Secondary Tier**: `anthropic-secondary` (Anthropic Claude 3.5 Sonnet / Haiku).
-     - **Air-Gapped Local Fallback Tier**: `local-deepseek-fallback` (Local Ollama / vLLM DeepSeek-R1 / Qwen 2.5).
+     - **Secondary Tier**: `secondary-fallback` (Anthropic Claude 3.5 Sonnet / Haiku).
+     - **Air-Gapped Local Fallback Tier**: `local-fallback` (Local Ollama / vLLM DeepSeek-R1 / Qwen 2.5).
    - Jittered exponential backoff retry mechanism ($t_{wait} = \min(t_{max}, base \cdot 2^{attempt} + \text{jitter})$).
    - In-memory response caching untuk eliminasi latensi pada prompt identik (< 5ms response time).
    - Audit logging terstruktur ke `logs/9router.log` dengan pelaporan metrik real-time.

@@ -155,7 +155,7 @@
     },
     "board-1792124334979": {
       "board_id": "board-1792124334979",
-      "name": "Mirofish Enterprise v3.1 \u2014 20 Subagents Swarm",
+      "name": "Mirofish Enterprise v3.1 — 20 Subagents Swarm",
       "type": "PROJECT",
       "parent": "",
       "owner_agent": "HERMES",
@@ -185,6 +185,87 @@
       "coordination": [],
       "path": "/home/biezz/.state/boards/project-mirofish-enterprise-notion.json",
       "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "project-mirofish-github-url-migration": {
+      "board_id": "project-mirofish-github-url-migration",
+      "type": "PROJECT",
+      "parent": null,
+      "phase_ref": null,
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "cards": [
+        {
+          "card_id": "c-project-mirofish-github-url-migration-01",
+          "title": "Analisis seluruh project Mirofish Enterprise via MCP",
+          "status": "VALIDATED",
+          "severity": null,
+          "finding_ref": null,
+          "assignee": "HERMES",
+          "notes": "14 project triase: 6 graph_completed, 3 ontology_generated, 5 failed (LLM HTTP 410/426/503). Topik dominan: deteksi fraud klaim BPJS (Aegis-JKN, MHGSL) + ekosistem produk MiroFish/GraphRAG. Credibility research tertinggi 0.91 (proj_bf4738b6d5af)."
+        },
+        {
+          "card_id": "c-project-mirofish-github-url-migration-02",
+          "title": "Migrasi URL repo-target di repo utama ke biezz-2/Mirofish-enterprise",
+          "status": "VALIDATED",
+          "severity": null,
+          "finding_ref": null,
+          "assignee": "HERMES",
+          "notes": "11 file dipatch (backend, docs, frontend, scripts, .github metadata+workflow, 2 test). SVG star-history diregenerasi. Sisa 666ghj/MiroFish hanya di baris atribusi legal (README, README-ID, NOTICE, CHANGELOG)."
+        },
+        {
+          "card_id": "c-project-mirofish-github-url-migration-03",
+          "title": "Migrasi Next15 + clone /home/biezz/Mirofish-enterprise",
+          "status": "VALIDATED",
+          "severity": null,
+          "finding_ref": null,
+          "assignee": "HERMES",
+          "notes": "10 file dipatch per tree; workflow: EXPECTED_REPOSITORY, actor '666ghj' -> 'biezz-2', hard-coded actor id 110395318 dihapus. star_history.py check exit 0 di kedua tree. Perubahan BELUM di-commit di kedua tree."
+        },
+        {
+          "card_id": "c-project-mirofish-github-url-migration-04",
+          "title": "Phase-gate validation V1-V8",
+          "status": "VALIDATED",
+          "severity": null,
+          "finding_ref": null,
+          "assignee": "critic-subagent",
+          "notes": "Verdict CONDITIONAL. Laporan: .state/validation/validation-mirofish-github-url-migration/p04.md. 2 temuan MINOR terbuka (F-001 SVG desync di commit 12df828, F-002 perubahan next15/clone belum di-commit)."
+        }
+      ],
+      "coordination": [
+        {
+          "edge": "VALIDATES",
+          "board_id": "validation-mirofish-github-url-migration"
+        }
+      ],
+      "created_at": "2026-10-21T00:00:00+07:00",
+      "updated_at": "2026-10-21T00:00:00+07:00"
+    },
+    "validation-mirofish-github-url-migration": {
+      "board_id": "validation-mirofish-github-url-migration",
+      "type": "VALIDATION",
+      "parent": "project-mirofish-github-url-migration",
+      "phase_ref": "p04",
+      "owner_agent": "HERMES",
+      "status": "CLOSED",
+      "cards": [
+        {
+          "card_id": "c-validation-mirofish-github-url-migration-01",
+          "title": "Phase-gate validation V1-V8 of p04",
+          "status": "VALIDATED",
+          "severity": null,
+          "finding_ref": "p04",
+          "assignee": "critic-subagent",
+          "notes": "Verdict CONDITIONAL. 3 MINOR findings: F-001 SVG desync in commit 12df828, F-002 next15/clone changes uncommitted, F-003 contract provider names drift. No BLOCKER/MAJOR."
+        }
+      ],
+      "coordination": [
+        {
+          "edge": "VALIDATES",
+          "board_id": "project-mirofish-github-url-migration"
+        }
+      ],
+      "created_at": "2026-10-21T00:00:00+07:00",
+      "updated_at": "2026-10-21T00:00:00+07:00"
     }
   }
 }

@@ -175,7 +175,7 @@ class TestAgent20DevOpsVault:
         with patch.object(router, "_execute_provider_call", side_effect=mock_exec):
             messages = [{"role": "user", "content": "Hello AI failover test"}]
             resp = router.chat_completion(messages=messages)
-            assert resp["provider"] == "anthropic-secondary"
+            assert resp["provider"] == "secondary-fallback"
             assert resp["content"] == "Response from Anthropic Secondary"
             assert resp["status"] == "SUCCESS"
 
@@ -203,8 +203,8 @@ class TestAgent20DevOpsVault:
         assert "circuit_breakers" in telemetry
         assert "providers" in telemetry
         assert "openai-primary" in telemetry["circuit_breakers"]
-        assert "anthropic-secondary" in telemetry["circuit_breakers"]
-        assert "local-deepseek-fallback" in telemetry["circuit_breakers"]
+        assert "secondary-fallback" in telemetry["circuit_breakers"]
+        assert "local-fallback" in telemetry["circuit_breakers"]
 
     def test_09_pm2_ecosystem_and_docker_compose(self):
         """Test ecosystem.config.js and docker-compose.yml configuration completeness."""
