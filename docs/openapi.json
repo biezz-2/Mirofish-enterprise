@@ -7,7 +7,7 @@
     "description": "Enterprise Multi-Agent Social Simulation Platform RESTful API conforming to OpenAPI 3.1.0 and JSON Schema Draft 2020-12. Features 6 engineering divisions, 20 subagents, ReACT Strategic Report engine, BettaFish sentiment & risk analytics, FastMCP canonical tool integration, and distributed HMAC-SHA256 webhooks with DLQ.",
     "contact": {
       "name": "MiroFish Enterprise Core Engineering",
-      "url": "https://github.com/666ghj/MiroFish"
+      "url": "https://github.com/biezz-2/Mirofish-enterprise"
     },
     "license": {
       "name": "Apache-2.0",
