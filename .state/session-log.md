@@ -461,3 +461,21 @@
   * Hardcoded strings: 841 baris teks literal Mandarin pada 15 file Vue (Process.vue 190, Step4Report.vue 175, HistoryDatabase.vue 124, GraphPanel.vue 84, Step2EnvSetup.vue 75).
 - Verdict: CONDITIONAL (tetap, tidak ada delta baru sejak audit 11:20 WIB). F-001 & F-002 tetap terbuka. Delivery: SILENT.
 - Board: audit-board-mirofish-i18n-cron diperbarui; laporan p01-audit.md diperbarui.
+
+## 2026-10-21T08:05:00+07:00 (2026-10-21 08:05 WIB) — Migrasi URL GitHub + Analisis Semua Project Mirofish Enterprise
+- Permintaan owner (lucifiz, Discord msg 1562253499826180096): analisis semua project Mirofish Enterprise, lalu ganti semua URL GitHub ke https://github.com/biezz-2/Mirofish-enterprise.
+- Board: project-mirofish-github-url-migration (PROJECT) + validation-mirofish-github-url-migration (VALIDATION), terdaftar di .state/registry/boards.json (repo) dan ~/.state/registry/boards.json (global).
+- Plan: .state/plan/mirofish-github-url-migration.md
+- Analisis project (MCP list_projects, 14 project):
+  * graph_completed (6): proj_752f1ecb3f68, proj_59a783358d36, proj_e3ce83946c30, proj_5e996d7cdf4b, proj_bf4738b6d5af, proj_e2333f9b4862
+  * ontology_generated (3): proj_a8915411c002 (cred 0.79), proj_714798351245 (cred 0.61), proj_ea2e6a6c82a0
+  * failed (5): proj_c927523026ee (HTTP 503), proj_04833d16ecf1 (HTTP 426), proj_0a3f5795ca23 (HTTP 426), proj_b0ef05166e7f (HTTP 410), proj_c00f7008ffef (HTTP 410)
+  * Tema dominan: deteksi fraud klaim BPJS Kesehatan (Aegis-JKN, MHGSL) + dampak MiroFish terhadap industri AI/simulasi.
+- Migrasi URL (11 file di repo utama, 13 file di Next15 + clone /home/biezz/Mirofish-enterprise):
+  backend/app/services/openapi_engine.py, docs/openapi.json, docs/openapi.yaml, frontend/src/views/Home.vue, frontend/src/views/DocsView.vue, scripts/fetch_star_count.py, scripts/star_history.py, .github/star-history/history.json, .github/workflows/update-star-history.yml, tests/test_local_star_count_fetch.py, tests/test_local_star_history.py + static/image/star-history-{light,dark}.svg (diregenerasi).
+  Workflow: EXPECTED_REPOSITORY -> biezz-2/Mirofish-enterprise; actor '666ghj' -> 'biezz-2'; hard-coded actor id 110395318 dihapus; allow-list origin dipersempit ke repo owner.
+- Sengaja TIDAK diganti: NOTICE/README/CHANGELOG atribusi legal ke 666ghj/MiroFish, 666ghj/BettaFish (upstream BettaFish), camel-ai/oasis, sponsor/dependency GitHub, badge Trendshift, link demo https://666ghj.github.io/mirofish-demo/ (repo Pages milik upstream owner; repo owner belum punya Pages: has_pages=false).
+- Validasi (V1-V8): star_history.py check exit 0 di 3 Git tree; pytest tests -> 66 passed; vite build frontend exit 0 (12.97s); test_agent_20_devops_vault.py -> 10 passed; residual 666ghj/MiroFish hanya di baris legal/atribusi.
+- Temuan: F-001 (MINOR, sudah diperbaiki) SVG star-history belum ikut ter-commit di 12df828 -> commit 2aaf5ca; F-002 (MINOR, sudah diperbaiki) perubahan Next15/clone belum di-commit -> commit 53ad33f di Next15 (branch feat/next15-dashboard-migration di-push) dan clone sync ke origin/main; F-003 (MINOR, sudah diperbaiki) contracts/DELIVERABLE-AGENT-20.md masih pakai nama provider lama -> sudah disinkronkan ke secondary-fallback/local-fallback.
+- Commit: repo utama 2aaf5ca + a0815bf (push ke origin/main); Next15 53ad33f (push branch baru).
+- Verdict: CONDITIONAL (3 MINOR, semuanya sudah tertutup). Cron regresi harian 7x didaftarkan: audit-mirofish-url-migration-regression.

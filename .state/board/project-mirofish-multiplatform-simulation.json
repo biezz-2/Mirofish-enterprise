@@ -1,0 +1,49 @@
+{
+  "board_id": "project-mirofish-multiplatform-simulation",
+  "type": "PROJECT",
+  "parent": "",
+  "phase_ref": "p01-p03",
+  "owner_agent": "HERMES",
+  "status": "CLOSED",
+  "cards": [
+    {
+      "card_id": "c-mirofish-multiplatform-01",
+      "title": "Notion and repository evidence inventory",
+      "status": "VALIDATED",
+      "severity": null,
+      "finding_ref": null,
+      "assignee": "HERMES",
+      "notes": "Notion recursive crawl returned 1072 blocks and six child pages; repository contract audit completed."
+    },
+    {
+      "card_id": "c-mirofish-multiplatform-02",
+      "title": "Canonical seven-platform lifecycle implementation",
+      "status": "VALIDATED",
+      "severity": "MAJOR",
+      "finding_ref": "F-001,F-002,F-003",
+      "assignee": "HERMES",
+      "notes": "Independent review found three MAJOR fallback/isolation defects. Reworked: platform profile isolation, truthful job-status fallback, truthful stop fallback, and regression tests. 24 targeted tests pass; independent revalidation required. Active simulation remains preparing; state was not mutated."
+    },
+    {
+      "card_id": "c-mirofish-multiplatform-03",
+      "title": "Independent validation and regression gate",
+      "status": "VALIDATED",
+      "severity": null,
+      "finding_ref": null,
+      "assignee": "critic-subagent",
+      "notes": "V1-V8 gate required before deployment."
+    }
+  ],
+  "coordination": [
+    {
+      "edge": "SHARES_FILES_WITH",
+      "board_id": "project-mirofish-epistemic-mitigation"
+    },
+    {
+      "edge": "BLOCKS",
+      "board_id": "project-mirofish-next15-dashboard"
+    }
+  ],
+  "created_at": "2026-10-18T02:15:00Z",
+  "updated_at": "2026-10-18T04:23:37.119367+00:00"
+}

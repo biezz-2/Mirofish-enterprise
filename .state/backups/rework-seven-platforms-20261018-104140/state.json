@@ -1,0 +1,31 @@
+{
+  "simulation_id": "sim_b839625f8ac2",
+  "project_id": "proj_5e996d7cdf4b",
+  "graph_id": "mirofish_7955644bda70404f",
+  "enable_twitter": true,
+  "enable_reddit": true,
+  "status": "ready",
+  "entities_count": 478,
+  "profiles_count": 478,
+  "entity_types": [
+    "ClaimVerifier",
+    "NewsMedia",
+    "HealthcareFacility",
+    "RegulatoryBody",
+    "InsuranceAgency",
+    "Person",
+    "Organization",
+    "Patient",
+    "AcademicResearcher",
+    "Physician"
+  ],
+  "profiles_generated": true,
+  "config_generated": true,
+  "config_reasoning": "Konfigurasi Waktu: 使用默认中国人作息配置（每轮1小时） | Konfigurasi Peristiwa: Simulated request meminta feedback implementasi healthkathon untuk BPJS. Entity types dipilih mencakup stakeholder utama ekosistem jaminan kesehatan Indonesia: ClaimVerifier (verifikator klaim), HealthcareFacility (rumah sakit/klinik), RegulatoryBody (pengatur kebijakan), AcademicResearcher (peneliti AI kesehatan), Patient (penerima manfaat), Physician (dokter penanggung jawab), Organization (mitra implementasi), NewsMedia (pemberita). Setiap post mencerminkan perspektif dan kepentingan respective stakeholder. | Konfigurasi Agen: 478 dihasilkan | Penetapan Unggahan: 8 unggahan ditetapkan",
+  "current_round": 0,
+  "twitter_status": "not_started",
+  "reddit_status": "not_started",
+  "created_at": "2026-10-18T08:57:54.962988",
+  "updated_at": "2026-10-18T10:09:12.777743",
+  "error": null
+}

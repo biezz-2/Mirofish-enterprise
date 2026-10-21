@@ -192,7 +192,7 @@
       "parent": null,
       "phase_ref": null,
       "owner_agent": "HERMES",
-      "status": "ACTIVE",
+      "status": "CLOSED",
       "cards": [
         {
           "card_id": "c-project-mirofish-github-url-migration-01",
@@ -219,7 +219,7 @@
           "severity": null,
           "finding_ref": null,
           "assignee": "HERMES",
-          "notes": "10 file dipatch per tree; workflow: EXPECTED_REPOSITORY, actor '666ghj' -> 'biezz-2', hard-coded actor id 110395318 dihapus. star_history.py check exit 0 di kedua tree. Perubahan BELUM di-commit di kedua tree."
+          "notes": "10 file dipatch per tree; workflow: EXPECTED_REPOSITORY, actor '666ghj' -> 'biezz-2', hard-coded actor id 110395318 dihapus. star_history.py check exit 0 di kedua tree. Perubahan BELUM di-commit di kedua tree. | RESOLVED 2026-10-21: commit 53ad33f di Next15 (branch feat/next15-dashboard-migration di-push ke origin), clone /home/biezz/Mirofish-enterprise sync ke origin/main (HEAD 2aaf5ca)."
         },
         {
           "card_id": "c-project-mirofish-github-url-migration-04",
@@ -228,7 +228,7 @@
           "severity": null,
           "finding_ref": null,
           "assignee": "critic-subagent",
-          "notes": "Verdict CONDITIONAL. Laporan: .state/validation/validation-mirofish-github-url-migration/p04.md. 2 temuan MINOR terbuka (F-001 SVG desync di commit 12df828, F-002 perubahan next15/clone belum di-commit)."
+          "notes": "Verdict CONDITIONAL -> semua 3 temuan MINOR ditutup 2026-10-21. F-001 diperbaiki commit 2aaf5ca (SVG star-history di-commit). F-002 diperbaiki commit 53ad33f (Next15) + push/sync clone. F-003 diperbaiki: contracts/DELIVERABLE-AGENT-20.md disinkronkan ke secondary-fallback/local-fallback dan tests/test_agent_20_devops_vault.py -> 10 passed. Commit state: 2aaf5ca, a0815bf (repo utama, pushed)."
         }
       ],
       "coordination": [
@@ -238,7 +238,7 @@
         }
       ],
       "created_at": "2026-10-21T00:00:00+07:00",
-      "updated_at": "2026-10-21T00:00:00+07:00"
+      "updated_at": "2026-10-21T08:30:00+07:00"
     },
     "validation-mirofish-github-url-migration": {
       "board_id": "validation-mirofish-github-url-migration",

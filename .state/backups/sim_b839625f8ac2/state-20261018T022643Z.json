@@ -1,0 +1,31 @@
+{
+  "simulation_id": "sim_b839625f8ac2",
+  "project_id": "proj_5e996d7cdf4b",
+  "graph_id": "mirofish_7955644bda70404f",
+  "enable_twitter": true,
+  "enable_reddit": true,
+  "status": "preparing",
+  "entities_count": 478,
+  "profiles_count": 0,
+  "entity_types": [
+    "ClaimVerifier",
+    "NewsMedia",
+    "HealthcareFacility",
+    "RegulatoryBody",
+    "InsuranceAgency",
+    "Person",
+    "Organization",
+    "Patient",
+    "AcademicResearcher",
+    "Physician"
+  ],
+  "profiles_generated": false,
+  "config_generated": false,
+  "config_reasoning": "",
+  "current_round": 0,
+  "twitter_status": "not_started",
+  "reddit_status": "not_started",
+  "created_at": "2026-10-18T08:57:54.962988",
+  "updated_at": "2026-10-18T08:57:55.111892",
+  "error": null
+}

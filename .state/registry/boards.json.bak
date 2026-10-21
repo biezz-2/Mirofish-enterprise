@@ -1,0 +1,190 @@
+{
+  "boards": {
+    "task-board-mirofish-i18n-jules": {
+      "board_id": "task-board-mirofish-i18n-jules",
+      "name": "task-board-mirofish-i18n-jules",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/task-board-mirofish-i18n-jules.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "audit-board-mirofish-i18n-cron": {
+      "board_id": "audit-board-mirofish-i18n-cron",
+      "type": "AUDIT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/audit-board-mirofish-i18n-cron.json",
+      "updated_at": "2026-10-18T21:05:00+07:00"
+    },
+    "project-mirofish-epistemic-mitigation": {
+      "board_id": "project-mirofish-epistemic-mitigation",
+      "name": "project-mirofish-epistemic-mitigation",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-mirofish-epistemic-mitigation.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "project-mirofish-supabase-migration": {
+      "board_id": "project-mirofish-supabase-migration",
+      "name": "project-mirofish-supabase-migration",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-mirofish-supabase-migration.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "project-mirofish-security-audit": {
+      "board_id": "project-mirofish-security-audit",
+      "name": "project-mirofish-security-audit",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-mirofish-security-audit.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "project-web-ide-collab": {
+      "board_id": "project-web-ide-collab",
+      "name": "project-web-ide-collab",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-web-ide-collab.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "project-osis-website-sync-supabase": {
+      "board_id": "project-osis-website-sync-supabase",
+      "name": "project-osis-website-sync-supabase",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-osis-website-sync-supabase.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "project-osis-manual-guidebook": {
+      "board_id": "project-osis-manual-guidebook",
+      "name": "project-osis-manual-guidebook",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-osis-manual-guidebook.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "board-1791787866961": {
+      "board_id": "board-1791787866961",
+      "name": "Autonomous Coding Agent Platform (Jules-style)",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/board-1791787866961.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "board-1791789035974": {
+      "board_id": "board-1791789035974",
+      "name": "LGP v2.0 - LangGraph Enterprise Migration",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/board-1791789035974.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "board-1791996401991": {
+      "board_id": "board-1791996401991",
+      "name": "Mirofish Enterprise - Full UI Localization & Release v3.3.0",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/board-1791996401991.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "board-1792047362103": {
+      "board_id": "board-1792047362103",
+      "name": "project-mirofish-supabase-migration",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/board-1792047362103.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "board-1792059973647": {
+      "board_id": "board-1792059973647",
+      "name": "LangGraph-Graphiti-FalkorDB-NeuronPlatform",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/board-1792059973647.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "board-1792083811802": {
+      "board_id": "board-1792083811802",
+      "name": "mcp-langgraph-secure-ingress",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/board-1792083811802.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "board-1792124334979": {
+      "board_id": "board-1792124334979",
+      "name": "Mirofish Enterprise v3.1 \u2014 20 Subagents Swarm",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/board-1792124334979.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "board-1792160551590": {
+      "board_id": "board-1792160551590",
+      "name": "OSIS SMAIT FI Manual Guidebook & Figma Design",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/board-1792160551590.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    },
+    "project-mirofish-enterprise-notion": {
+      "board_id": "project-mirofish-enterprise-notion",
+      "name": "project-mirofish-enterprise-notion",
+      "type": "PROJECT",
+      "parent": "",
+      "owner_agent": "HERMES",
+      "status": "ACTIVE",
+      "coordination": [],
+      "path": "/home/biezz/.state/boards/project-mirofish-enterprise-notion.json",
+      "updated_at": "2026-10-16T15:22:40.437143+00:00"
+    }
+  }
+}

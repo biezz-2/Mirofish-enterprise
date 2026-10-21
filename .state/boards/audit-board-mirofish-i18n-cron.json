@@ -10,12 +10,12 @@
     "cards": [
       {
         "card_id": "c-mirofish-cron-02",
-        "title": "Phase-Gate Validation V1–V8 hasil lokalisasi i18n Mirofish Enterprise",
+        "title": "Phase-Gate Validation V1\u2013V8 hasil lokalisasi i18n Mirofish Enterprise",
         "status": "IN_PROGRESS",
         "severity": "MAJOR",
         "finding_ref": "F-001",
         "assignee": "critic-subagent",
-        "notes": "Verdict: CONDITIONAL @ 2026-10-18 21:05 WIB. Jules 3767768341149407718 stable; lastActivity agentMessaged @ 2026-10-15T11:04:39.788410Z; belum ada PR/diff i18n. Locale zh/en/id parity 905/905/905 (0 missing, 0 empty). npm run build sukses (Vite 7.3.6, 709 modul, exit 0, 6.04s). Scan menemukan 187 baris non-komentar literal Mandarin pada 13 file Vue/JS (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11). Temuan: [F-001] MAJOR hardcoded UI literals, [F-002] MAJOR Jules stalled tanpa PR/diff, [F-003] MINOR bundle JS 760.82 kB (>500 kB). Card tetap IN_PROGRESS.",
+        "notes": "Verdict: CONDITIONAL @ 2026-10-20 11:48 WIB. Jules 3767768341149407718 stable; lastActivity agentMessaged @ 2026-10-15T11:04:39.788410Z; belum ada PR/diff i18n. Locale zh/en/id parity 905/908 (0 missing, 0 empty). npm run build sukses (Vite 7.3.6, 709 modul, exit 0). Scan menemukan 303 baris non-komentar literal Mandarin pada 15 file Vue/JS + literal Indonesia di PlatformChooser.vue. Temuan: [F-001] MAJOR hardcoded UI literals, [F-002] MAJOR Jules stalled tanpa PR/diff, [F-003] MINOR bundle JS 760.82 kB (>500 kB). Card tetap IN_PROGRESS.",
         "phase_ref": ""
       },
       {
@@ -25,7 +25,7 @@
         "severity": null,
         "finding_ref": null,
         "assignee": "HERMES",
-        "notes": "Jules 3767768341149407718 status: stable (agentMessaged @ 2026-10-15T11:04:39.788410Z). Recheck cron 2026-10-18: tetap stable tanpa PR/diff i18n baru. Clean checkout commit 6048ac2 memiliki locales/en.json, locales/id.json, dan locales/zh.json dengan top-level parity; hardcoded strings masih ada. npm run build gagal karena vite dan @vitejs/plugin-vue tidak terpasang. Audit p01-audit diperbarui; verdict FAIL; card tetap IN_PROGRESS.",
+        "notes": "Recheck 2026-10-20 11:48 WIB: Jules 3767768341149407718 tetap stable (lastActivity agentMessaged @ 2026-10-15T11:04:39.788410Z), 0 diff/PR baru. Jules menunggu arahan per-file refactor. Remote origin/main commit 12df828.",
         "phase_ref": ""
       },
       {
@@ -35,12 +35,12 @@
         "severity": null,
         "finding_ref": null,
         "assignee": "HERMES",
-        "notes": "Audit 12:02 WIB selesai dievaluasi. Tidak ada delta baru sejak audit 11:20 WIB (status: stable, 0 diff/PR, build exit 0, paritas 100%). Delivery disupresi via SILENT.",
+        "notes": "Audit 11:48 WIB selesai dievaluasi. Tidak ada delta baru sejak audit 10:56 WIB (status: stable, 0 diff/PR, build exit 0, paritas 100%). Delivery disupresi via [SILENT].",
         "phase_ref": ""
       }
     ],
     "coordination": [],
     "created_at": "2026-10-16T15:10:40.584640+00:00",
-    "updated_at": "2026-10-18T21:05:00+07:00"
+    "updated_at": "2026-10-20T05:00:30.570116+00:00"
   }
 }
