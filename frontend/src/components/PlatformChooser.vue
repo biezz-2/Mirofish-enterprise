@@ -33,10 +33,10 @@
         </div>
 
         <div class="mt-3 pt-2.5 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-[11px] text-slate-400">
-          <div>Kebaruan: <span class="text-slate-200 font-semibold">{{ p.recency_weight }}</span></div>
-          <div>Viral: <span class="text-slate-200 font-semibold">{{ p.viral_threshold.toLocaleString() }}</span></div>
-          <div>Echo: <span class="text-slate-200 font-semibold">{{ p.echo_chamber_strength }}</span></div>
-          <div>Maks Teks: <span class="text-slate-200 font-semibold">{{ p.max_content_length }}</span></div>
+          <div>{{ $t('platform.novelty') }}: <span class="text-slate-200 font-semibold">{{ p.recency_weight }}</span></div>
+          <div>{{ $t('platform.viral') }}: <span class="text-slate-200 font-semibold">{{ p.viral_threshold.toLocaleString() }}</span></div>
+          <div>{{ $t('platform.echo') }}: <span class="text-slate-200 font-semibold">{{ p.echo_chamber_strength }}</span></div>
+          <div>{{ $t('platform.maxText') }}: <span class="text-slate-200 font-semibold">{{ p.max_content_length }}</span></div>
         </div>
       </div>
     </div>
