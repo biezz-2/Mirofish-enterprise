@@ -995,6 +995,7 @@ dependencies = [
     { name = "flask" },
     { name = "flask-cors" },
     { name = "httpx" },
+    { name = "mcp" },
     { name = "nltk" },
     { name = "openai" },
     { name = "pillow" },
@@ -1002,8 +1003,10 @@ dependencies = [
     { name = "pymupdf" },
     { name = "python-dotenv" },
     { name = "sentence-transformers" },
+    { name = "starlette" },
     { name = "transformers" },
     { name = "unstructured" },
+    { name = "uvicorn" },
     { name = "zep-cloud" },
 ]
 
@@ -1029,6 +1032,7 @@ requires-dist = [
     { name = "flask", specifier = ">=3.0.0" },
     { name = "flask-cors", specifier = ">=6.0.0" },
     { name = "httpx", specifier = ">=0.27.0" },
+    { name = "mcp", specifier = ">=1.0.0" },
     { name = "nltk", specifier = ">=3.9" },
     { name = "openai", specifier = ">=1.0.0" },
     { name = "pillow", specifier = "==10.3.0" },
@@ -1039,8 +1043,10 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "sentence-transformers", specifier = ">=3.0.0" },
+    { name = "starlette", specifier = ">=0.38.0" },
     { name = "transformers", specifier = ">=4.40.0" },
     { name = "unstructured", specifier = ">=0.13.7" },
+    { name = "uvicorn", specifier = ">=0.30.0" },
     { name = "zep-cloud", specifier = "==3.25.0" },
 ]
 provides-extras = ["dev"]
@@ -1764,11 +1770,11 @@ wheels = [
 
 [[package]]
 name = "pypdf"
-version = "6.4.2"
+version = "6.21.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/bd/c2/b59b02ff7f2dc006799d2c5dc3a8877686890abdd915176ef799070edf17/pypdf-6.4.2.tar.gz", hash = "sha256:c466ff1272ffb4712c2348d2bbc3019bc93f1c62ccfaf50808e3b9f13c3dc527", size = 5275502, upload-time = "2025-12-14T14:30:58.58Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/e1/ec8f4d155c997c45917153a5521e60d6ee6389d68abdcbc8e44e564caffc/pypdf-6.21.4.tar.gz", hash = "sha256:c8817e3f888d47a087872ded69812c1ef30cacb871d6e053e0c00bbaf0bc2163", size = 7109255, upload-time = "2026-10-28T17:00:54.81Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/99/3147435e15ccd97c0451efc3d13495dc22602e9887f81e64f1b135bae821/pypdf-6.4.2-py3-none-any.whl", hash = "sha256:014dcff867fd99fc0b6fc90ed1f7e1347ef2317ae038a489c2caa64106d268f4", size = 328212, upload-time = "2025-12-14T14:30:56.701Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/4b/77e8ad4ac42c9d93600f40541a50e9feb3a61d2bbee2d76f659346072051/pypdf-6.21.4-py3-none-any.whl", hash = "sha256:33e4fb41ca352810eb4e9838aa0d82d6888a5f8bf682f43e99cce5faa666255c", size = 410430, upload-time = "2026-10-28T17:00:53.146Z" },
 ]
 
 [[package]]
