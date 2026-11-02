@@ -1,46 +1,27 @@
 {
-  "board": {
-    "board_id": "audit-board-mirofish-i18n-cron",
-    "name": "audit-board-mirofish-i18n-cron",
-    "type": "AUDIT",
-    "parent": "",
-    "phase_ref": "",
-    "owner_agent": "HERMES",
-    "status": "ACTIVE",
-    "cards": [
-      {
-        "card_id": "c-mirofish-cron-02",
-        "title": "Phase-Gate Validation V1–V8 hasil lokalisasi i18n Mirofish Enterprise",
-        "status": "IN_PROGRESS",
-        "severity": "MAJOR",
-        "finding_ref": "F-001",
-        "assignee": "critic-subagent",
-        "notes": "Verdict: CONDITIONAL @ 2026-10-31 09:47 WIB. Jules 3767768341149407718 stable & sessionCompleted @ 2026-10-28T09:40:19Z; PR #48 (refactor Process.vue & PlatformChooser.vue) OPEN. Paritas kamus root 905/905/905 (100%), frontend 908/908/908 (100%), ada divergensi 3 key. Build Vite 7.3.6 sukses (706 modul, exit 0). Hardcoded strings di main: 187 baris CJK pada 13 file Vue/JS. F-002 CLOSED (PR #48 submitted), F-001 MAJOR tetap open menunggu merge PR #48 & refactor sisa komponen. Card tetap IN_PROGRESS.",
-        "phase_ref": ""
-      },
-      {
-        "card_id": "c-mirofish-cron-01",
-        "title": "Pemantauan berkala status proses Jules session 3767768341149407718 (i18n zh/en/id)",
-        "status": "VALIDATED",
-        "severity": null,
-        "finding_ref": null,
-        "assignee": "HERMES",
-        "notes": "Recheck 2026-10-31 09:47 WIB: Jules 3767768341149407718 selesai (sessionCompleted @ 2026-10-28T09:40:19Z). Berhasil membuat PR #48 (https://github.com/biezz-2/Mirofish-enterprise/pull/48). Tugas pemantauan Jules selesai dan VALIDATED.",
-        "phase_ref": ""
-      },
-      {
-        "card_id": "c-mirofish-cron-03",
-        "title": "Broadcast laporan validasi ke Discord thread & persistensi LangGraph Store",
-        "status": "VALIDATED",
-        "severity": null,
-        "finding_ref": null,
-        "assignee": "HERMES",
-        "notes": "Audit 2026-10-31 09:47 WIB: PR #48 dideteksi dan divalidasi. Laporan dicatat di .state/ dan dibroadcast ke Discord.",
-        "phase_ref": ""
-      }
-    ],
-    "coordination": [],
-    "created_at": "2026-10-16T15:10:40.584640+00:00",
-    "updated_at": "2026-10-31T02:47:00.000000+00:00"
-  }
+  "board_id": "audit-board-mirofish-i18n-cron",
+  "type": "AUDIT",
+  "parent": "mirofish-i18n",
+  "phase_ref": "p01",
+  "owner_agent": "HERMES",
+  "status": "ACTIVE",
+  "cards": [
+    {
+      "card_id": "c-audit-board-mirofish-i18n-cron-01",
+      "title": "i18n locale parity & hardcoded string audit (cron recheck)",
+      "status": "REWORK",
+      "severity": "MAJOR",
+      "finding_ref": "F-001, F-003, F-004, F-005",
+      "assignee": "HERMES",
+      "notes": "Cron recheck 2026-11-02 20:50 WIB: Jules stable (PR #48 open). Paritas kamus 100% (root 905, frontend 908 keys, 3 divergence keys). Build Vite exit 0 in 5.95s. Hardcoded CJK tersisa 302 baris di 14 file Vue pada main. F-002 CLOSED; F-001 MAJOR open (PR #48 pending merge). Verdict CONDITIONAL."
+    }
+  ],
+  "coordination": [
+    {
+      "edge": "VALIDATES",
+      "board_id": "phase-board-mirofish-i18n-p01"
+    }
+  ],
+  "created_at": "2026-10-25T17:15:00+07:00",
+  "updated_at": "2026-11-02T20:50:00+07:00"
 }
