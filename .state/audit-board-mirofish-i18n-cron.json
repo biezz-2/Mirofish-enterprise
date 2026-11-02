@@ -13,7 +13,7 @@
       "severity": "MAJOR",
       "finding_ref": "F-001, F-003, F-004, F-005",
       "assignee": "HERMES",
-      "notes": "Cron recheck 2026-11-03 04:58 WIB: Jules stable (PR #48 open). Paritas kamus 100% (root 905, frontend 908 keys, 3 divergence keys). Build Vite exit 0 in 5.85s. Hardcoded CJK tersisa 73 baris template (827 total baris CJK) di main. F-002 CLOSED; F-001 MAJOR open (PR #48 pending merge). Verdict CONDITIONAL."
+      "notes": "Cron recheck 2026-11-03 05:35 WIB: Jules stable (PR #48 open). Paritas kamus 100% (root 905, frontend 908 keys, 3 divergence keys). Build Vite exit 0 in 5.99s. Hardcoded CJK tersisa 72 baris template (823 total baris CJK) di main. F-002 CLOSED; F-001 MAJOR open (PR #48 pending merge). Verdict CONDITIONAL."
     }
   ],
   "coordination": [
@@ -23,5 +23,5 @@
     }
   ],
   "created_at": "2026-10-25T17:15:00+07:00",
-  "updated_at": "2026-11-02T21:58:00+00:00"
+  "updated_at": "2026-11-02T22:35:00+00:00"
 }
