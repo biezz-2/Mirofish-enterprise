@@ -2250,6 +2250,240 @@ CONDITIONAL. Build dan paritas kini tervalidasi; F-001 dan F-002 masih MAJOR seh
 - Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-03 22:50 WIB; delivery disupresi via [SILENT].
 
 
+## Cron Recheck — 2026-11-04 00:38 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.59s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (termasuk Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 sudah mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.59s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 00:05 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 01:12 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.65s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (termasuk Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 sudah mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.65s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 00:38 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 01:46 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 6.44s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (termasuk Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 sudah mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (6.44s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 01:12 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 02:22 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 6.02s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (termasuk Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 sudah mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (6.02s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 01:46 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 02:56 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.92s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (termasuk Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 sudah mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.92s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 02:22 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 03:32 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.51s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (termasuk Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 sudah mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.51s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 02:56 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 04:41 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.83s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 823 baris memuat karakter CJK pada 14 file Vue (termasuk Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 sudah mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.83s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 04:07 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 05:14 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.54s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (termasuk Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 sudah mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.54s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 04:41 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 07:01 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 13.03s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (termasuk Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 sudah mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (13.03s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 06:24 WIB; delivery disupresi via [SILENT].
+
+
 ## Cron Recheck — 2026-11-04 07:36 WIB
 - Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
 - Repo `biezz-2/Mirofish-enterprise` (main branch, commit `f398fd8`):
@@ -2274,6 +2508,1148 @@ CONDITIONAL. Build dan paritas kini tervalidasi; F-001 dan F-002 masih MAJOR seh
   - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
   - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
 - Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 07:01 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 08:13 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.83s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 14 file Vue (termasuk Process.vue: 99 baris, Step4Report.vue: 53 baris, HistoryDatabase.vue: 33 baris, Step2EnvSetup.vue: 34 baris, GraphPanel.vue: 27 baris, Step3Simulation.vue: 22 baris, Home.vue: 18 baris) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.83s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 07:36 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 10:04 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.63s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.63s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 09:21 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 10:38 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 11.02s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (11.02s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 10:04 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 11:15 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 8.42s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (8.42s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 10:38 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 11:49 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.67s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.67s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 11:15 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 12:24 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 7.27s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (7.27s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 11:49 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 12:59 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.90s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.90s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 12:24 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 13:37 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.75s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.75s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 12:59 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 14:14 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.90s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.90s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 13:37 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 14:52 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 6.54s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (6.54s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 14:14 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 15:31 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 6.24s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (6.24s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 14:52 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 16:06 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.55s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.55s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 15:31 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 16:43 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 6.43s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 827 baris memuat karakter CJK pada 15 file Vue (Process.vue: 190 baris, Step4Report.vue: 168 baris, HistoryDatabase.vue: 124 baris, GraphPanel.vue: 84 baris, Step2EnvSetup.vue: 76 baris, Home.vue: 43 baris, Step3Simulation.vue: 42 baris, Step5Interaction.vue: 35 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (6.43s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 16:06 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 17:23 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.56s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 302 baris memuat karakter CJK pada 14 file Vue (Process.vue: 99 baris, Step4Report.vue: 53 baris, Step2EnvSetup.vue: 34 baris, HistoryDatabase.vue: 33 baris, GraphPanel.vue: 27 baris, Step3Simulation.vue: 22 baris, Home.vue: 18 baris, dsb) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.56s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 13 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 16:43 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 18:31 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.71s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.71s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 17:23 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 19:39 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.71s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.71s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 18:31 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 21:34 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 6.89s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (6.89s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 19:39 WIB; delivery disupresi via [SILENT].
+
+## Cron Recheck — 2026-11-04 22:28 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.59s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.59s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 21:34 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 23:10 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.86s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.86s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 22:28 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-04 23:46 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.54s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.54s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-04).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 23:10 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 00:23 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.69s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.69s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-04 23:46 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 01:32 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.61s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.61s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 00:23 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 02:06 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 909/909/909 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 912/912/912 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.69s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.69s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 01:32 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 02:41 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.53s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.53s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 02:06 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 03:15 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 6.20s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (6.20s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 02:41 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 03:49 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.65s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.65s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 03:15 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 04:25 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.47s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.47s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 03:49 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 04:59 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.7, 709 modul terkompilasi dalam 5.76s, bundle JS 760.82 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.76s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 760.82 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (760.82 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 04:25 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 05:34 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.74s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.74s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 04:59 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 06:09 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.59s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.59s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 05:34 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 06:43 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.58s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.58s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 06:09 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 07:18 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.91s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.91s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 06:43 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 07:52 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.57s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.57s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 07:18 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 08:26 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.59s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.59s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 07:52 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 09:03 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.98s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.98s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 08:26 WIB; delivery disupresi via [SILENT].
+
+## Cron Recheck — 2026-11-05 10:14 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.59s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.59s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 09:38 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 10:51 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 6.85s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (6.85s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 10:14 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 11:32 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 6.86s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (6.86s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 10:51 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 12:28 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.75s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.75s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 11:32 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 13:03 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.70s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.70s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 12:28 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 13:49 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.56s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.56s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 13:03 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 14:20 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, 706 modul terkompilasi dalam 5.86s, bundle JS 749.63 kB).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue (Process.vue: 73, Step4Report.vue: 49, GraphPanel.vue: 14, Step2EnvSetup.vue: 13, HistoryDatabase.vue: 11, Step3Simulation.vue: 11, Home.vue: 5, Step1GraphBuild.vue: 3, Step5Interaction.vue: 3, SimulationView.vue: 2, MainView.vue: 1, SimulationRunView.vue: 1) serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.86s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 13:49 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 14:56 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, exit 0).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0.
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 14:20 WIB; delivery disupresi via [SILENT].
+
+
+## Cron Recheck — 2026-11-05 15:29 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, exit 0 in 5.64s).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue serta label hardcoded di PlatformChooser.vue.
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (5.64s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-05).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-05 14:56 WIB; delivery disupresi via [SILENT].
 
 
 ## Cron Recheck — 2026-11-05 16:05 WIB
@@ -2679,3 +4055,28 @@ CONDITIONAL. Build dan paritas kini tervalidasi; F-001 dan F-002 masih MAJOR seh
   - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
   - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
 - Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-06 01:16 WIB; delivery disupresi via [SILENT].
+
+## Cron Recheck — 2026-11-06 02:23 WIB
+- Sesi Jules `3767768341149407718`: status `stable`, lastActivity `sessionCompleted` @ `2026-10-28T09:40:19.353380Z`. PR #48 (`feat(i18n): Refactor components Process.vue and PlatformChooser.vue`, branch `fix-i18n-process-platform-3767768341149407718`, commit `51d6439`) tetap berstatus OPEN di GitHub (menunggu review & merge ke `main`).
+- Repo `biezz-2/Mirofish-enterprise` (main branch):
+  * Paritas Kamus Root (`locales/`): 905/905/905 kunci (zh, en, id) sinkron 100%.
+  * Paritas Kamus Frontend (`frontend/locales/`): 908/908/908 kunci (zh, en, id) sinkron 100%.
+  * Divergensi Kamus: 3 kunci di frontend belum ada di root (`step2.multiPlatformConfig`, `step2.multiPlatformConfigDesc`, `step2.startMultiWorldSim`).
+  * Build Frontend: `npm run build` sukses (Vite v7.3.6, exit 0 in 6.30s).
+  * Hardcoded strings di branch main: 186 baris CJK aktif pada 12 file Vue serta label hardcoded di PlatformChooser.vue (303 baris total pada 15 file).
+- Checklist V1–V8:
+  - V1: PARTIAL — Kamus 3 bahasa valid (paritas 100%), PR #48 mencakup refaktor Process.vue & PlatformChooser.vue namun masih OPEN, sisa komponen UI belum direfaktor.
+  - V2: MET — JSON valid, paritas 100%, frontend Vite build exit 0 (6.30s).
+  - V3: MET — Tidak ada celah keamanan baru, authn/authz/secrets terjaga.
+  - V4: MET — Vue I18n Composition API & Vite build terverifikasi sesuai standar resmi (Vue I18n: https://vue-i18n.intlify.dev/guide/advanced/composition; Vite: https://vite.dev/guide/build, dicek 2026-11-06).
+  - V5: PARTIAL — Bundle size JS minified 749.63 kB (>500 kB chunk warning Vite).
+  - V6: MET — PR #48 clean mergeable dengan main.
+  - V7: PARTIAL — PR #48 menyelesaikan hardcoded strings di Process.vue & PlatformChooser.vue, menunggu review & merge ke main. Komponen lain masih membutuhkan refaktor.
+  - V8: PARTIAL — Laporan dan state dipersist di `.state/`.
+- Findings:
+  - [F-001] (MAJOR) Hardcoded UI strings di branch main: Process.vue & PlatformChooser.vue menunggu merge PR #48; 12 file komponen lainnya masih membutuhkan refaktor lanjutan.
+  - [F-002] (CLOSED) Sesi Jules selesai dan menghasilkan PR #48.
+  - [F-003] (MINOR) Bundle size JS frontend > 500 kB (749.63 kB).
+  - [F-004] (MINOR) Divergensi 3 key antara `frontend/locales/` dan root `locales/`.
+  - [F-005] (MINOR) Belum ada automated CI guard untuk paritas kamus dan deteksi hardcoded UI strings.
+- Verdict: CONDITIONAL (F-001 masih terbuka di main hingga PR #48 dimerge dan sisa file selesai direfaktor; card audit tetap REWORK / IN_PROGRESS). Tidak ada perubahan status baru sejak run 2026-11-06 01:50 WIB; delivery disupresi via [SILENT].
