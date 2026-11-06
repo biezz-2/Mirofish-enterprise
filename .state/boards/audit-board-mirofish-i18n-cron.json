@@ -13,7 +13,7 @@
       "severity": "MAJOR",
       "finding_ref": "F-001, F-003, F-004, F-005",
       "assignee": "HERMES",
-      "notes": "Cron recheck 2026-11-06 17:52 WIB: Jules stable (PR #48 open). Paritas kamus 100% (root 905, frontend 908 keys, 3 divergence keys). Build Vite exit 0 in 6.05s. Hardcoded CJK tersisa 302 baris CJK pada 14 file Vue di main + label hardcoded di PlatformChooser.vue. F-002 CLOSED; F-001 MAJOR open (PR #48 pending merge). Verdict CONDITIONAL."
+      "notes": "Cron recheck 2026-11-06 18:35 WIB: Jules stable (PR #48 open). Paritas kamus 100% (root 905, frontend 908 keys, 3 divergence keys). Build Vite exit 0 in 6.06s. Hardcoded CJK tersisa 302 baris CJK pada 14 file Vue di main + label hardcoded di PlatformChooser.vue. F-002 CLOSED; F-001 MAJOR open (PR #48 pending merge). Verdict CONDITIONAL."
     }
   ],
   "coordination": [
@@ -23,5 +23,5 @@
     }
   ],
   "created_at": "2026-10-25T17:15:00+07:00",
-  "updated_at": "2026-11-06T10:52:00+00:00"
+  "updated_at": "2026-11-06T11:35:00+00:00"
 }
