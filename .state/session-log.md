@@ -914,3 +914,4 @@
 - [2026-11-07 07:54 WIB] Cron audit: Jules 3767768341149407718 stable (PR #48 open). Key parity 100% (root 905, fe 908). Vite build exit 0 (5.79s). Hardcoded 221 lines across 12 Vue files. Verdict CONDITIONAL. No delta; [SILENT].
 - [2026-11-07 08:31 WIB] Cron audit: Jules 3767768341149407718 stable (PR #48 open). Key parity 100% (root 905, fe 908). Vite build exit 0 (5.71s). Hardcoded 221 lines across 12 Vue files. Verdict CONDITIONAL. No delta; [SILENT].
 - [2026-11-07 10:31 WIB] Cron audit: Jules 3767768341149407718 stable (PR #48 open). Key parity 100% (root 905, fe 908). Vite build exit 0 (5.65s). Hardcoded 186 lines across 12 Vue files. Verdict CONDITIONAL. No delta; [SILENT].
+2026-11-07T11:12:00+07:00 | cron-audit: mirofish-i18n recheck completed. Jules stable (PR #48 open). Parity 905/908. Vite build exit 0 in 5.88s. Hardcoded CJK: 186 baris / 12 file. Verdict CONDITIONAL. Delivery: [SILENT].
