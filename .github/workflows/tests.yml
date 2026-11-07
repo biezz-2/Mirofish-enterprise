@@ -3,13 +3,14 @@ name: "Tests"
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
   pull_request:
     branches: [ "main" ]
 
 jobs:
   backend-tests:
     name: "Backend Tests"
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     env:
       FLASK_DEBUG: "false"
       SECRET_KEY: "unit-test-secure-key-32-bytes-long-abc12345"
@@ -38,7 +39,7 @@ jobs:
 
   frontend-build:
     name: "Frontend Build"
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

@@ -16,7 +16,7 @@ permissions:
 jobs:
   python-security:
     name: "Python Vulnerability & SAST Audit"
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
 
   npm-security:
     name: "Node.js Dependency Vulnerability Audit"
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -64,7 +64,7 @@ jobs:
 
   secret-scan:
     name: "Secret & Credential Leak Detection"
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -78,7 +78,7 @@ jobs:
 
   trivy-fs-scan:
     name: "Trivy Vulnerability Scanner (FS & Config)"
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
