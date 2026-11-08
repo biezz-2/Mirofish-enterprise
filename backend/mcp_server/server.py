@@ -129,7 +129,10 @@ def create_fastmcp_app(
         transport_sec = TransportSecuritySettings(enable_dns_rebinding_protection=False)
 
     # FastMCP Streamable HTTP app
-    app = fastmcp.streamable_http_app(transport_security=transport_sec)
+    try:
+        app = fastmcp.streamable_http_app(transport_security=transport_sec)
+    except TypeError:
+        app = fastmcp.streamable_http_app()
 
     async def health_endpoint(request: Request) -> JSONResponse:
         diag = handle_audit_system_diagnostics(include_vault=True, include_backends=True)
