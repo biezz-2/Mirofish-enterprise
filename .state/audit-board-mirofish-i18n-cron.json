@@ -9,11 +9,11 @@
     {
       "card_id": "c-audit-board-mirofish-i18n-cron-01",
       "title": "i18n locale parity & hardcoded string audit (cron recheck)",
-      "status": "VALIDATED",
+      "status": "IN_VALIDATION",
       "severity": "MAJOR",
-      "finding_ref": "F-001, F-002, F-003, F-004, F-005",
+      "finding_ref": "F-001, F-002, F-003, F-004, F-005, F-006",
       "assignee": "HERMES",
-      "notes": "Cron recheck 2026-11-09 13:02 WIB: Jules sessionCompleted (2026-10-28), PR #48 open. Root locales: 905 keys each, 100% parity zh/en/id. Build Vite 7.3.7 exit 0 6.2s. User-facing hardcoded: 4 Chinese strings in Process.vue template. NEW F-002 MAJOR: 3 step2.* keys used in Step2EnvSetup.vue MISSING from root locales (exist only in unused frontend/locales/). F-001 MAJOR blocked on PR #48 merge. F-003/004/005 MINOR. Verdict CONDITIONAL. Report: p01-audit-20261109-1302.md"
+      "notes": "Cron recheck 2026-11-09 20:00 WIB: Jules stable (sessionCompleted 2026-10-28, PR #48 OPEN). Paritas kamus 905/905/905 (100%). Build Vite exit 0 in 6.54s (bundle 763 kB). Process.vue & PlatformChooser.vue di main masih hardcoded. F-006 BLOCKER: PR #48 branch fix-i18n-process-platform-3767768341149407718 berstatus orphaned root (no merge base) dan namespace process.*/platform.* belum ada di main locales. F-001 MAJOR, F-002 MAJOR, F-006 BLOCKER. Verdict CONDITIONAL. Report: .state/validation/audit-board-mirofish-i18n-cron/p01-audit.md"
     }
   ],
   "coordination": [
@@ -23,5 +23,5 @@
     }
   ],
   "created_at": "2026-10-25T17:15:00+07:00",
-  "updated_at": "2026-11-09T13:02:00+07:00"
+  "updated_at": "2026-11-09T20:00:00+07:00"
 }
