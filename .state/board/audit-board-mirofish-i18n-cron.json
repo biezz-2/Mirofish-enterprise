@@ -9,11 +9,11 @@
     {
       "card_id": "c-audit-board-mirofish-i18n-cron-01",
       "title": "i18n locale parity & hardcoded string audit (cron recheck)",
-      "status": "REWORK",
+      "status": "IN_VALIDATION",
       "severity": "MAJOR",
-      "finding_ref": "F-001, F-003, F-004, F-005",
+      "finding_ref": "F-001, F-002, F-003, F-004, F-005",
       "assignee": "HERMES",
-      "notes": "Cron recheck 2026-11-09 08:56 WIB: Jules stable (sessionCompleted 2026-10-28, PR #48 open). Paritas 905/908 sinkron. Build Vite exit 0 7.86s. Hardcoded CJK non-komentar: 175 baris / 12 file. F-001 MAJOR open. Verdict CONDITIONAL."
+      "notes": "Cron recheck 2026-11-09 11:44 WIB: Jules stable (sessionCompleted 2026-10-28, PR #48 open). Paritas kamus 100% (~871 keys zh/en/id). Build Vite exit 0 in 6.1s. Hardcoded CJK di main: 289 baris pada 13 file Vue (Process.vue 96, Step4Report 53, HistoryDatabase 32, Step2EnvSetup 31, GraphPanel 27, Step3Simulation 20, Home 18, others). F-001 MAJOR (Process.vue 0 i18n) blocked on PR #48 merge (Jules branch has fix). F-002/003/004/005 MINOR. Verdict CONDITIONAL. Report: p01-audit-20261109-1144.md"
     }
   ],
   "coordination": [
@@ -23,5 +23,5 @@
     }
   ],
   "created_at": "2026-10-25T17:15:00+07:00",
-  "updated_at": "2026-11-09T01:56:00+00:00"
+  "updated_at": "2026-11-09T04:44:00+07:00"
 }
