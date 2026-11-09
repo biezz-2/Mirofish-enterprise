@@ -1,27 +1,166 @@
 {
-  "board_id": "audit-board-mirofish-i18n-cron",
-  "type": "AUDIT",
-  "parent": "mirofish-i18n",
-  "phase_ref": "p01",
-  "owner_agent": "HERMES",
-  "status": "ACTIVE",
-  "cards": [
-    {
-      "card_id": "c-audit-board-mirofish-i18n-cron-01",
-      "title": "i18n locale parity & hardcoded string audit (cron recheck)",
-      "status": "IN_VALIDATION",
-      "severity": "MAJOR",
-      "finding_ref": "F-001, F-002, F-003, F-004, F-005, F-006",
-      "assignee": "HERMES",
-      "notes": "Cron recheck 2026-11-09 20:00 WIB: Jules stable (sessionCompleted 2026-10-28, PR #48 OPEN). Paritas kamus 905/905/905 (100%). Build Vite exit 0 in 6.54s (bundle 763 kB). Process.vue & PlatformChooser.vue di main masih hardcoded. F-006 BLOCKER: PR #48 branch fix-i18n-process-platform-3767768341149407718 berstatus orphaned root (no merge base) dan namespace process.*/platform.* belum ada di main locales. F-001 MAJOR, F-002 MAJOR, F-006 BLOCKER. Verdict CONDITIONAL. Report: .state/validation/audit-board-mirofish-i18n-cron/p01-audit.md"
-    }
-  ],
-  "coordination": [
-    {
-      "edge": "VALIDATES",
-      "board_id": "phase-board-mirofish-i18n-p01"
-    }
-  ],
-  "created_at": "2026-10-25T17:15:00+07:00",
-  "updated_at": "2026-11-09T20:00:00+07:00"
+  "board": {
+    "board_id": "audit-board-mirofish-i18n-cron",
+    "name": "audit-board-mirofish-i18n-cron",
+    "type": "AUDIT",
+    "parent": "",
+    "phase_ref": "",
+    "owner_agent": "HERMES",
+    "status": "ACTIVE",
+    "cards": [
+      {
+        "card_id": "c-mirofish-cron-14",
+        "title": "REWORK: Migrate Vue I18n to lazy-loading (eager-load bundle 760KB)",
+        "status": "BACKLOG",
+        "severity": "MINOR",
+        "finding_ref": "F-013",
+        "assignee": "JULES",
+        "notes": "NEW 2026-10-28 21:30: Legacy new VueI18n() with import.meta.glob(eager: true) loads all 3 locales at startup. Vite chunk warning >500KB (760KB JS, 236KB gzip). Migrate to useI18n() composable with dynamic locale loading (Vue I18n v11 best practice). Card BACKLOG.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-09",
+        "title": "REWORK: Audit DocsView.vue for hardcoded strings",
+        "status": "BACKLOG",
+        "severity": "MINOR",
+        "finding_ref": "F-011",
+        "assignee": "JULES",
+        "notes": "PENDING: DocsView.vue not yet audited in this cycle. Previous finding (F-005) claimed 12 hardcoded EN/ID strings. Needs verification.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-11",
+        "title": "REWORK: Fix Step3Simulation.vue hardcoded UI labels & PLATFORMS_META",
+        "status": "IN_PROGRESS",
+        "severity": "MAJOR",
+        "finding_ref": "F-006",
+        "assignee": "JULES",
+        "notes": "NEW 2026-10-28 21:30: 20+ hardcoded UI labels (ROUND, TIME, ACTS, Actions, TOTAL, FILTER, Stream, Dual, Auto Scroll, Paused, All Platforms, platform tabs) + PLATFORMS_META object (~60 platform metadata strings: names, subnames, actions for 7 platforms). Evidence: lines 74-100, 464-507. Must extract all to locale with nested platform structure. Card IN_PROGRESS. CONFIRMED 2026-10-29 re-audit.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-13",
+        "title": "REWORK: Fix Home.vue \"Docs\" hardcoded",
+        "status": "IN_PROGRESS",
+        "severity": "MINOR",
+        "finding_ref": "F-015",
+        "assignee": "JULES",
+        "notes": "NEW 2026-10-28 21:30: Line 14: <router-link to=\"/docs\">Docs</router-link>. Add nav.docs locale key. Card IN_PROGRESS.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-05",
+        "title": "REWORK: Fix PlatformChooser.vue \"Aktif\" badge hardcoded Indonesian",
+        "status": "IN_PROGRESS",
+        "severity": "MAJOR",
+        "finding_ref": "F-010",
+        "assignee": "JULES",
+        "notes": "PR #48 fixes 4/5 Indonesian literals: Kebarua\u2192novelty, Viral\u2192viral, Echo\u2192echo, Maks Teks\u2192maxText. \"Aktif\" badge remains hardcoded: `{{ selectedPlatforms.length }} / {{ Object.keys(platforms).length }} Aktif`. Must add locale key (e.g., common.active) and use $t(). Card IN_PROGRESS.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-08",
+        "title": "REWORK: Update languages.json to match supported locales (3 of 8)",
+        "status": "IN_PROGRESS",
+        "severity": "MINOR",
+        "finding_ref": "F-012",
+        "assignee": "JULES",
+        "notes": "PENDING: languages.json lists 8 languages (zh, en, es, fr, pt, ru, de, id) but only 3 have locale files (zh, en, id). Remove unsupported or add placeholders.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-12",
+        "title": "REWORK: Fix Step1GraphBuild.vue hardcoded strings",
+        "status": "IN_PROGRESS",
+        "severity": "MAJOR",
+        "finding_ref": "F-005",
+        "assignee": "JULES",
+        "notes": "NEW 2026-10-28 21:30: 9 hardcoded strings: \"ENTITY\", \"RELATION\", \"ATTRIBUTES\", \"EXAMPLES\", \"CONNECTIONS\", \"GENERATED ENTITY TYPES\", \"GENERATED RELATION TYPES\", \"SYSTEM DASHBOARD\", \"NO_PROJECT\". Evidence: template lines. Needs i18n keys. Card IN_PROGRESS. CONFIRMED 2026-10-29 re-audit.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-10",
+        "title": "REWORK: Fix Step2EnvSetup.vue hardcoded strings",
+        "status": "IN_PROGRESS",
+        "severity": "MAJOR",
+        "finding_ref": "F-003",
+        "assignee": "JULES",
+        "notes": "UPDATED 2026-10-28 21:30: 6 hardcoded strings: \"Project ID\", \"Graph ID\", \"Simulation ID\", \"Task ID\", \"SYSTEM DASHBOARD\", \"Unknown\". Evidence: template lines ~148, 153, 158, 163, 220. Needs i18n keys and $t() usage. Card IN_PROGRESS. CONFIRMED 2026-10-29 re-audit (also 2 Chinese error strings in script).",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-15",
+        "title": "REWORK: Fix MainView.vue hardcoded English toast/notification strings",
+        "status": "IN_PROGRESS",
+        "severity": "MAJOR",
+        "finding_ref": "F-014",
+        "assignee": "JULES",
+        "notes": "NEW 2026-10-29 23:30: 13 hardcoded English strings in script (lines 186-407): \"Project view initialized.\", \"Uploading and analyzing docs...\", \"Graph build task completed.\", \"Environment setup task completed.\", \"Simulation task completed.\", \"Report generation task completed.\", \"Interaction task completed.\", \"Task failed:\", \"Project updated successfully.\", \"Project deleted successfully.\", \"Invalid project ID.\", \"Upload failed.\", \"Analysis failed.\". Must use $t() with locale keys. Card IN_PROGRESS.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-06",
+        "title": "REWORK: Fix Step4Report.vue & Step5Interaction.vue hardcoded English/Chinese strings",
+        "status": "IN_PROGRESS",
+        "severity": "MAJOR",
+        "finding_ref": "F-007, F-008",
+        "assignee": "JULES",
+        "notes": "UPDATED 2026-10-28 21:30: Step4Report.vue ~25 hardcoded English strings (Prediction Report, Sections, Elapsed, Tools, Simulation, Requirement, sections planned, content ready, Waiting for Report Agent..., section titles). Step5Interaction.vue: duplicate \"Prediction Report\"/\"Waiting for Report Agent...\" + Chinese prompt template with \"\u63d0\u95ee\u8005\"/\"\u4f60\" (lines 742, 744). Keys exist as step4.* \u2014 use $t('step4.*') in both. Card IN_PROGRESS. CONFIRMED 2026-10-29 re-audit.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-03",
+        "title": "Broadcast laporan validasi ke Discord thread & persistensi LangGraph Store",
+        "status": "IMPLEMENTED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "HERMES",
+        "notes": "Audit 2026-11-09 21:02 WIB complete. Jules 3767768341149407718 STABLE. PR #48 OPEN. Locales parity 100% (905 root, 908 frontend). Build PASS (Vite 7.3.7 in 6.57s). Hardcoded remaining: 15 file Vue, 827 baris CJK. Verdict CONDITIONAL. Report delivered to Discord.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-01",
+        "title": "Pemantauan berkala status proses Jules session 3767768341149407718 (i18n zh/en/id)",
+        "status": "IMPLEMENTED",
+        "severity": null,
+        "finding_ref": null,
+        "assignee": "HERMES",
+        "notes": "Recheck 2026-11-09 21:02 WIB (cron): Jules session STABLE (completed 2026-10-28T09:40:19Z). PR #48 OPEN di GitHub. Paritas kamus 905 zh / 905 en / 905 id (100%). Vite build 7.3.7 PASS in 6.57s. 15 file Vue masih memiliki 827 baris CJK di main. F-006 BLOCKER tetap aktif (namespace process.*/platform.* missing). Verdict: CONDITIONAL.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-02",
+        "title": "Phase-Gate Validation V1\u2013V8 hasil lokalisasi i18n Mirofish Enterprise",
+        "status": "VALIDATED",
+        "severity": "MAJOR",
+        "finding_ref": "F-001",
+        "assignee": "critic-subagent",
+        "notes": "Verdict: CONDITIONAL @ 2026-11-09 21:02 WIB (cron re-check). Jules 3767768341149407718 stable (PR #48 open). Paritas kamus 905 leaf keys 100% zh/en/id. Vite build PASS in 6.57s. F-001 & F-002 MAJOR open (PR #48 pending review/merge). F-006 BLOCKER (namespace process.*/platform.* missing di locales main, git orphaned root). Report: .state/validation/audit-board-mirofish-i18n-cron/p01-audit.md.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-07",
+        "title": "REWORK: Sync root locales/ with frontend/locales/ (parity verified 905 keys each)",
+        "status": "VALIDATED",
+        "severity": "MINOR",
+        "finding_ref": "F-001",
+        "assignee": "HERMES",
+        "notes": "VERIFIED 2026-10-28: Both root locales/ and frontend/locales/ on main branch have 905 keys each (zh/en/id). PR #48 branch has 1024 keys each. Parity achieved on both branches. Card VALIDATED.",
+        "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-04",
+        "title": "REWORK: Fix Process.vue hardcoded CJK/English strings",
+        "status": "VALIDATED",
+        "severity": "MAJOR",
+        "finding_ref": "F-003",
+        "assignee": "JULES",
+        "notes": "RESOLVED 2026-10-28: PR #48 fully refactored Process.vue to use $t(). Scan of Process.vue on PR branch found 0 hardcoded user-facing CJK/English strings (only comments/console). Original ~95 hardcoded lines addressed. Card VALIDATED.",
+        "phase_ref": ""
+      }
+    ],
+    "coordination": [],
+    "created_at": "2026-10-16T15:10:40.584640+00:00",
+    "updated_at": "2026-11-09T14:07:09.951253+00:00"
+  }
 }
