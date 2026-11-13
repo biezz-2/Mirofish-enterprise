@@ -55,7 +55,7 @@
         "severity": "MAJOR",
         "finding_ref": "F-010",
         "assignee": "JULES",
-        "notes": "PR #48 fixes 4/5 Indonesian literals: Kebarua\u2192novelty, Viral\u2192viral, Echo\u2192echo, Maks Teks\u2192maxText. \"Aktif\" badge remains hardcoded: `{{ selectedPlatforms.length }} / {{ Object.keys(platforms).length }} Aktif`. Must add locale key (e.g., common.active) and use $t(). Card IN_PROGRESS.",
+        "notes": "PR #48 fixes 4/5 Indonesian literals: Kebarua→novelty, Viral→viral, Echo→echo, Maks Teks→maxText. \"Aktif\" badge remains hardcoded: `{{ selectedPlatforms.length }} / {{ Object.keys(platforms).length }} Aktif`. Must add locale key (e.g., common.active) and use $t(). Card IN_PROGRESS.",
         "phase_ref": ""
       },
       {
@@ -105,7 +105,7 @@
         "severity": "MAJOR",
         "finding_ref": "F-007, F-008",
         "assignee": "JULES",
-        "notes": "UPDATED 2026-10-28 21:30: Step4Report.vue ~25 hardcoded English strings (Prediction Report, Sections, Elapsed, Tools, Simulation, Requirement, sections planned, content ready, Waiting for Report Agent..., section titles). Step5Interaction.vue: duplicate \"Prediction Report\"/\"Waiting for Report Agent...\" + Chinese prompt template with \"\u63d0\u95ee\u8005\"/\"\u4f60\" (lines 742, 744). Keys exist as step4.* \u2014 use $t('step4.*') in both. Card IN_PROGRESS. CONFIRMED 2026-10-29 re-audit.",
+        "notes": "UPDATED 2026-10-28 21:30: Step4Report.vue ~25 hardcoded English strings (Prediction Report, Sections, Elapsed, Tools, Simulation, Requirement, sections planned, content ready, Waiting for Report Agent..., section titles). Step5Interaction.vue: duplicate \"Prediction Report\"/\"Waiting for Report Agent...\" + Chinese prompt template with \"提问者\"/\"你\" (lines 742, 744). Keys exist as step4.* — use $t('step4.*') in both. Card IN_PROGRESS. CONFIRMED 2026-10-29 re-audit.",
         "phase_ref": ""
       },
       {
@@ -115,7 +115,7 @@
         "severity": null,
         "finding_ref": null,
         "assignee": "HERMES",
-        "notes": "Audit 2026-11-09 21:44 WIB complete. Jules 3767768341149407718 STABLE. PR #48 OPEN. Locales parity 100% (905 root, 908 frontend). Build PASS (Vite 7.3.7 in 6.70s). Hardcoded remaining: 15 file Vue, 827 baris CJK. Verdict CONDITIONAL. Report delivered to Discord.",
+        "notes": "Audit 2026-11-13 18:44 WIB recheck. Jules sessionCompleted. PR #48 OPEN — orphaned, namespace process.*/platform.* missing. Locales parity 100% (905 root/908 frontend). Build PASS (Vite 7.3.7, 763 kB in 5.91s). Hardcoded: 221 baris di 12 file Vue. Repo main fast-forward PR #68 (bump axios 1.21.1) — tidak ada perubahan i18n. F-006 BLOCKER ESCALATE. Verdict CONDITIONAL. Delivery: SILENT.",
         "phase_ref": ""
       },
       {
@@ -130,7 +130,7 @@
       },
       {
         "card_id": "c-mirofish-cron-02",
-        "title": "Phase-Gate Validation V1\u2013V8 hasil lokalisasi i18n Mirofish Enterprise",
+        "title": "Phase-Gate Validation V1–V8 hasil lokalisasi i18n Mirofish Enterprise",
         "status": "VALIDATED",
         "severity": "MAJOR",
         "finding_ref": "F-001",
@@ -161,7 +161,7 @@
     ],
     "coordination": [],
     "created_at": "2026-10-16T15:10:40.584640+00:00",
-    "updated_at": "2026-11-09T14:44:39.208864+00:00"
+    "updated_at": "2026-11-13T11:44:00.000000+00:00"
   },
-  "updated_at": "2026-11-09T16:24:00.000000+00:00"
+  "updated_at": "2026-11-13T11:44:00.000000+00:00"
 }
