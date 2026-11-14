@@ -1,0 +1,450 @@
+# PlatformSpec — TikTok
+# Schema: SPEC_SCHEMA.md v1.0
+#
+# Source basis (documented, public):
+#  - "Algo 101" (TikTok newsroom, published): FYP objective
+#      score = P(like)*V_like + P(comment)*V_comment
+#            + E[playtime]*V_playtime + P(play)*V_play
+#    Watch time (E[playtime]) is the dominant term; completion of LONG
+#    videos is disproportionately rewarded; rewatches boost ranking.
+#  - Eligibility gates run BEFORE ranking (hard admission layer, not score):
+#      * misinformation pending fact-check -> not eligible
+#      * videos receiving only <3s views (spam/abuse filter) -> not eligible
+#      * unlabeled AI-generated content -> gated/label required
+#  - Fatigue controls: repeated exposure to the same author or same hashtag
+#    is suppressed within a session window.
+#  - Cold start: the first ~50 impressions carry outsized weight in learning
+#    user preferences -> sequential (round/event) simulation required.
+#  - Live requires >=1000 followers; Stories expire in 24h and never enter FYP.
+
+spec_version: "1.0"
+platform_id: tiktok
+display_name: TikTok
+archetype: public_ranked_feed
+privacy_tier: public
+delivery_mode: pull
+graph_visibility: public
+temporal_model: event_driven
+encryption: none
+timezone_anchor: UTC
+
+entities:
+  - entity_type: Creator
+    primary_key: [user_id]
+    attributes:
+      user_id: {type: string, unique: true}
+      username: {type: string, unique: true, max_length: 24}
+      follower_count: {type: integer, min: 0, default: 0}
+      following_count: {type: integer, min: 0, default: 0}
+      likes_received_total: {type: integer, min: 0, default: 0}
+      is_verified: {type: boolean, default: false}
+      is_private: {type: boolean, default: false}
+      can_live: {type: boolean, default: false}  # derived: follower_count >= 1000
+      interests: {type: array, items: {type: string}, default: []}
+
+  - entity_type: Video
+    primary_key: [video_id]
+    attributes:
+      video_id: {type: string, unique: true}
+      author_id: {type: string, ref: Creator.user_id}
+      media_kind: {type: enum, enum: [video, photo_mode]}
+      duration_seconds: {type: integer, min: 3, max: 1800, nullable: true}  # null for photo_mode
+      caption: {type: string, max_length: 2200}
+      hashtags: {type: array, items: {type: string}, default: []}
+      music_id: {type: string, nullable: true}
+      is_ai_generated: {type: boolean, default: false}
+      ai_label_applied: {type: boolean, default: false}
+      fact_check_status: {type: enum, enum: [clear, pending, flagged_misinfo], default: clear}
+      low_view_flag: {type: boolean, default: false}  # only <3s views observed
+      duet_of_video_id: {type: string, nullable: true, ref: Video.video_id}
+      stitch_of_video_id: {type: string, nullable: true, ref: Video.video_id}
+      created_at: {type: integer}
+      view_count: {type: integer, min: 0, default: 0}
+      like_count: {type: integer, min: 0, default: 0}
+      comment_count: {type: integer, min: 0, default: 0}
+      share_count: {type: integer, min: 0, default: 0}
+      total_playtime_seconds: {type: integer, min: 0, default: 0}
+      completion_events: {type: integer, min: 0, default: 0}
+      rewatch_events: {type: integer, min: 0, default: 0}
+      impression_count: {type: integer, min: 0, default: 0}
+      fyp_eligible: {type: boolean, default: true}
+
+  - entity_type: Live
+    primary_key: [live_id]
+    attributes:
+      live_id: {type: string, unique: true}
+      host_id: {type: string, ref: Creator.user_id}
+      started_at: {type: integer}
+      viewer_count_peak: {type: integer, min: 0, default: 0}
+      gift_count: {type: integer, min: 0, default: 0}
+      duration_seconds: {type: integer, min: 0, default: 0}
+
+  - entity_type: Story
+    primary_key: [story_id]
+    attributes:
+      story_id: {type: string, unique: true}
+      author_id: {type: string, ref: Creator.user_id}
+      media_ref: {type: string}
+      created_at: {type: integer}
+      expires_at: {type: integer}   # created_at + 86400
+      view_count: {type: integer, min: 0, default: 0}
+
+relations:
+  - relation_type: authored_video
+    from: Creator
+    to: Video
+    cardinality: one_to_many
+    semantics: authorship
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: follows
+    from: Creator
+    to: Creator
+    cardinality: many_to_many
+    semantics: directed_follow_graph
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: duet_of
+    from: Video
+    to: Video
+    cardinality: many_to_one
+    semantics: derivative_per_post_gate   # duet inherits source's admission gates + adds own
+    transitive: false
+    symmetric_effect: false
+    attributes: {requires_original_access: true}
+
+  - relation_type: stitch_of
+    from: Video
+    to: Video
+    cardinality: many_to_one
+    semantics: derivative_per_post_gate
+    transitive: false
+    symmetric_effect: false
+    attributes: {clip_duration_max_seconds: 60}
+
+  - relation_type: hosts_live
+    from: Creator
+    to: Live
+    cardinality: one_to_many
+    semantics: membership_with_threshold   # requires follower_count >= 1000
+    transitive: false
+    symmetric_effect: false
+    attributes: {min_followers: 1000, provenance: documented}
+
+  - relation_type: posts_story
+    from: Creator
+    to: Story
+    cardinality: one_to_many
+    semantics: visibility_gate   # 24h expiry; hard_exclusion from FYP retrieval
+    transitive: false
+    symmetric_effect: false
+    attributes: {ttl_seconds: 86400, fyp_eligible: false, provenance: documented}
+
+  - relation_type: comments_on
+    from: Creator
+    to: Video
+    cardinality: many_to_many
+    semantics: engagement_edge
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: not_interested_in
+    from: Creator
+    to: Video
+    cardinality: many_to_many
+    semantics: negative_feedback   # feeds negative_feedback signal + fatigue suppression
+    transitive: false
+    symmetric_effect: false
+
+actions:
+  - action_id: create_video
+    actor: Creator
+    target: null
+    verb: create
+    preconditions:
+      media_kind: video
+      duration_seconds_min: 3
+      duration_seconds_max: 1800
+      caption_max_length_chars: 2200
+      photo_mode_max_images: 35
+      is_ai_generated_requires_label: true
+    effects:
+      creates: Video
+      queues_moderation: true
+      feeds_scorer_signal: true
+    visibility: public_or_followers_per_account_setting
+    cost: 10
+
+  - action_id: watch_video
+    actor: Creator
+    target: Video
+    verb: consume
+    preconditions:
+      video_fyp_eligible: true          # hard admission layer, evaluated before ranking
+      gates_passed: [fact_check_clear, min_view_duration_3s, aigc_labeled_if_required]
+    effects:
+      increments: [Video.view_count, Video.impression_count]
+      updates: Video.total_playtime_seconds
+      feeds_scorer_signal: true         # attention_dwell + E[playtime] term
+    visibility: public
+    cost: 1
+
+  - action_id: like_video
+    actor: Creator
+    target: Video
+    verb: react
+    preconditions: {video_visible: true}
+    effects:
+      increments: [Video.like_count]
+      feeds_scorer_signal: true         # P(like) term
+    visibility: public
+    cost: 1
+
+  - action_id: comment_on_video
+    actor: Creator
+    target: Video
+    verb: react
+    preconditions:
+      video_visible: true
+      not_shadow_limited: true
+    effects:
+      increments: [Video.comment_count]
+      feeds_scorer_signal: true         # P(comment) term
+    visibility: public
+    cost: 2
+
+  - action_id: share_video
+    actor: Creator
+    target: Video
+    verb: amplify
+    preconditions: {video_visible: true}
+    effects:
+      increments: [Video.share_count]
+      feeds_scorer_signal: true         # shares_private + popularity_velocity
+    visibility: public
+    cost: 2
+
+  - action_id: rewatch_video
+    actor: Creator
+    target: Video
+    verb: consume
+    preconditions: {video_visible: true}
+    effects:
+      increments: [Video.rewatch_events]
+      updates: Video.total_playtime_seconds
+      feeds_scorer_signal: true         # rewatch boost per Algo 101
+    visibility: public
+    cost: 1
+
+  - action_id: duet_video
+    actor: Creator
+    target: Video
+    verb: create
+    preconditions:
+      original_video_accessible: true
+      duet_enabled_on_original: true
+      media_kind: video
+      duration_seconds_max: 1800
+    effects:
+      creates: Video                  # sets duet_of_video_id; per-post admission gates apply
+      queues_moderation: true
+      feeds_scorer_signal: true
+    visibility: public
+    cost: 10
+
+  - action_id: stitch_video
+    actor: Creator
+    target: Video
+    verb: create
+    preconditions:
+      original_video_accessible: true
+      stitch_enabled_on_original: true
+      clip_duration_max_seconds: 60
+      media_kind: video
+    effects:
+      creates: Video                  # sets stitch_of_video_id; per-post admission gates apply
+      queues_moderation: true
+      feeds_scorer_signal: true
+    visibility: public
+    cost: 10
+
+  - action_id: start_live
+    actor: Creator
+    target: null
+    verb: create
+    preconditions:
+      follower_count_min: 1000        # documented gate
+      account_in_good_standing: true
+    effects:
+      creates: Live
+      queues_moderation: true
+    visibility: public
+    cost: 5
+
+  - action_id: post_story
+    actor: Creator
+    target: null
+    verb: create
+    preconditions:
+      media_present: true
+      ttl_seconds: 86400
+    effects:
+      creates: Story                  # hard_exclusion from FYP by relation semantics
+      queues_moderation: true
+    visibility: followers_only_24h
+    cost: 3
+
+  - action_id: follow_creator
+    actor: Creator
+    target: Creator
+    verb: relational
+    preconditions: {target_not_private_or_follow_approved: true}
+    effects:
+      creates: follows
+      feeds_scorer_signal: true       # author_affinity edge weight
+    visibility: public
+    cost: 1
+
+  - action_id: mark_not_interested
+    actor: Creator
+    target: Video
+    verb: react
+    preconditions: {video_visible: true}
+    effects:
+      creates: not_interested_in
+      feeds_scorer_signal: true       # negative_feedback signal
+    visibility: private
+    cost: 1
+
+feed:
+  kind: ranked
+  delivery_note: pull — FYP is materialized per-user at read time; no push fan-out.
+  temporal_note: event_driven — impressions arrive sequentially; cold-start
+    learning requires ordered simulation (first ~50 impressions per user).
+
+  # Hard admission layer — evaluated BEFORE scoring. Failure => ineligible,
+  # never reaches the ranker. Modeled as gates, not score penalties.
+  admission_gates:
+    - {gate: fact_check_clear, rule: "fact_check_status != pending AND != flagged_misinfo", provenance: documented}
+    - {gate: min_view_duration, rule: "views averaging <3s are filtered as spam/abuse signal", provenance: documented}
+    - {gate: aigc_label, rule: "is_ai_generated == true requires ai_label_applied == true", provenance: documented}
+    - {gate: story_exclusion, rule: "Story entities are never FYP candidates (24h ttl)", provenance: documented}
+    - {gate: creator_standing, rule: "account/community-guideline strikes remove eligibility", provenance: inferred}
+
+  # Cold-start: first impressions dominate preference learning.
+  cold_start:
+    impression_window: 50             # documented ~first 50 impressions
+    weight_multiplier: 3.0            # inferred magnitude; mark as prior
+    requires_sequential_simulation: true
+
+  # Fatigue / diversity controls.
+  fatigue:
+    same_author_max_in_window: 2      # inferred
+    same_author_window_items: 20      # inferred
+    same_hashtag_max_in_window: 2     # inferred
+    same_hashtag_window_items: 20     # inferred
+    decay_half_life_items: 50         # inferred
+
+  retrieval:
+    - source: candidate_pool
+      quota_ratio: 1.0                # TikTok discloses ~200-candidate retrieval then rank; inferred size
+      provenance: inferred
+      notes: "candidate generation precedes the 4-term objective scorer; pool composition proprietary"
+      provenance: inferred
+
+  signal_schema:
+    # Maps the 10 canonical families onto Algo 101. Signals TikTok does not
+    # expose externally are omitted per observation_mask convention.
+    - {name: attention_dwell, type: float_seconds, weight: 1.0, provenance: documented, notes: "E[playtime] — dominant term of Algo 101 objective"}
+    - {name: quality_satisfaction, type: float_ratio, weight: 1.0, provenance: documented, notes: "completion_events/duration; long-video completion weighted disproportionately; rewatch_events add boost"}
+    - {name: engagement_count, type: integer, weight: 1.0, provenance: documented, notes: "P(like) and P(comment) probability terms"}
+    - {name: shares_private, type: integer, weight: 0.5, provenance: documented, notes: "share_count feeds discovery amplification"}
+    - {name: author_affinity, type: float, weight: 0.5, provenance: inferred, notes: "follow + repeat-author watch history; suppressed by same-author fatigue"}
+    - {name: topic_graph, type: float, weight: 0.5, provenance: inferred, notes: "hashtag/music co-occurrence interest graph"}
+    - {name: negative_feedback, type: float, weight: 0.8, provenance: inferred, notes: "not_interested, hide, <3s-view signals hard-downrank"}
+    - {name: popularity_velocity, type: float, weight: 0.5, provenance: inferred, notes: "view/like velocity early in lifecycle"}
+    - {name: content_type_prior, type: enum, weight: 0.3, provenance: inferred, notes: "video vs photo_mode priors"}
+    - {name: recency, type: float, weight: 0.2, provenance: inferred, notes: "freshness boost; weak vs watch-time terms"}
+
+  scorer:
+    plugin: custom:tiktok_fyp
+    params:
+      # Algo 101 objective (documented functional form).
+      objective: "P(like)*V_like + P(comment)*V_comment + E[playtime]*V_playtime + P(play)*V_play"
+      V_like: 1.0
+      V_comment: 1.2                  # comments weighted above likes per Algo 101 spirit; magnitude inferred
+      V_playtime: 2.0                 # dominant term; watch time weighted highest
+      V_play: 0.5
+      watch_time_dominance: 0.6       # share of effective score mass attributed to dwell/quality terms
+      long_video_completion_bonus: 1.5  # completion of long videos disproportionately rewarded
+      long_video_threshold_seconds: 60
+      rewatch_multiplier: 1.3          # each rewatch_events increments boosts score
+      photo_mode_dwell_discount: 0.8   # inferred: no playtime term for photo carousels
+    provenance: documented
+
+  params:
+    candidate_pool_size: 200           # inferred
+    rerank_pool_size: 50               # inferred
+    fyp_eligible_media: [video, photo_mode]
+    duet_stitch_inherit_source_gates: true
+
+content_constraints:
+  max_length_chars: 2200              # caption ~2200 chars (chars, not bytes)
+  length_unit: chars
+  media_policy: >-
+    Video posts: 3s-30min duration. Photo mode: up to 35 images per post.
+    Duet/Stitch are video-only derivatives with per-post admission gates.
+    Stories: single media item, 24h TTL, excluded from FYP.
+    Live: streaming session gated on follower_count >= 1000.
+  max_media_per_post: 35              # photo mode image cap
+  video_duration_min_seconds: 3
+  video_duration_max_seconds: 1800
+  stitch_clip_max_seconds: 60
+  story_ttl_seconds: 86400
+  live_min_followers: 1000
+  edit_window_seconds: null           # caption edits unrestricted-ish; inferred null
+  caption_unit_note: "2200-char cap is character-based (UTF-8 chars)"
+
+visibility_model:
+  default_scope: broadcast
+  rules:
+    - {scope: public_fyp, predicate: "account public + admission gates pass", grants: null}
+    - {scope: followers_only, predicate: "private account or restricted content", grants: follows}
+    - {scope: story_24h, predicate: "Story entity; expires at created_at + 86400", grants: follows}
+    - {scope: duet_stitch_source, predicate: "derivative requires access to original video", grants: video_accessible}
+
+moderation:
+  metadata_only: false                # public platform; content inspectable
+  tiers:
+    - {tier: 0, name: admission_gates, action: ineligible, note: "misinfo pending fact-check, <3s-view spam, unlabeled AIGC — excluded before ranking"}
+    - {tier: 1, name: label_only, action: label_only, note: "AIGC label, branded content, graphic-media labels"}
+    - {tier: 2, name: downrank, action: downrank, note: "borderline content pushed below median FYP position"}
+    - {tier: 3, name: remove_and_sanction, action: remove_and_sanction, note: "guideline violations; strikes reduce creator_standing gate"}
+    - {tier: 4, name: live_intervention, action: remove_and_sanction, note: "Live-specific violations; live streams are heavily moderated"}
+  enforcement_points: [create_video, watch_video, duet_video, stitch_video, start_live, post_story]
+  queues:
+    - fact_check_queue: "misinformation candidates pending review -> admission_gate fact_check_clear"
+    - aigc_detection_queue: "unlabeled AI content -> ai_label_applied or tier-3 removal"
+
+demographics:
+  mau: "~1.6B (2024 public reporting; figure approximate, provenance: prior)"
+  notes: >-
+    ~33% of US adults use TikTok; ~62% of US adults aged 18-29.
+    Strong skew to younger demographics globally; audience composition
+    is a first-class input to per-user candidate pools.
+
+data_availability:
+  tier: 4                            # near-blind: Research API is gated,
+                                     # topic-specific datasets only; no
+                                     # per-video impression-level data
+  sources:
+    - "TikTok Research API (academic approval required)"
+    - "Topic-specific public datasets (e.g., research releases)"
+    - "Commercial third-party scrapers/estimates (unofficial)"
+  observability_notes: >-
+    FYP composition and per-user impressions are NOT externally observable.
+    Only public counters (views/likes/comments/shares) and aggregate
+    reporting are available; scorer internals beyond Algo 101's published
+    functional form are proprietary.

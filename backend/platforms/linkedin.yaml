@@ -1,0 +1,711 @@
+# PlatformSpec: LinkedIn
+# Conforms to docs/SPEC_SCHEMA.md v1.0
+#
+# Key platform facts encoded here:
+# - Professional graph: Economic Graph ~270B edges (members x skills/industries/
+#   titles/companies). Ranking explicitly mixes professional-graph affinity with
+#   engagement signals.
+# - Two-pass funnel: high-recall retrieval (in-network + second-degree/viral +
+#   candidate pool) -> multi-objective ranking.
+# - Multi-objective outcomes: passive consumption (feed value), active
+#   engagement (reactions/comments/reposts), downstream outcomes (profile views,
+#   InMail replies, hires/leads), and creator-side diminishing returns
+#   (over-surfaced creators get downweighted).
+# - Generative Recommender (GR): causal-attention transformer over >1000
+#   member interactions; replaces most hand-crafted ranking features.
+# - In-network delivers >70% of impressions; stranger-viral content enters via
+#   second-degree graph paths.
+# - Reaction taxonomy: LIKE / PRAISE / EMPATHY / INTEREST / APPRECIATION /
+#   ENTERTAINMENT (discrete enum, not binary).
+# - Authenticity moderation: engagement pods, invitation velocity, automation
+#   timing.
+# - Limits: post 3000 chars, article ~125k chars, group comment 1250 chars,
+#   connections capped at 30k.
+# - Demographics: ~1.2B members. Data availability tier 4 (near-blind; only
+#   EgoNet-UIUC 2013 public dataset).
+
+spec_version: "1.0"
+platform_id: linkedin
+display_name: "LinkedIn"
+archetype: public_ranked_feed
+privacy_tier: semi_public
+delivery_mode: pull
+graph_visibility: private
+temporal_model: event_driven
+encryption: none
+timezone_anchor: UTC
+
+# ---------------------------------------------------------------------------
+# Entities
+# ---------------------------------------------------------------------------
+entities:
+  - entity_type: Member
+    primary_key: [member_id]
+    attributes:
+      member_id:
+        type: string
+        unique: true
+        pattern: "^[A-Za-z0-9_-]{1,64}$"
+      headline:
+        type: string
+        max_length: 220
+        nullable: true
+      about_text:
+        type: string
+        max_length: 2600
+        nullable: true
+      skills:
+        type: array
+        items: {type: string, max_length: 100}
+        default: []
+      industry:
+        type: enum
+        enum: [technology, finance, healthcare, education, manufacturing,
+               retail, consulting, media, government, nonprofit, other]
+        nullable: true
+      job_title:
+        type: string
+        max_length: 150
+        nullable: true
+      company:
+        type: string
+        max_length: 150
+        nullable: true
+      seniority:
+        type: enum
+        enum: [entry, mid, senior, manager, director, vp, c_level, owner]
+        nullable: true
+      connection_count:
+        type: integer
+        min: 0
+        max: 30000
+        default: 0
+      is_creator:
+        type: boolean
+        default: false
+      is_premium:
+        type: boolean
+        default: false
+      created_at:
+        type: string
+        nullable: true
+
+  - entity_type: Company
+    primary_key: [company_id]
+    attributes:
+      company_id: {type: string, unique: true}
+      name: {type: string, max_length: 100}
+      industry: {type: string, max_length: 50, nullable: true}
+      follower_count: {type: integer, min: 0, default: 0}
+
+  - entity_type: Post
+    primary_key: [post_id]
+    attributes:
+      post_id:
+        type: string
+        unique: true
+      author:
+        type: string
+        ref: Member.member_id
+      content:
+        type: string
+        max_length: 3000
+      visibility_scope:
+        type: enum
+        enum: [connections, public, group_members]
+        default: connections
+      post_type:
+        type: enum
+        enum: [text, image, video, article_link, document, poll, job,
+               celebration, live]
+        default: text
+      group_id:
+        type: string
+        nullable: true
+        ref: Group.group_id
+      created_at:
+        type: string
+      is_sponsored:
+        type: boolean
+        default: false
+
+  - entity_type: Article
+    primary_key: [article_id]
+    attributes:
+      article_id:
+        type: string
+        unique: true
+      author:
+        type: string
+        ref: Member.member_id
+      title:
+        type: string
+        max_length: 150
+      body:
+        type: string
+        max_length: 125000
+      visibility_scope:
+        type: enum
+        enum: [connections, public]
+        default: connections
+      created_at:
+        type: string
+
+  - entity_type: Comment
+    primary_key: [comment_id]
+    attributes:
+      comment_id:
+        type: string
+        unique: true
+      post_id:
+        type: string
+        ref: Post.post_id
+        nullable: true
+      article_id:
+        type: string
+        ref: Article.article_id
+        nullable: true
+      author:
+        type: string
+        ref: Member.member_id
+      text:
+        type: string
+        max_length: 1250
+      parent_comment_id:
+        type: string
+        nullable: true
+        ref: Comment.comment_id
+      created_at:
+        type: string
+
+  - entity_type: Reaction
+    primary_key: [reaction_id]
+    attributes:
+      reaction_id:
+        type: string
+        unique: true
+      member_id:
+        type: string
+        ref: Member.member_id
+      post_id:
+        type: string
+        nullable: true
+        ref: Post.post_id
+      article_id:
+        type: string
+        nullable: true
+        ref: Article.article_id
+      comment_id:
+        type: string
+        nullable: true
+        ref: Comment.comment_id
+      type:
+        type: enum
+        enum: [LIKE, PRAISE, EMPATHY, INTEREST, APPRECIATION, ENTERTAINMENT]
+      created_at:
+        type: string
+
+  - entity_type: Repost
+    primary_key: [repost_id]
+    attributes:
+      repost_id:
+        type: string
+        unique: true
+      member_id:
+        type: string
+        ref: Member.member_id
+      post_id:
+        type: string
+        ref: Post.post_id
+      repost_kind:
+        type: enum
+        enum: [simple, with_insight]
+        default: simple
+      insight_text:
+        type: string
+        max_length: 3000
+        nullable: true
+      created_at:
+        type: string
+
+  - entity_type: Group
+    primary_key: [group_id]
+    attributes:
+      group_id:
+        type: string
+        unique: true
+      name: {type: string, max_length: 100}
+      member_count: {type: integer, min: 0, default: 0}
+
+  - entity_type: GroupMembership
+    primary_key: [member_id, group_id]
+    attributes:
+      member_id: {type: string, ref: Member.member_id}
+      group_id: {type: string, ref: Group.group_id}
+      role:
+        type: enum
+        enum: [member, moderator, admin]
+        default: member
+
+  - entity_type: Invitation
+    primary_key: [invitation_id]
+    attributes:
+      invitation_id:
+        type: string
+        unique: true
+      sender:
+        type: string
+        ref: Member.member_id
+      recipient_email_hash:
+        type: string
+        pattern: "^[a-f0-9]{64}$"
+      status:
+        type: enum
+        enum: [pending, accepted, ignored, withdrawn]
+        default: pending
+      sent_at:
+        type: string
+      accepted_at:
+        type: string
+        nullable: true
+
+  - entity_type: Follow
+    primary_key: [follower_id, followee_id]
+    attributes:
+      follower_id: {type: string, ref: Member.member_id}
+      followee_id: {type: string, ref: Member.member_id}
+      created_at: {type: string}
+
+  - entity_type: DwellSignal
+    primary_key: [signal_id]
+    attributes:
+      signal_id:
+        type: string
+        unique: true
+      member_id:
+        type: string
+        ref: Member.member_id
+      post_id:
+        type: string
+        nullable: true
+        ref: Post.post_id
+      article_id:
+        type: string
+        nullable: true
+        ref: Article.article_id
+      dwell_ms:
+        type: integer
+        min: 0
+      skip:
+        type: boolean
+        default: false
+      seen_at:
+        type: string
+
+# ---------------------------------------------------------------------------
+# Relations
+# ---------------------------------------------------------------------------
+relations:
+  - relation_type: connection
+    from: Member
+    to: Member
+    cardinality: many_to_many
+    semantics: mutual_connection        # symmetric connection grant; cap 30000
+    transitive: true
+    symmetric_effect: true
+    attributes:
+      max_degree: 30000
+
+  - relation_type: follow
+    from: Member
+    to: Member
+    cardinality: many_to_many
+    semantics: directed_follow_graph      # one-way; enables stranger content
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: authorship
+    from: Member
+    to: Post
+    cardinality: one_to_many
+    semantics: authorship
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: article_authorship
+    from: Member
+    to: Article
+    cardinality: one_to_many
+    semantics: authorship
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: commenting
+    from: Comment
+    to: Post
+    cardinality: many_to_one
+    semantics: visibility_gate           # comment inherits post scope
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: group_membership
+    from: Member
+    to: Group
+    cardinality: many_to_many
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+    attributes:
+      edge_entity: GroupMembership
+
+  - relation_type: group_post
+    from: Post
+    to: Group
+    cardinality: many_to_one
+    semantics: visibility_gate
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: invitation
+    from: Member
+    to: Member
+    cardinality: one_to_many
+    semantics: directed_invite           # invitation velocity is moderated
+    transitive: false
+    symmetric_effect: false
+    attributes:
+      edge_entity: Invitation
+
+# ---------------------------------------------------------------------------
+# Actions  (verb groups: consume | react | amplify | create | relational)
+# ---------------------------------------------------------------------------
+actions:
+  - action_id: fetch_feed
+    actor: Member
+    target: [Post, Article]
+    verb: consume
+    preconditions:
+      requires_session: true
+    effects:
+      creates: {entity: DwellSignal, fields: {dwell_ms: 0, skip: false}}
+      feeds_scorer_signal: true
+    visibility: connections
+    cost: 1
+
+  - action_id: dwell_on_item
+    actor: Member
+    target: [Post, Article]
+    verb: consume
+    preconditions:
+      requires_session: true
+      item_in_feed: true
+    effects:
+      updates: {DwellSignal.dwell_ms: incremental}
+      feeds_scorer_signal: true           # attention_dwell is a major signal
+    visibility: private
+    cost: 0
+
+  - action_id: react
+    actor: Member
+    target: [Post, Article, Comment]
+    verb: react
+    preconditions:
+      item_visible_to_actor: true
+      reaction_enum: [LIKE, PRAISE, EMPATHY, INTEREST, APPRECIATION,
+                      ENTERTAINMENT]
+      not_self_reaction: true
+    effects:
+      creates: {entity: Reaction}
+      queues_moderation: true            # authenticity checks on reaction bursts
+      feeds_scorer_signal: true
+    visibility: connections
+    cost: 1
+
+  - action_id: comment
+    actor: Member
+    target: [Post, Article]
+    verb: create
+    preconditions:
+      item_visible_to_actor: true
+      text_length_chars: 1250
+      group_comment_requires_membership: true
+    effects:
+      creates: {entity: Comment}
+      queues_moderation: true
+      feeds_scorer_signal: true
+    visibility: inherits_target           # connections / public / group_members
+    cost: 2
+
+  - action_id: repost
+    actor: Member
+    target: Post
+    verb: amplify
+    preconditions:
+      item_visible_to_actor: true
+      not_already_reposted: true
+      insight_text_length_chars: 3000
+    effects:
+      creates: {entity: Repost}
+      feeds_scorer_signal: true
+    visibility: connections
+    cost: 2
+
+  - action_id: publish_post
+    actor: Member
+    target: null
+    verb: create
+    preconditions:
+      content_length_chars: 3000
+      connection_count_lt: 30000
+    effects:
+      creates: {entity: Post}
+      queues_moderation: true
+      feeds_scorer_signal: true
+    visibility: connections               # default; public if scope set
+    cost: 5
+
+  - action_id: publish_article
+    actor: Member
+    target: null
+    verb: create
+    preconditions:
+      body_length_chars: 125000
+      title_length_chars: 150
+    effects:
+      creates: {entity: Article}
+      queues_moderation: true
+      feeds_scorer_signal: true
+    visibility: connections
+    cost: 10
+
+  - action_id: send_invite
+    actor: Member
+    target: Member
+    verb: relational
+    preconditions:
+      connection_count_lt: 30000
+      not_already_connected: true
+      not_already_pending: true
+    effects:
+      creates: {entity: Invitation, fields: {status: pending}}
+      queues_moderation: true            # invitation velocity checks
+      feeds_scorer_signal: false
+    visibility: private
+    cost: 1
+
+  - action_id: accept_invite
+    actor: Member
+    target: Invitation
+    verb: relational
+    preconditions:
+      invitation_status: pending
+    effects:
+      creates: {relation: connection, symmetric: true}
+      updates: {Invitation.status: accepted}
+    visibility: mutuals
+    cost: 1
+
+  - action_id: follow_member
+    actor: Member
+    target: Member
+    verb: relational
+    preconditions:
+      not_already_following: true
+      target_allows_follow: true
+    effects:
+      creates: {relation: follow}
+      feeds_scorer_signal: true           # second-degree/stranger-viral path
+    visibility: public
+    cost: 1
+
+  - action_id: join_group
+    actor: Member
+    target: Group
+    verb: relational
+    preconditions:
+      not_already_member: true
+    effects:
+      creates: {entity: GroupMembership, fields: {role: member}}
+      updates: {Group.member_count: +1}
+      feeds_scorer_signal: false
+    visibility: group_members
+    cost: 1
+
+# ---------------------------------------------------------------------------
+# Feed — two-pass funnel: high-recall retrieval -> multi-objective ranking
+# ---------------------------------------------------------------------------
+feed:
+  kind: ranked
+
+  retrieval:
+    # High-recall pass. In-network dominates (>70% of impressions per
+    # documented product behavior); second-degree/viral supplies stranger
+    # content; candidate_pool is the Generative Recommender's wide net.
+    - source: in_network
+      quota_ratio: 0.70        # documented: >70% of impressions in-network
+      provenance: inferred
+      notes: "1st-degree connections + followed creators' recent posts"
+    - source: candidate_pool
+      quota_ratio: 0.20        # prior: second-degree graph paths, lookalike
+      provenance: inferred
+      notes: "GR transformer candidates: >1000-interaction sequence model"
+    - source: trending
+      quota_ratio: 0.10        # prior: viral breakout content by engagement velocity
+      provenance: inferred
+
+  signal_schema:
+    # Canonical 10 signal families + LinkedIn-specific customs.
+    # observation_mask: LinkedIn does not expose some families publicly;
+    # all listed here are inferred from documented ranking behavior.
+    - {name: recency,                  type: float, weight: 0.15, provenance: inferred}
+    - {name: engagement_count,         type: float, weight: 0.20, provenance: inferred}
+    - {name: attention_dwell,          type: float, weight: 0.25, provenance: documented}
+    - {name: shares_private,           type: float, weight: 0.10, provenance: inferred}
+    - {name: author_affinity,          type: float, weight: 0.15, provenance: documented}
+    - {name: topic_graph,              type: float, weight: 0.10, provenance: documented}
+    - {name: negative_feedback,        type: float, weight: -0.15, provenance: inferred}
+    - {name: popularity_velocity,      type: float, weight: 0.10, provenance: inferred}
+    - {name: content_type_prior,       type: float, weight: 0.05, provenance: prior}
+    - {name: quality_satisfaction,     type: float, weight: 0.10, provenance: inferred}
+    # Customs
+    - {name: custom_professional_graph_affinity,
+       type: float, weight: 0.30, provenance: documented,
+       notes: "skills/industry/headline/company match via Economic Graph (~270B edges)"}
+    - {name: custom_skip_probability,
+       type: float, weight: -0.20, provenance: inferred,
+       notes: "P(skip) from DwellSignal.skip; strong negative ranker input"}
+    - {name: custom_reaction_type_prior,
+       type: float, weight: 0.10, provenance: inferred,
+       notes: "PRAISE/EMPATHY/INTEREST weighted above LIKE; ENTERTAINMENT lower for professional feed"}
+    - {name: custom_creator_diminishing_returns,
+       type: float, weight: -0.10, provenance: inferred,
+       notes: "multi-objective: over-exposed creators downweighted to preserve feed diversity"}
+    - {name: custom_downstream_outcome_potential,
+       type: float, weight: 0.05, provenance: prior,
+       notes: "profile-view / InMail-reply / hire-lead propensity; long-horizon objective"}
+
+  scorer:
+    plugin: custom
+    params:
+      funnel:
+        retrieval_pool_size: 500      # prior: high-recall first pass
+        rank_cutoff: 25               # prior: items materialized per pull
+      ranking_model:
+        architecture: causal_attention_transformer  # Generative Recommender
+        sequence_length: 1000         # documented: >1000 interactions
+        multi_objective: true         # consumption + engagement + downstream + creator fairness
+      weights:
+        w_professional_graph: 0.30    # provenance: documented
+        w_dwell: 0.25                  # provenance: documented
+        w_skip_penalty: -0.20          # provenance: inferred
+        w_author_affinity: 0.15        # provenance: documented
+        w_engagement_count: 0.20       # provenance: inferred
+        w_reaction_type_prior: 0.10    # provenance: inferred
+        w_creator_diminishing: -0.10   # provenance: inferred
+        w_downstream_outcome: 0.05     # provenance: prior
+      diversity:
+        max_consecutive_same_author: 2   # prior
+        creator_exposure_cap_7d: 3       # prior: diminishing-returns guardrail
+
+  params:
+    in_network_impression_share_target: 0.70   # documented
+    stranger_viral_via_second_degree: true     # documented
+    pull_interval_seconds: 300                  # prior
+    sponsored_slot_position: top                # prior: ads precede organic
+
+# ---------------------------------------------------------------------------
+# Content constraints (hard limits at action-precondition time)
+# ---------------------------------------------------------------------------
+content_constraints:
+  max_length_chars: 3000          # post text; articles governed separately (125000)
+  length_unit: chars              # unicode code points; LinkedIn counts characters
+  media_policy: >-
+    Images, video, documents, polls, links, and live events allowed.
+    Articles are long-form (max ~125k chars) published via Article entity.
+  max_media_per_post: 20          # prior: multi-image carousel cap
+  edit_window_seconds: null       # posts editable indefinitely; comments within window
+  comment_max_length_chars: 1250  # group-comment limit per spec
+  article_max_length_chars: 125000
+  max_connections: 30000
+
+# ---------------------------------------------------------------------------
+# Privacy / visibility model
+# ---------------------------------------------------------------------------
+visibility_model:
+  default_scope: mutuals           # posts default to connections-only
+  rules:
+    - scope: connections_only
+      predicate: "author's 1st-degree connections"
+      grants: connection
+    - scope: public
+      predicate: "any LinkedIn member or logged-out viewer"
+      grants: broadcast
+    - scope: group_members
+      predicate: "members of the target group"
+      grants: group_membership
+    - scope: followers_only
+      predicate: "members following the author (incl. non-connections)"
+      grants: follow
+    - scope: conversation
+      predicate: "1:1 messaging; never enters feed"
+      grants: none
+
+# ---------------------------------------------------------------------------
+# Moderation
+# ---------------------------------------------------------------------------
+moderation:
+  tiers:
+    - tier: 0
+      name: allowed
+      action: allow
+    - tier: 1
+      name: sensitive_topic_label
+      action: label_only
+    - tier: 2
+      name: reduced_distribution
+      action: downrank
+    - tier: 3
+      name: authenticity_violation
+      action: remove_and_sanction
+    - tier: 4
+      name: illegal_or_harmful
+      action: remove_and_sanction
+
+  enforcement_points:
+    - react
+    - comment
+    - repost
+    - publish_post
+    - publish_article
+    - send_invite
+
+  metadata_only: false
+
+  authenticity_moderation:
+    # Documented integrity systems: engagement pods (coordinated inauthentic
+    # engagement rings), invitation velocity spikes, automation timing
+    # (bot-like posting/engagement cadence).
+    signals:
+      - engagement_pod_detection     # coordinated reaction/comment clusters
+      - invitation_velocity_limit    # >N invites/day triggers review
+      - automation_timing_analysis   # inhumanly regular action intervals
+      - connection_accept_rate_anomaly
+    action_on_detect: "reduce reach -> restrict distribution -> suspend"
+
+# ---------------------------------------------------------------------------
+# Demographics & data availability
+# ---------------------------------------------------------------------------
+demographics:
+  mau: "~1.2B registered members (not all monthly-active)"
+  notes: >-
+    Professional network; skew toward knowledge workers in tech, finance,
+    consulting, healthcare. Strong B2B and recruiting intent. Premium
+    subscribers monetized separately.
+
+data_availability:
+  tier: 4                     # near-blind: almost no public production datasets
+  sources:
+    - "EgoNet-UIUC (Carnegie Mellon / UIUC ego-network crawl, 2013) — stale,
+       the only public LinkedIn graph dataset; treat as prior only"
+    - "LinkedIn Marketing/Advertising API (aggregate, gated, no user-level feed)"
+    - "Economic Graph claims ~270B edges but no public edge-level data"

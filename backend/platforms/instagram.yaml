@@ -1,0 +1,588 @@
+# Instagram PlatformSpec v1.0
+# Sources: Meta disclosures (Apr-2025 "more photos shared via DM than
+# Stories/Feed" statement by Adam Mosseri), Meta transparency / newsroom
+# rankings documentation, Instagram Graph API docs (professional accounts
+# only; no follower graph, no DM access), third-party ranking analyses.
+# All numeric weights are provenance-marked; inferred/priors are NOT
+# production values.
+
+spec_version: "1.0"
+platform_id: instagram
+display_name: Instagram
+archetype: public_ranked_feed
+privacy_tier: semi_public
+delivery_mode: hybrid            # pull feeds + push DMs
+graph_visibility: private        # follower graph not publicly observable
+temporal_model: event_driven
+encryption: partial              # DMs use E2EE in transit; server-visible content
+timezone_anchor: UTC
+
+entities:
+  - entity_type: User
+    primary_key: [user_id]
+    attributes:
+      user_id: {type: string, pattern: "^[0-9]+$", unique: true}
+      username: {type: string, unique: true, max_length: 30}
+      account_type: {type: enum, enum: [personal, creator, business, professional]}
+      is_private: {type: boolean, default: false}
+      is_close_friend_of: {type: array, items: {type: string, ref: User.user_id}, nullable: true}
+      follower_count_bucket: {type: string, nullable: true}  # bucketed, not exact
+      account_status: {type: enum, enum: [active, suspended, deleted], default: active}
+
+  - entity_type: Post
+    primary_key: [post_id]
+    attributes:
+      post_id: {type: string, unique: true}
+      author_id: {type: string, ref: User.user_id}
+      media_type: {type: enum, enum: [photo, video, carousel, reel]}
+      caption: {type: string, max_length: 2200, nullable: true}
+      media_items: {type: array, items: {type: object}, max_length: 20}  # 10 via API, 20 in-app
+      visibility: {type: enum, enum: [public, followers, close_friends], default: public}
+      originality_flag: {type: enum, enum: [original, reposted, aggregator], nullable: true}
+      repost_count_30d: {type: integer, min: 0, default: 0}
+      created_at: {type: integer}  # unix seconds
+      expires_at: {type: integer, nullable: true}  # Stories only
+
+  - entity_type: Story
+    primary_key: [story_id]
+    attributes:
+      story_id: {type: string, unique: true}
+      author_id: {type: string, ref: User.user_id}
+      media_ref: {type: string}
+      visibility: {type: enum, enum: [public, close_friends]}
+      created_at: {type: integer}
+      expires_at: {type: integer}  # created_at + 86400
+      view_count: {type: integer, min: 0, default: 0}
+      reply_count: {type: integer, min: 0, default: 0}
+
+  - entity_type: Comment
+    primary_key: [comment_id]
+    attributes:
+      comment_id: {type: string, unique: true}
+      post_id: {type: string, ref: Post.post_id}
+      author_id: {type: string, ref: User.user_id}
+      parent_comment_id: {type: string, nullable: true, ref: Comment.comment_id}
+      text: {type: string, max_length: 2200}
+      like_count: {type: integer, min: 0, default: 0}
+      created_at: {type: integer}
+
+  - entity_type: DMConversation
+    primary_key: [conversation_id]
+    attributes:
+      conversation_id: {type: string, unique: true}
+      participant_ids: {type: array, items: {type: string, ref: User.user_id}}
+      is_group: {type: boolean, default: false}
+      last_message_at: {type: integer, nullable: true}
+      exchange_count: {type: integer, min: 0, default: 0}  # DM-exchange closeness signal
+
+  - entity_type: DMMessage
+    primary_key: [message_id]
+    attributes:
+      message_id: {type: string, unique: true}
+      conversation_id: {type: string, ref: DMConversation.conversation_id}
+      sender_id: {type: string, ref: User.user_id}
+      content_type: {type: enum, enum: [text, media, post_share, reel_share, story_share]}
+      shared_post_id: {type: string, nullable: true, ref: Post.post_id}
+      shared_reel_id: {type: string, nullable: true, ref: Post.post_id}
+      created_at: {type: integer}
+      is_encrypted: {type: boolean, default: true}
+
+  - entity_type: AudioTrack
+    primary_key: [audio_id]
+    attributes:
+      audio_id: {type: string, unique: true}
+      title: {type: string, max_length: 200}
+      artist: {type: string, nullable: true}
+      reuse_count: {type: integer, min: 0, default: 0}
+
+relations:
+  - relation_type: directed_follow
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: directed_follow_graph   # asymmetric; not publicly enumerable via API
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: close_friend
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: bidirectional_opt_in   # each user curates own close-friends list
+    transitive: false
+    symmetric_effect: false           # A may list B without B listing A
+
+  - relation_type: block
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: hard_exclusion          # removes content from both directions
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: authorship
+    from: User
+    to: Post
+    cardinality: one_to_many
+    semantics: ownership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: authorship
+    from: User
+    to: Story
+    cardinality: one_to_many
+    semantics: ownership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: membership
+    from: User
+    to: DMConversation
+    cardinality: many_to_many
+    semantics: membership             # private surface; server-side only
+    transitive: false
+    symmetric_effect: true
+
+  - relation_type: private_share
+    from: DMMessage
+    to: Post
+    cardinality: many_to_many
+    semantics: visibility_gate        # DM share grants visibility to recipients only;
+                                      # strongest recommendation signal per Mosseri Apr-2025
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: audio_usage
+    from: Post
+    to: AudioTrack
+    cardinality: many_to_many
+    semantics: membership             # Reels audio reuse drives discovery
+    transitive: false
+    symmetric_effect: false
+
+actions:
+  - action_id: scroll_feed
+    actor: User
+    target: null
+    verb: consume
+    preconditions: {account_status: active}
+    effects: {feeds_scorer_signal: true, increments: {feed_impressions: 1}}
+    visibility: self
+    cost: 1
+
+  - action_id: like_post
+    actor: User
+    target: Post
+    verb: react
+    preconditions: {media_type: [photo, video, carousel, reel]}
+    effects: {increments: {Post.like_count: 1}, feeds_scorer_signal: true}
+    visibility: followers
+    cost: 1
+
+  - action_id: save_post
+    actor: User
+    target: Post
+    verb: react
+    preconditions: {}
+    effects: {creates: {SavedPost: {}}, feeds_scorer_signal: true}  # high-intent signal
+    visibility: private
+    cost: 1
+
+  - action_id: comment_post
+    actor: User
+    target: Post
+    verb: react
+    preconditions: {comments_enabled: true}
+    effects: {creates: {Comment: {}}, increments: {Post.comment_count: 1},
+              feeds_scorer_signal: true}
+    visibility: public
+    cost: 2
+
+  - action_id: share_post_dm
+    actor: User
+    target: [Post, DMConversation]
+    verb: amplify
+    preconditions: {content_type: [photo, video, carousel, reel]}
+    effects: {creates: {DMMessage: {content_type: post_share}},
+              increments: {Post.private_share_count: 1},
+              feeds_scorer_signal: true}   # documented key ranking signal
+    visibility: conversation
+    cost: 2
+
+  - action_id: reshare_to_feed
+    actor: User
+    target: Post
+    verb: amplify
+    preconditions: {}
+    effects: {creates: {Post: {media_type: reel, originality_flag: reposted}},
+              feeds_scorer_signal: true}
+    visibility: public
+    cost: 3
+
+  - action_id: watch_reel
+    actor: User
+    target: Post
+    verb: consume
+    preconditions: {media_type: reel}
+    effects: {increments: {ReelWatch.dwell_ms: null},
+              feeds_scorer_signal: true}   # <3s skip vs >95% completion buckets
+    visibility: self
+    cost: 1
+
+  - action_id: reuse_audio
+    actor: User
+    target: AudioTrack
+    verb: create
+    preconditions: {}
+    effects: {creates: {Post: {media_type: reel}},
+              increments: {AudioTrack.reuse_count: 1}, feeds_scorer_signal: true}
+    visibility: public
+    cost: 2
+
+  - action_id: create_post
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      caption_max_length: 2200
+      max_media_per_post: 20        # 10 via API for professional accounts
+      originality_policy: "unoriginal reposts >= 10 in rolling 30d lose recommendation eligibility"
+    effects: {creates: {Post: {}}, feeds_scorer_signal: true,
+              queues_moderation: true}
+    visibility: followers
+    cost: 3
+
+  - action_id: create_story
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      expires_at_offset_seconds: 86400
+      visibility: [public, close_friends]
+    effects: {creates: {Story: {}}, feeds_scorer_signal: true}
+    visibility: followers
+    cost: 2
+
+  - action_id: view_story
+    actor: User
+    target: Story
+    verb: consume
+    preconditions: {story_not_expired: true}
+    effects: {increments: {Story.view_count: 1}, feeds_scorer_signal: true}  # view/interaction ratio
+    visibility: author
+    cost: 1
+
+  - action_id: reply_story
+    actor: User
+    target: Story
+    verb: react
+    preconditions: {story_not_expired: true}
+    effects: {increments: {Story.reply_count: 1},
+              creates: {DMMessage: {content_type: text}}, feeds_scorer_signal: true}
+    visibility: author
+    cost: 1
+
+  - action_id: send_dm
+    actor: User
+    target: DMConversation
+    verb: relational
+    preconditions: {}
+    effects: {creates: {DMMessage: {}},
+              increments: {DMConversation.exchange_count: 1},
+              feeds_scorer_signal: true}   # DM exchange count = closeness signal
+    visibility: conversation
+    cost: 1
+
+  - action_id: block_user
+    actor: User
+    target: User
+    verb: relational
+    preconditions: {}
+    effects: {creates: {Block: {}}, feeds_scorer_signal: true}
+    visibility: self
+    cost: 1
+
+  - action_id: negative_feedback
+    actor: User
+    target: Post
+    verb: react
+    preconditions: {}
+    effects: {feeds_scorer_signal: true, downrank_author: true}  # "not interested"/"see less"
+    visibility: self
+    cost: 1
+
+feed:
+  kind: hybrid                        # ranked primary + Stories chronological tray + DM push
+  # Top-level fields describe the dominant home_feed surface; all five
+  # surfaces are also modeled separately under surfaces[].
+  retrieval:
+    - {source: in_network, quota_ratio: 0.75, provenance: inferred,
+       note: "followed accounts, ~700 raw candidates"}
+    - {source: feed_recommendations, quota_ratio: 0.25, provenance: inferred,
+       note: "unconnected accounts; reduced weight per Mosseri 'less recommendations'"}
+  signal_schema:
+    - {name: author_affinity, type: float, weight: 0.30, provenance: inferred}
+    - {name: recency, type: float, weight: 0.15, provenance: inferred}
+    - {name: engagement_count, type: float, weight: 0.15, provenance: inferred}
+    - {name: attention_dwell, type: float, weight: 0.10, provenance: inferred}
+    - {name: shares_private, type: float, weight: 0.10, provenance: documented}
+    - {name: topic_graph, type: float, weight: 0.10, provenance: inferred}
+    - {name: negative_feedback, type: float, weight: -0.10, provenance: documented}
+    - {name: content_type_prior, type: float, weight: 0.05, provenance: prior}
+  scorer:
+    plugin: custom
+    params: {pipeline: "two_stage_rank_then_rerank", dedup_window_hours: 72}
+  params:
+    candidate_target: 700
+    post_filter_target: 500
+    originality_penalty_threshold: 10
+    originality_window_days: 30
+  surfaces:                           # FIVE ranking surfaces modeled separately
+
+    - surface_id: home_feed
+      name: Home Feed
+      kind: ranked
+      audience: followed              # in-network candidates ~700 -> ~500 after filters
+      candidate_pool: "posts from followed accounts + injected recommendations"
+      retrieval:
+        - {source: in_network, quota_ratio: 0.75, provenance: inferred,
+           note: "followed accounts, ~700 raw candidates"}
+        - {source: feed_recommendations, quota_ratio: 0.25, provenance: inferred,
+           note: "unconnected accounts; reduced weight per Mosseri 'less recommendations'"}
+      pipeline:
+        - stage: retrieval
+          detail: "~700 candidates from followed + recommended sources"
+        - stage: filtering
+          detail: "down to ~500: remove seen, blocked, muted, demoted originality violators"
+        - stage: ranking
+          detail: "multi-task predicted engagement; heavy author_affinity + recency"
+      signal_schema:
+        - {name: author_affinity, type: float, weight: 0.30, provenance: inferred}
+        - {name: recency, type: float, weight: 0.15, provenance: inferred}
+        - {name: engagement_count, type: float, weight: 0.15, provenance: inferred}
+        - {name: attention_dwell, type: float, weight: 0.10, provenance: inferred}
+        - {name: shares_private, type: float, weight: 0.10, provenance: documented}
+        - {name: topic_graph, type: float, weight: 0.10, provenance: inferred}
+        - {name: negative_feedback, type: float, weight: -0.10, provenance: documented}
+        - {name: content_type_prior, type: float, weight: 0.05, provenance: prior}
+      scorer:
+        plugin: custom
+        params: {pipeline: "two_stage_rank_then_rerank", dedup_window_hours: 72}
+      params:
+        candidate_target: 700
+        post_filter_target: 500
+        originality_penalty_threshold: 10   # unoriginal posts per 30d
+        originality_window_days: 30
+
+    - surface_id: feed_recommendations
+      name: Feed Recommendations (unconnected)
+      kind: ranked
+      audience: unconnected
+      retrieval:
+        - {source: candidate_pool, quota_ratio: 1.0, provenance: inferred,
+              note: "accounts user does not follow; injected into Home Feed"}
+      pipeline:
+        - stage: retrieval
+          detail: "candidate pool from interest graph + popularity"
+        - stage: ranking
+          detail: "weaker author_affinity (no follow edge); topic_graph + popularity_velocity dominate"
+      signal_schema:
+        - {name: topic_graph, type: float, weight: 0.30, provenance: inferred}
+        - {name: popularity_velocity, type: float, weight: 0.25, provenance: inferred}
+        - {name: engagement_count, type: float, weight: 0.20, provenance: inferred}
+        - {name: recency, type: float, weight: 0.10, provenance: inferred}
+        - {name: content_type_prior, type: float, weight: 0.10, provenance: prior}
+        - {name: negative_feedback, type: float, weight: -0.05, provenance: documented}
+      scorer:
+        plugin: custom
+        params: {eligibility: "must pass originality policy; no recommendation slot if violating"}
+      params:
+        injection_quota_ratio: 0.25
+        provenance: inferred
+
+    - surface_id: explore
+      name: Explore Grid
+      kind: discover
+      audience: unconnected
+      retrieval:
+        - {source: candidate_pool, quota_ratio: 1.0, provenance: inferred}
+      pipeline:
+        - stage: retrieval
+          detail: "~1500 candidate posts via embedding/ANN similarity + trending"
+        - stage: two_tower
+          detail: "two-tower retrieval model narrows to ~100 candidates"
+        - stage: multi_task_rank
+          detail: "predicts likes, saves, comments; no author_affinity (unconnected)"
+      signal_schema:
+        - {name: topic_graph, type: float, weight: 0.35, provenance: inferred}
+        - {name: engagement_count, type: float, weight: 0.25, provenance: inferred}
+        - {name: popularity_velocity, type: float, weight: 0.15, provenance: inferred}
+        - {name: quality_satisfaction, type: float, weight: 0.15, provenance: inferred}
+        - {name: content_type_prior, type: float, weight: 0.10, provenance: prior}
+        - {name: negative_feedback, type: float, weight: -0.10, provenance: documented}
+      scorer:
+        plugin: custom
+        params:
+          retrieval_candidates: 1500
+          two_tower_candidates: 100
+          predicted_actions: [like, save, comment]
+      params:
+        grid_personalization: true
+
+    - surface_id: reels
+      name: Reels
+      kind: ranked
+      audience: mixed                # followed + unconnected chaining feed
+      retrieval:
+        - {source: in_network, quota_ratio: 0.3, provenance: inferred,
+           note: "followed accounts seed the chain"}
+        - {source: candidate_pool, quota_ratio: 0.7, provenance: inferred,
+           note: "~100 candidates chained per session"}
+      pipeline:
+        - stage: chaining
+          detail: "sequential candidate generation; ~100 reels per browsing session"
+        - stage: ranking
+          detail: "multi-task: watch completion buckets, comments, reshares, audio reuse"
+      signal_schema:
+        - {name: attention_dwell, type: float, weight: 0.35, provenance: documented}
+        - {name: engagement_count, type: float, weight: 0.20, provenance: inferred}
+        - {name: shares_private, type: float, weight: 0.15, provenance: documented}
+        - {name: popularity_velocity, type: float, weight: 0.15, provenance: inferred}
+        - {name: content_type_prior, type: float, weight: 0.10, provenance: prior}
+        - {name: negative_feedback, type: float, weight: -0.05, provenance: documented}
+      scorer:
+        plugin: custom
+        params:
+          watch_buckets: ["skip_under_3s", "partial", "watch_over_95pct"]
+          predicted_actions: [watch_95pct, comment, reshare, audio_reuse]
+          chain_length: 100
+      params:
+        originality_policy: enforced  # unoriginal reels deprioritized
+
+    - surface_id: stories
+      name: Stories Tray + Viewer
+      kind: chronological            # tray ordered by interaction recency; ranking inside viewer
+      audience: followed_close        # followers + close friends subset
+      retrieval:
+        - {source: in_network, quota_ratio: 1.0, provenance: inferred}
+      pipeline:
+        - stage: tray_ordering
+          detail: "stories sorted by recent interaction; closeness from DM exchange counts"
+        - stage: impression_scoring
+          detail: "interaction/view ratio per viewer-author pair"
+      signal_schema:
+        - {name: author_affinity, type: float, weight: 0.40, provenance: inferred}
+        - {name: engagement_count, type: float, weight: 0.30, provenance: inferred}
+        - {name: recency, type: float, weight: 0.20, provenance: inferred}
+        - {name: shares_private, type: float, weight: 0.10, provenance: documented}
+      scorer:
+        plugin: custom
+        params:
+          closeness_source: "DMConversation.exchange_count"
+          metric: "interaction_per_view_ratio"
+          expiry_seconds: 86400
+      params:
+        tray_limit: "unbounded horizontal scroll"
+
+  # Delivery note: hybrid = pull feeds materialized on scroll + push DMs
+  # delivered to conversation inbox (delivery_model semantics).
+  delivery_model:
+    pull_surfaces: [home_feed, feed_recommendations, explore, reels, stories]
+    push_surfaces: [direct_messages]
+
+content_constraints:
+  max_length_chars: 2200
+  length_unit: chars                # caption; UTF-8 chars, not graphemes
+  media_policy: >-
+    Photo/video/carousel/Reel. Carousel: 10 items via API (professional
+    accounts), 20 items in-app. Reels: 3s-15min duration, max 300MB upload.
+    Stories: ephemeral, 24h expiry, media + text stickers.
+  max_media_per_post: 20            # in-app; API-limited to 10 for professional accounts
+  edit_window_seconds: null         # captions editable indefinitely; media not replaceable
+  reel_min_duration_seconds: 3
+  reel_max_duration_seconds: 900
+  reel_max_upload_bytes: 314572800   # 300 MiB
+  story_ttl_seconds: 86400
+  api_access: >-
+    Instagram Graph API: professional accounts (creator/business) only;
+    requires Facebook Login; NO follower-graph enumeration, NO DM read
+    access, NO private-account content. Basic Display API deprecated.
+
+visibility_model:
+  default_scope: followers
+  rules:
+    - {scope: public, predicate: "account is public and post.visibility=public",
+       grants: "anyone incl. unconnected surfaces (Explore/Reels recs)"}
+    - {scope: followers, predicate: "viewer follows author OR author account public",
+       grants: directed_follow}
+    - {scope: close_friends, predicate: "author listed viewer in close-friends",
+       grants: close_friend}
+    - {scope: conversation, predicate: "viewer is DMConversation participant",
+       grants: membership}
+    - {scope: author_only, predicate: "Story view telemetry visible to story author",
+       grants: authorship}
+    - {scope: private_profile, predicate: "account is_private=true",
+       grants: approved_follow}     # content invisible to non-followers entirely
+
+moderation:
+  tiers:
+    - {tier: 1, name: allow, action: allow}
+    - {tier: 2, name: reduce_distribution, action: downrank,
+       note: "borderline content; reduced recommendation eligibility"}
+    - {tier: 3, name: original_content_policy, action: remove_and_sanction,
+       note: ">=10 unoriginal posts in 30d -> lose recommendation eligibility (documented policy)"}
+    - {tier: 4, name: remove, action: remove_and_sanction}
+    - {tier: 5, name: account_suspension, action: suspend}
+  enforcement_points: [create_post, create_story, reshare_to_feed,
+                       comment_post, share_post_dm]
+  metadata_only: false              # server-side content analysis applies
+  notes: >-
+    Originality detection via perceptual hashing + repost heuristics.
+    DM content is encrypted in transit but report/abuse signals still flow.
+
+privacy:
+  dm_encryption: e2e_in_transit      # server can still mediate reports
+  close_friends: semi_private        # modeled as private sub-surface
+  follower_graph: not_publicly_enumerable   # no API, no public graph export
+
+feed_policy_notes: >-
+  - Mosseri (Apr 2025): "more photos are shared via DM than Stories and Feed
+    combined" -> shares_private is a first-class, heavily weighted signal.
+  - Originality policy (documented): accounts posting >=10 unoriginal items
+    per rolling 30 days lose recommendation eligibility on all surfaces.
+  - Mosseri late-2024/2025 direction: reduce recommended/unconnected content
+    in Home Feed; emphasize content from people user knows.
+
+signal_observability:
+  observable: [likes, comments, saves, shares_dm, views, watch_dwell_buckets,
+               follows, blocks, dm_exchange_counts, audio_reuse]
+  partially_observable: [impression-level dwell (bucketed), recommendation
+                         exposure reasons]
+  not_observable: [exact follower graph via API, DM content, private-profile
+                   content of non-followed accounts, precise MAU denominators]
+
+demographics:
+  mau: "~2B+ MAU (Meta family disclosure; Instagram-specific figure not separately
+        broken out — treat as Meta-family proxy)"
+  notes: >-
+    Instagram does not publish a standalone MAU; Meta discloses combined
+    family metrics. US: ~78% of adults aged 18-29 use Instagram (Pew
+    Research, documented). Largest markets: India, US, Brazil, Indonesia.
+    Skews younger than Facebook; Reels drives significant session time.
+
+data_availability:
+  tier: 3                          # ranked surfaces partially observable;
+                                   # follower graph + DMs opaque; no public API for graph
+  sources:
+    - "Meta Transparency Center / newsroom ranking explainers"
+    - "Instagram Graph API documentation (developers.facebook.com)"
+    - "Pew Research Center social media demographics"
+    - "Mosseri public statements (Apr 2025 DM-sharing, originality policy)"
+    - "Third-party ranking analyses (inferred weights only)"
+
+validation_notes: >-
+  YAML must parse cleanly; schema fields per docs/SPEC_SCHEMA.md v1.0.
+  Five surfaces modeled under feed.surfaces[]; canonical feed.* fields
+  retained for schema compatibility (kind/scorer/params at top level apply
+  to the dominant home_feed surface).

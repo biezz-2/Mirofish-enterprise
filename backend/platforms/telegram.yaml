@@ -1,0 +1,732 @@
+# PlatformSpec v1.0 — Telegram
+# Conforms to docs/SPEC_SCHEMA.md
+#
+# Key structural facts (as specified by project owner):
+#  - ONE entity type `Chat` covers all container kinds: private (1:1), group
+#    (<=200 members), supergroup (<=200k members, incl. topics/forums), and
+#    channel (broadcast, subscribers are members).
+#  - A channel may have exactly ONE linked "discussion group" acting as a
+#    bidirectional comment bridge (comments posted in group surface under the
+#    channel post and vice versa). Uniqueness enforced at relation level.
+#  - View counters exist ONLY on channel posts and are viewport-based
+#    ESTIMATES (exposed range counters, not exact counts). Forward counters
+#    are exact.
+#  - Reactions: emoji reactions (free) + PAID reactions denominated in Stars
+#    (Telegram's virtual currency) — a willingness-to-pay signal.
+#  - Channel "boosts" via Telegram Premium raise channel limits and surface
+#    boosted channels in the public channel directory.
+#  - Paid media: posts/media can be priced 1000-10000 Stars; bots can gate
+#    content behind Stars payments.
+#  - Chat list ordering is fully user-arranged: manual pins, folders, recency.
+#    Telegram has NO feed ranking anywhere. The ONLY algorithmic discovery
+#    surface is "similar channels" recommendations.
+#  - Content: text ~4096 chars; polls max 10 options.
+#  - Moderation historically lax (disinformation was NOT in ToS until ~2024);
+#    since ~2024 AI moderation + EU Digital Services Act obligations; regional
+#    divergence in enforcement.
+
+spec_version: "1.0"
+platform_id: telegram
+display_name: Telegram
+archetype: private_push_feed
+privacy_tier: private
+delivery_mode: push        # push-dominant; public channel directory is pull/discover only
+graph_visibility: private  # social graph not exposed; only public channel directory is crawlable
+temporal_model: event_driven
+encryption: partial        # Secret Chats are E2EE; default cloud chats are server-encrypted at rest
+                           # but plaintext-visible to Telegram; channels/groups are plaintext to server
+timezone_anchor: UTC
+
+entities:
+  - entity_type: User
+    primary_key: [user_id]
+    attributes:
+      user_id:
+        type: integer
+        unique: true
+        description: Telegram user ID (int64)
+      username:
+        type: string
+        nullable: true
+        max_length: 32
+        description: Public @username; may change; unique when set
+      display_name:
+        type: string
+        max_length: 64
+        description: First+last name shown to contacts
+      is_bot:
+        type: boolean
+        default: false
+      is_premium:
+        type: boolean
+        default: false
+        description: Telegram Premium subscriber; enables boosts + paid reaction perks
+      language:
+        type: string
+        nullable: true
+        description: Client UI language hint
+      account_created_at:
+        type: string
+        format: ISO-8601
+        nullable: true
+
+  - entity_type: Chat
+    primary_key: [chat_id]
+    description: >
+      Single container entity for ALL Telegram conversation kinds.
+      chat_type discriminates behavior: 'private' (1:1, member_count<=2),
+      'group' (<=200 members), 'supergroup' (<=200000 members, may have
+      topics/forums), 'channel' (broadcast; subscribers are members).
+    attributes:
+      chat_id:
+        type: integer
+        unique: true
+        description: Telegram chat ID (negative for groups/channels)
+      chat_type:
+        type: enum
+        enum: [private, group, supergroup, channel]
+      title:
+        type: string
+        nullable: true
+        max_length: 255
+        description: Group/channel title; null for private chats
+      username:
+        type: string
+        nullable: true
+        max_length: 32
+        description: Public @username (groups/channels only; private chats have none)
+      description:
+        type: string
+        nullable: true
+        max_length: 255
+      member_count:
+        type: integer
+        nullable: true
+        min: 1
+        max: 200000
+        description: Visible member/subscriber count
+      is_forum:
+        type: boolean
+        default: false
+        description: Supergroup topics/forums enabled (threads = topics)
+      is_verified:
+        type: boolean
+        default: false
+        description: Telegram-verified badge (not purchaseable)
+      is_scam_or_fake:
+        type: boolean
+        default: false
+        description: Telegram anti-abuse flag
+      discussion_chat_id:
+        type: integer
+        nullable: true
+        ref: Chat.chat_id
+        unique: true
+        description: >
+          For channels: the single linked discussion group (comment bridge).
+          For discussion groups: back-pointer to the channel. At most one
+          per side — enforced unique.
+      boosts_count:
+        type: integer
+        default: 0
+        min: 0
+        description: Aggregate Telegram Premium boosts received
+      created_at:
+        type: string
+        format: ISO-8601
+        nullable: true
+
+  - entity_type: Message
+    primary_key: [chat_id, message_id]
+    attributes:
+      chat_id:
+        type: integer
+        ref: Chat.chat_id
+      message_id:
+        type: integer
+        description: Per-chat sequential message ID
+      sender_id:
+        type: integer
+        nullable: true
+        ref: User.user_id
+        description: Null for anonymous channel/group posts sent as the chat itself
+      topic_id:
+        type: integer
+        nullable: true
+        description: Forum topic (supergroup threads) the message belongs to
+      text:
+        type: string
+        nullable: true
+        max_length: 4096
+      entities:
+        type: array
+        nullable: true
+        description: Telegram entities (mentions, links, formatting, spoilers)
+      media_type:
+        type: enum
+        enum: [none, photo, video, voice, audio, document, sticker, animated_emoji, poll, paid_media, contact, location]
+        default: none
+      poll_options:
+        type: array
+        nullable: true
+        description: >
+          For media_type=poll: list of {text, voter_count}; max 10 options,
+          each option text <= ~100 chars (API limit varies by mode).
+      is_forwarded:
+        type: boolean
+        default: false
+      forward_origin_chat_id:
+        type: integer
+        nullable: true
+        ref: Chat.chat_id
+        description: Original chat when forwarded
+      reply_to_message_id:
+        type: integer
+        nullable: true
+      edit_date:
+        type: string
+        format: ISO-8601
+        nullable: true
+        description: Edited messages show edit timestamp; service messages tracked
+      views:
+        type: object
+        nullable: true
+        description: >
+          Channel posts only: {count_min, count_max} — Telegram exposes a
+          viewport-based RANGE estimate (e.g. "1.2K"), not an exact count.
+          null for non-channel messages.
+      forwards_count:
+        type: integer
+        default: 0
+        min: 0
+        description: Exact forward counter (channels)
+      is_paid_media:
+        type: boolean
+        default: false
+        description: Content gated behind Stars payment (1000-10000 Stars range)
+      stars_price:
+        type: integer
+        nullable: true
+        min: 1000
+        max: 10000
+        description: Price in Telegram Stars when is_paid_media=true
+      timestamp:
+        type: string
+        format: ISO-8601
+        description: Server timestamp of send/edit
+
+  - entity_type: MessageStats
+    primary_key: [chat_id, message_id]
+    description: Aggregated per-message counters exposed via Bot API getMessage
+    attributes:
+      chat_id:
+        type: integer
+        ref: Chat.chat_id
+      message_id:
+        type: integer
+        ref: Message.message_id
+      views:
+        type: integer
+        nullable: true
+        description: Latest known view estimate snapshot (min of range)
+      forwards:
+        type: integer
+        default: 0
+      reactions:
+        type: object
+        default: {}
+        description: >
+          Map of emoji -> count for free emoji reactions; plus
+          stars_paid_reactions: total Stars spent on paid reactions on this message.
+
+  - entity_type: ChatMembership
+    primary_key: [chat_id, user_id]
+    attributes:
+      chat_id:
+        type: integer
+        ref: Chat.chat_id
+      user_id:
+        type: integer
+        ref: User.user_id
+      role:
+        type: enum
+        enum: [member, admin, creator, restricted]
+        default: member
+      can_post:
+        type: boolean
+        default: true
+        description: "Channels: false = subscriber (read-only)"
+      joined_at:
+        type: string
+        format: ISO-8601
+        nullable: true
+      folder_id:
+        type: integer
+        nullable: true
+        description: User-arranged folder assignment (local to each user's UI)
+      pinned_by_user:
+        type: boolean
+        default: false
+        description: Manual pin — user-arranged ordering, NOT algorithmic
+      muted_until:
+        type: string
+        format: ISO-8601
+        nullable: true
+
+  - entity_type: StarsTransaction
+    primary_key: [transaction_id]
+    description: Telegram Stars (TON-backed virtual currency) flows
+    attributes:
+      transaction_id:
+        type: string
+        unique: true
+      user_id:
+        type: integer
+        ref: User.user_id
+      chat_id:
+        type: integer
+        nullable: true
+        ref: Chat.chat_id
+        description: Context chat when payment occurred inside a chat
+      kind:
+        type: enum
+        enum: [paid_media_unlock, paid_reaction, bot_payment, stars_topup, refund]
+      amount:
+        type: integer
+        description: Stars amount (positive = spent/received per kind)
+      message_id:
+        type: integer
+        nullable: true
+        ref: Message.message_id
+      timestamp:
+        type: string
+        format: ISO-8601
+
+relations:
+  - relation_type: chat_membership
+    from: User
+    to: Chat
+    cardinality: many_to_many
+    via: ChatMembership
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+    attributes:
+      role: member|admin|creator|restricted
+      can_post: bool
+
+  - relation_type: authored_message
+    from: User
+    to: Message
+    cardinality: one_to_many
+    semantics: directed_follow_graph
+    transitive: false
+    symmetric_effect: false
+    description: User sends messages; channel anonymous posts have null sender_id
+
+  - relation_type: posted_in_chat
+    from: Message
+    to: Chat
+    cardinality: many_to_one
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: discussion_group_link
+    from: Chat
+    to: Chat
+    cardinality: one_to_one
+    semantics: bidirectional_opt_in
+    transitive: false
+    symmetric_effect: true
+    description: >
+      Unique bidirectional bridge between a channel and its discussion group.
+      Comments flow both ways; at most one discussion group per channel.
+      Represented by Chat.discussion_chat_id on both sides.
+    attributes:
+      unique_per_side: true
+
+  - relation_type: blocked_user
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: hard_exclusion
+    transitive: false
+    symmetric_effect: true
+    description: Blocking prevents private messages and mentions across chats
+
+  - relation_type: starred_payment_context
+    from: StarsTransaction
+    to: Message
+    cardinality: many_to_one
+    semantics: visibility_gate
+    transitive: false
+    symmetric_effect: false
+    description: Links paid-media unlocks and paid reactions to the message
+
+  - relation_type: admin_of_chat
+    from: User
+    to: Chat
+    cardinality: many_to_many
+    via: ChatMembership
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+    attributes:
+      role: admin|creator
+
+  - relation_type: folder_organization
+    from: ChatMembership
+    to: User
+    cardinality: many_to_one
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+    description: Folder assignment is per-user presentation state; no ranking signal
+
+actions:
+  - action_id: send_message
+    actor: User
+    target: Chat
+    verb: create
+    preconditions:
+      is_member: true
+      can_post_or_dm_allowed: true
+      text_length_chars_max: 4096
+      blocked_users_absent: true
+    effects:
+      creates: "Message{text: string, media_type: enum, timestamp: now}"
+      queues_moderation: false
+      feeds_scorer_signal: false
+    visibility: chat_members
+    cost: 1
+
+  - action_id: send_poll
+    actor: User
+    target: Chat
+    verb: create
+    preconditions:
+      is_member: true
+      can_post_or_dm_allowed: true
+      poll_options_max: 10
+      poll_option_text_max_chars: 100
+      poll_question_max_chars: 300
+    effects:
+      creates: "Message{media_type: poll, poll_options: array}"
+    visibility: chat_members
+    cost: 1
+
+  - action_id: react_emoji
+    actor: User
+    target: Message
+    verb: react
+    preconditions:
+      can_view_message: true
+      not_blocked_from_sender: true
+    effects:
+      increments: "MessageStats.reactions[emoji]"
+      feeds_scorer_signal: true
+    visibility: chat_members
+    cost: 1
+
+  - action_id: react_paid_stars
+    actor: User
+    target: Message
+    verb: react
+    preconditions:
+      can_view_message: true
+      stars_balance_sufficient: true
+      stars_amount_range: [1, 1000000]
+    effects:
+      increments: "MessageStats.reactions.stars_paid_reactions"
+      creates: "StarsTransaction{kind: paid_reaction, amount: stars}"
+      feeds_scorer_signal: true
+      notes: willingness-to-pay signal — premium monetization of attention
+    visibility: chat_members
+    cost: 2
+
+  - action_id: forward_message
+    actor: User
+    target: [Message, Chat]
+    verb: amplify
+    preconditions:
+      can_view_message: true
+      target_chat_post_allowed: true
+      protected_content_absent: true
+    effects:
+      creates: "Message{is_forwarded: true, forward_origin_chat_id: src}"
+      increments: "Message.forwards_count"
+      feeds_scorer_signal: false
+    visibility: target_chat_members
+    cost: 1
+
+  - action_id: view_channel_post
+    actor: User
+    target: Message
+    verb: consume
+    preconditions:
+      message_chat_type: channel
+      is_subscriber_or_public: true
+    effects:
+      increments: "Message.views"   # ESTIMATE ONLY — viewport-based range counter
+      feeds_scorer_signal: true
+      notes: >
+        Telegram reports views as rounded ranges (e.g. "1.2K", "12K-15K")
+        computed from client viewports, not server-side exact counts.
+        Cannot be used as exact impression count.
+    visibility: none
+    cost: 0
+
+  - action_id: unlock_paid_media
+    actor: User
+    target: Message
+    verb: consume
+    preconditions:
+      is_paid_media: true
+      stars_balance_sufficient: true
+      stars_price_range: [1000, 10000]
+    effects:
+      creates: "StarsTransaction{kind: paid_media_unlock, amount: stars_price}"
+      updates: "Message.accessible_to: [actor]"
+      feeds_scorer_signal: true
+      notes: direct monetization of content; payment gates visibility of media/text
+    visibility: payer_only
+    cost: 2
+
+  - action_id: post_channel_message
+    actor: User
+    target: Chat
+    verb: create
+    preconditions:
+      chat_type: channel
+      role_in: [admin, creator]
+      discussion_group_link_optional: true
+    effects:
+      creates: "Message{chat_id: channel}"
+      mirrors_to_discussion_group: true   # surfaces as comment thread if linked
+      feeds_scorer_signal: false
+    visibility: channel_subscribers
+    cost: 1
+
+  - action_id: comment_via_discussion_group
+    actor: User
+    target: Message
+    verb: create
+    preconditions:
+      chat_type: supergroup
+      discussion_chat_id_backpointer_exists: true
+      is_member: true
+      can_post: true
+    effects:
+      creates: "Message{topic or reply linking to channel post}"
+      surfaces_under_channel_post: true   # bidirectional bridge
+      feeds_scorer_signal: true
+    visibility: channel_subscribers_plus_group_members
+    cost: 1
+
+  - action_id: boost_channel
+    actor: User
+    target: Chat
+    verb: amplify
+    preconditions:
+      chat_type: channel
+      actor_is_premium: true
+      boost_slots_available: true
+    effects:
+      increments: Chat.boosts_count
+      updates: channel_directory_ranking_boost
+      feeds_scorer_signal: true
+      notes: Premium boost consumes a finite per-user slot; boosts grant the channel extra limits (e.g. more reaction slots, faster posting)
+    visibility: public_directory
+    cost: 2
+
+  - action_id: join_chat
+    actor: User
+    target: Chat
+    verb: relational
+    preconditions:
+      chat_joinable: true   # public username or invite link
+      not_already_member: true
+    effects:
+      creates: "ChatMembership{role: member, can_post: by_chat_type}"
+      feeds_scorer_signal: false
+    visibility: chat_members
+    cost: 1
+
+  - action_id: pin_chat
+    actor: User
+    target: ChatMembership
+    verb: relational
+    preconditions:
+      is_member: true
+    effects:
+      updates: "ChatMembership.pinned_by_user = true"
+      feeds_scorer_signal: false
+      notes: manual user-arranged ordering — NOT an algorithmic ranking signal
+    visibility: self_only
+    cost: 0
+
+feed:
+  kind: push
+  delivery_model:
+    notes: >
+      Telegram has NO feed ranking. Chat list order is 100% user-arranged:
+      manual pins, folders, and recency of last activity. Messages are pushed
+      to devices via MTProto long-poll/websocket; there is no server-side
+      scoring of "what to show next". Unread badges and mention badges are
+      the only attention signals.
+    inbox_rules:
+      ordering: user_arranged          # manual pin > folder order > recency
+      manual_pins: respected           # user pins always on top
+      folders: user_defined            # arbitrary grouping, no ranking
+      unread_badges: count_messages_unread
+      mention_badges: count_unread_mentions
+      mute_respected: true
+      typing_indicators: shown
+  discover:
+    kind: discover
+    notes: >
+      The ONLY algorithmic surface on Telegram: "similar channels"
+      recommendations shown on public channel profiles and in search.
+      Also the public channel directory (searchable by keyword/username,
+      sortable by member count — NOT by engagement). Boosted channels get
+      placement in the directory via Premium boosts.
+    sources:
+      - source: similar_channels_recommendation   # the sole algorithmic recommender
+        description: >
+          Telegram's recommendation engine suggests channels similar to ones
+          a user already follows, based on channel content/category metadata.
+          No public documentation of scoring; inferred to use content
+          embeddings + co-subscription graphs.
+        provenance: inferred
+      - source: public_channel_directory
+        description: >
+          Searchable directory of public channels (@username). Sorted by
+          subscribers; boosted channels surface higher. Pull-based browse,
+          not personalized ranking.
+        provenance: documented
+    signal_schema:
+      - {name: custom_channel_subscriber_count, type: integer, provenance: documented}
+      - {name: custom_boost_count, type: integer, provenance: documented}
+      - {name: custom_content_category_match, type: float, provenance: inferred}
+      - {name: custom_co_subscription_affinity, type: float, provenance: inferred}
+  # No `scorer` and no `retrieval` — push archetype forbids ranking plugins.
+
+content_constraints:
+  max_length_chars: 4096
+  length_unit: chars                   # Telegram counts UTF-16 code units (~chars)
+  caption_max_chars: 1024              # media captions separate limit
+  media_policy: >
+    Photos, video, voice, audio, documents, stickers, GIFs, polls, contacts,
+    locations all supported. Paid media can price content at 1000-10000 Stars.
+    Files up to 2GB (4GB Premium) via client; Bot API 50MB.
+  max_media_per_post: 10               # media groups (albums) up to 10 items
+  max_poll_options: 10
+  max_poll_option_chars: 100
+  edit_window_seconds: null            # messages editable indefinitely by sender
+  delete_window_seconds: null          # any message deletable by sender anytime
+  forwards_restricted: possible        # channel/group admins can disable forwarding
+  text_entities: supported             # bold/italic/link/mention/spoiler/blockquote
+  service_messages: supported          # join/leave/pin events are messages too
+
+privacy:
+  visibility_model:
+    default_scope: conversation
+    rules:
+      - scope: private_chat
+        predicate: 1:1 chat between two users; also usable for bot interactions
+        grants: mutual_membership
+      - scope: group_members
+        predicate: messages visible to all members of the group/supergroup
+        grants: chat_membership
+      - scope: channel_subscribers
+        predicate: channel posts visible to all subscribers; comment bridge extends to linked discussion group
+        grants: chat_membership
+      - scope: public_channel
+        predicate: public channels with @username browsable without joining via web preview/search
+        grants: none_required
+      - scope: contacts_only
+        predicate: phone-number-based discovery limited to saved contacts
+        grants: contact_relationship
+      - scope: paid_media
+        predicate: paid content visible only after Stars payment
+        grants: stars_transaction
+      - scope: secret_chat
+        predicate: E2EE 1:1 chats; no server-side content access, no cloud backup
+        grants: mutual_membership
+        note: metadata_only platforms treat secret chats as opaque
+
+moderation:
+  tiers:
+    - tier: 0
+      name: none_required
+      action: allow
+      description: >
+        Historically Telegram enforced almost nothing beyond illegal-content
+        cooperation with LEAs. Disinformation was NOT prohibited by ToS until
+        approximately 2024. Public channel content largely self-moderated
+        by channel admins; groups vary wildly.
+    - tier: 1
+      name: ai_moderation_labels
+      action: label_only
+      description: >
+        Since ~2024 Telegram deployed AI moderation on public channel/group
+        content (nudity, violence, spam) with label/warning overlays rather
+        than removal. Coverage and aggressiveness vary by region/language.
+    - tier: 2
+      name: dsa_compliance
+      action: downrank
+      description: >
+        As a Very Large Online Platform under EU Digital Services Act
+        (designated 2024), Telegram must: provide ad repository, risk
+        assessments, researcher data access, statement-of-reasons for
+        moderation decisions, and notice-and-action mechanisms for illegal
+        content. Enforcement concentrated on EU-facing surfaces.
+    - tier: 3
+      name: regional_restrictions
+      action: remove_and_sanction
+      description: >
+        Regional divergence: e.g. Indonesia blocked Telegram entirely
+        2017-2019 over extremist content, then unblocked on condition of
+        appointing a local "trusted flagger". Russia/Iran/China apply
+        throttling or blocks at ISP level (outside Telegram's control).
+        Channel bans remove the channel; user bans are per-chat unless
+        Telegram-wide anti-spam.
+  enforcement_points:
+    - send_message
+    - send_poll
+    - forward_message
+    - post_channel_message
+    - comment_via_discussion_group
+    - react_emoji
+    - react_paid_stars
+    - unlock_paid_media
+  metadata_only: false               # server sees plaintext of non-secret chats
+  regional_divergence: true
+  historical_laxness: >
+    Pre-2024 ToS did not prohibit disinformation; moderation was famously
+    hands-off ("Telegram is not responsible for content"). Post-2024 DSA +
+    AI moderation shifted posture, but enforcement remains thinner than
+    Meta/X and highly region-dependent.
+
+demographics:
+  mau: "~950 million monthly active users (Telegram-reported, 2024-2025)"
+  notes: >
+    Strong in CIS, Middle East, South/Southeast Asia, Latin America, and
+    Iran (where it is the dominant platform). Indonesia: blocked 2017,
+    unblocked ~2019 with trusted-flagger arrangement — now a major market.
+    ~70%+ of users outside Western Europe/US. Heavily skewed toward
+    mobile, anonymous/pseudonymous usage, channels over feeds.
+
+data_availability:
+  tier: 2                            # large public-channel datasets exist; private/group content near-blind
+  sources:
+    - TGStat (tgstat.com) — ~290K tracked public channels, subscriber/view/forward stats
+    - TeleScope — ~120M messages dataset (public channel corpus)
+    - Misinfo-TeleGraph — ~5M labeled messages for misinformation research
+    - Telegram Bot API / MTProto client API — real-time access where credentials exist
+  notes: >
+    Public channels are fully observable via directory + API. Groups and
+    private chats are membership-gated. View counters are estimates only.
+    Forward counters, reaction breakdowns (emoji), and Stars payment totals
+    are exposed on channel posts via Bot API getMessage statistics.

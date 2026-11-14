@@ -1,0 +1,811 @@
+# PlatformSpec v1.0 — Bluesky (AT Protocol)
+# Archetype: hybrid feed — Discover (public_ranked_feed) + Following (chronological)
+# Identity: did:plc + self-authenticating records on per-user PDS repositories
+spec_version: "1.0"
+platform_id: bluesky
+display_name: Bluesky
+archetype: public_ranked_feed   # Discover feed is ranked; Following is chronological → feed.kind=hybrid
+privacy_tier: public
+delivery_mode: pull             # firehose pull / feed materialization; no write-time fan-out
+graph_visibility: public        # follows/likes/reposts are public by default (per-user blocks/mutes exist)
+temporal_model: event_driven    # AT Protocol stream is a live event stream, not round-based
+encryption: none                 # public repos; App Passwords are auth-only, not content E2E
+timezone_anchor: UTC
+
+# ---------------------------------------------------------------------------
+# Entities
+# ---------------------------------------------------------------------------
+entities:
+  - entity_type: User
+    primary_key: [did]
+    attributes:
+      did:
+        type: string
+        pattern: '^did:plc:[a-z2-7]{24}$'
+        unique: true
+      handle:
+        type: string
+        unique: true           # may change; did is canonical identity
+        nullable: true
+      display_name:
+        type: string
+        max_length: 64
+        nullable: true
+      bio:
+        type: string
+        max_length: 256
+        nullable: true
+      avatar_url:
+        type: string
+        nullable: true
+      banner_url:
+        type: string
+        nullable: true
+      created_at:
+        type: string            # ISO 8601; record timestamps in repo
+      pds_endpoint:
+        type: string            # Personal Data Server hosting this user's repo
+      labeler_did:
+        type: string            # did of labeler service user configures (nullable)
+        nullable: true
+      muted_dids:
+        type: array
+        items: {type: string}
+        default: []
+      blocked_dids:
+        type: array
+        items: {type: string}
+        default: []
+      custom_feeds:
+        type: array
+        items: {type: string}   # AT-URI refs to subscribed custom feed generators
+        default: []
+
+  - entity_type: Post
+    primary_key: [uri]
+    attributes:
+      uri:
+        type: string            # at://did:plc:.../app.bsky.feed.post/<rkey>
+        unique: true
+      cid:
+        type: string            # content-addressed CID of record
+      author_did:
+        type: string
+        ref: User.did
+      text:
+        type: string
+        max_length: 300          # graphemes (see content_constraints)
+      facets:
+        type: array              # link/mention/hashtag spans with byte offsets
+        items: {type: object}
+        default: []
+      reply_ref:
+        type: object             # {uri, cid} — set iff this post is a reply
+        nullable: true
+      reply_root_ref:
+        type: object             # {uri, cid} — root of the reply thread
+        nullable: true
+      reply_parent_ref:
+        type: object
+        nullable: true
+      embed:
+        type: object             # union: images | external | record(record+media) | video | none
+        nullable: true
+      created_at:
+        type: string
+      indexed_at:
+        type: string             # firehose/indexer ingestion time
+      reply_count:
+        type: integer
+        default: 0
+      repost_count:
+        type: integer
+        default: 0
+      like_count:
+        type: integer
+        default: 0
+      quote_count:
+        type: integer
+        default: 0
+      reply_parent_author_handle:
+        type: string             # @handle thread view — used by threadgate visibility checks
+        nullable: true
+      via:
+        type: string             # "feedgen" | "appview" | "labeler" — provenance of record view
+      langs:
+        type: array
+        items: {type: string}
+        default: []
+      labels:
+        type: array
+        items: {type: string}    # label values applied by subscribed labelers
+        default: []
+
+  - entity_type: PostRecord
+    # Lexicon record app.bsky.feed.post — the self-authenticating object in the user's repo.
+    # Modeled separately from Post (indexer projection) because it is the source of truth.
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      cid: {type: string}
+      repo: {type: string, ref: User.did}   # owning repo
+      text: {type: string, max_length: 300}
+      embed: {type: object, nullable: true}
+      record: {type: object}                # full lexicon record blob
+      created_at: {type: string}
+
+  - entity_type: Like
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      cid: {type: string}
+      author_did: {type: string, ref: User.did}
+      subject_uri: {type: string, ref: Post.uri}
+      subject_cid: {type: string}
+      created_at: {type: string}
+
+  - entity_type: Repost
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      cid: {type: string}
+      author_did: {type: string, ref: User.did}
+      subject_uri: {type: string, ref: Post.uri}
+      subject_cid: {type: string}
+      created_at: {type: string}
+
+  - entity_type: Follow
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      cid: {type: string}
+      author_did: {type: string, ref: User.did}      # follower
+      subject_did: {type: string, ref: User.did}     # followee
+      created_at: {type: string}
+
+  - entity_type: Block
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      author_did: {type: string, ref: User.did}      # blocker
+      subject_did: {type: string, ref: User.did}     # blocked
+      created_at: {type: string}
+
+  - entity_type: Mute
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      author_did: {type: string, ref: User.did}      # muter
+      subject_did: {type: string, ref: User.did}     # muted
+      created_at: {type: string}
+      list_uri: {type: string, nullable: true}       # optional: mute entire list
+
+  - entity_type: List
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      cid: {type: string}
+      author_did: {type: string, ref: User.did}
+      name: {type: string, max_length: 2000}
+      purpose:
+        type: enum
+        enum: [modlist, curatelist, referencelist]
+      created_at: {type: string}
+      description: {type: string, max_length: 3000, nullable: true}
+
+  - entity_type: ListItem
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      cid: {type: string}
+      author_did: {type: string, ref: User.did}
+      subject_did: {type: string, ref: User.did}
+      list_uri: {type: string, ref: List.uri}
+      created_at: {type: string}
+
+  - entity_type: Label
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      cid: {type: string}
+      val: {type: string}              # label value e.g. !hide, porn, spam
+      src: {type: string, ref: User.did}  # labeler (service account) DID
+      uri_target: {type: string}       # at:// URI or did:plc of labeled subject
+      cts: {type: string}              # labeled-at timestamp
+      neg: {type: boolean, default: false}  # negation record
+      ver: {type: integer, default: 1}     # label version
+
+  - entity_type: Profile
+    # app.bsky.actor.profile — display metadata; secondary record type
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      cid: {type: string}
+      author_did: {type: string, ref: User.did}
+      display_name: {type: string, max_length: 64, nullable: true}
+      description: {type: string, max_length: 256, nullable: true}
+      avatar: {type: string, nullable: true}
+      banner: {type: string, nullable: true}
+      created_at: {type: string}
+
+  - entity_type: Dislike
+    # Private negative-feedback signal (introduced Nov 2025). NOT a public repo record;
+    # stored per-viewer and exposed only to the actor + feed scorer.
+    primary_key: [author_did, subject_uri]
+    attributes:
+      author_did: {type: string, ref: User.did}
+      subject_uri: {type: string, ref: Post.uri}
+      created_at: {type: string}
+
+  - entity_type: SavedPost
+    primary_key: [uri]
+    attributes:
+      uri: {type: string, unique: true}
+      cid: {type: string}
+      author_did: {type: string, ref: User.did}
+      collection: {type: string, enum: [app.bsky.actor.defs#savedFeeds,
+                                       app.bsky.graph.savedPosts]}   # feed or post bookmark
+      subject_uri: {type: string, ref: Post.uri, nullable: true}
+      subject_list_uri: {type: string, nullable: true}
+      created_at: {type: string}
+
+# ---------------------------------------------------------------------------
+# Relations
+# ---------------------------------------------------------------------------
+relations:
+  - relation_type: follows
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: directed_follow_graph        # one-way follow; Following feed = followed authors
+    transitive: false
+    symmetric_effect: false                 # unlike X/IG, follow is NOT mutual by default
+
+  - relation_type: blocks
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: hard_exclusion               # hard filter everywhere; bidirectional effect
+    transitive: false
+    symmetric_effect: true                  # block removes content/interaction BOTH ways
+
+  - relation_type: mutes
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: soft_exclusion               # hides content in feeds/notifications only
+    transitive: false
+    symmetric_effect: false                 # muted user can still see muter's posts
+
+  - relation_type: authors_post
+    from: User
+    to: Post
+    cardinality: one_to_many
+    semantics: ownership                    # repo owner; author controls record lifecycle
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: replies_to
+    from: Post
+    to: Post
+    cardinality: many_to_many               # a post can be reply to at most one parent,
+    semantics: thread_link                  # but threading trees allow many children
+    transitive: false
+    symmetric_effect: false
+    attributes:
+      role: {type: enum, enum: [reply_parent, reply_root]}
+
+  - relation_type: likes
+    from: User
+    to: Post
+    cardinality: many_to_many               # via Like record
+    semantics: engagement_signal
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: reposts
+    from: User
+    to: Post
+    cardinality: many_to_many
+    semantics: amplification                # feeds Following + Discover candidate pool
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: quote_posts
+    from: Post
+    to: Post
+    cardinality: many_to_many               # embed.record target
+    semantics: engagement_signal            # quote = post-with-embedded-record
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: list_membership
+    from: User
+    to: List
+    cardinality: many_to_many
+    semantics: membership                   # ListItem edges user→List; modlists gate labels
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: labels_subject
+    from: Label
+    to: Post
+    cardinality: many_to_many
+    semantics: moderation_annotation        # pluggable per-user labelers + Ozone
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: subscribes_labeler
+    from: User
+    to: User
+    cardinality: many_to_many               # User.labeler_did + subscribed labeler services
+    semantics: moderation_subscription
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: subscribes_feed
+    from: User
+    to: List                                # conceptual: custom feed generator refs
+    cardinality: many_to_many
+    semantics: feed_subscription            # custom feed generators are first-class, open-source
+    transitive: false
+    symmetric_effect: false
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+# verb groups: consume | react | amplify | create | relational
+# preconditions use predicate names evaluated before legality.
+actions:
+  - action_id: post
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      account_not_suspended: true
+      text_within_limits: true              # ≤300 graphemes AND ≤3000 UTF-8 bytes
+      embed_within_limits: true             # ≤4 images (≤2MB each) | ≤1 video | ≤1 external | quote
+      threadgate_allowed: true              # reply gating rules pass if reply
+      postgate_allowed: true                # post gating rules pass if reply
+    effects:
+      creates: 'Post{author_did: actor.did, created_at: now}'
+      increments: {Post.like_count: 0}      # counters init
+      feeds_scorer_signal: true              # candidate for Discover pool
+      queues_moderation: false              # labelers may still apply async labels
+    visibility: public                      # broadcast by default; labelers can restrict view
+    cost: 5
+
+  - action_id: reply
+    actor: User
+    target: Post
+    verb: create
+    preconditions:
+      account_not_suspended: true
+      target_exists: true
+      text_within_limits: true
+      threadgate_allowed: true              # app.bsky.feed.threadgate: reply audience rules
+      reply_depth_valid: true
+    effects:
+      creates: 'Post{reply_ref: {uri: target.uri}, reply_root_ref: target.reply_root_ref or target.uri}'
+      updates: {target.reply_count: +1}
+      feeds_scorer_signal: true
+    visibility: inherits_target_thread       # gated by threadgate rules of ancestors
+    cost: 5
+
+  - action_id: repost
+    actor: User
+    target: Post
+    verb: amplify
+    preconditions:
+      account_not_suspended: true
+      target_exists: true
+      not_blocked_either_way: true
+      target_not_deleted: true
+      embed_constraints_ok: true            # repost may add comment text ≤300 graphemes
+    effects:
+      creates: 'Repost{author_did: actor.did, subject_uri: target.uri}'
+      updates: {target.repost_count: +1}
+      feeds_scorer_signal: true             # strongest Following-feed + Discover signal
+    visibility: public
+    cost: 2
+
+  - action_id: like
+    actor: User
+    target: [Post, PostRecord]
+    verb: react
+    preconditions:
+      account_not_suspended: true
+      target_exists: true
+      not_blocked_either_way: true
+    effects:
+      creates: 'Like{author_did: actor.did, subject_uri: target.uri}'
+      updates: {target.like_count: +1}
+      feeds_scorer_signal: true             # private-ish engagement signal (likes ARE public)
+    visibility: public                      # like records are public in the repo
+    cost: 1
+
+  - action_id: quote
+    actor: User
+    target: Post
+    verb: amplify
+    preconditions:
+      account_not_suspended: true
+      target_exists: true
+      text_within_limits: true              # quote text ≤300 graphemes
+      embed_constraints_ok: true            # quoted record consumes embed slot
+    effects:
+      creates: 'Post{embed: {record: target.uri}}'
+      updates: {target.quote_count: +1}
+      feeds_scorer_signal: true
+    visibility: public
+    cost: 4
+
+  - action_id: follow
+    actor: User
+    target: User
+    verb: relational
+    preconditions:
+      account_not_suspended: true
+      target_exists: true
+      target_accepts_follows: true          # app.bsky.actor.defs accept_follow? default true
+      not_blocked_either_way: true
+      not_already_following: true
+    effects:
+      creates: 'Follow{author_did: actor.did, subject_did: target.did}'
+      updates: {target.follower_count: +1}
+      feeds_scorer_signal: true             # graph edge → author_affinity / topic_graph signals
+    visibility: public                      # follow graph is public (followers/following lists)
+    cost: 1
+
+  - action_id: unfollow
+    actor: User
+    target: User
+    verb: relational
+    preconditions:
+      currently_following: true
+    effects:
+      deletes: 'Follow{author_did: actor.did, subject_did: target.did}'
+      updates: {target.follower_count: -1}
+    visibility: public
+    cost: 1
+
+  - action_id: block
+    actor: User
+    target: User
+    verb: relational
+    preconditions:
+      account_not_suspended: true
+      target_exists: true
+    effects:
+      creates: 'Block{author_did: actor.did, subject_did: target.did}'
+      cascades: ['unfollow_both_directions; likes persist but hidden']
+      queues_moderation: false
+    visibility: private_to_actor_repo        # block record is public in repo but affects views
+    cost: 1
+
+  - action_id: mute
+    actor: User
+    target: [User, List]
+    verb: relational
+    preconditions:
+      target_exists: true
+    effects:
+      creates: 'Mute{author_did: actor.did, subject_did: target.did or list_uri}'
+      feeds_scorer_signal: false            # mute is viewer-local; does NOT enter global signals
+    visibility: private_to_actor_repo
+    cost: 1
+
+  - action_id: list_create
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      account_not_suspended: true
+      name_within_limits: true              # name ≤2000 chars
+    effects:
+      creates: 'List{author_did: actor.did, purpose: curatelist}'
+    visibility: public
+    cost: 2
+
+  - action_id: list_add_member
+    actor: User
+    target: [User, List]
+    verb: relational
+    preconditions:
+      actor_owns_list: true                 # or modlist labeler powers
+      subject_not_blocked: true
+    effects:
+      creates: 'ListItem{author_did: actor.did, list_uri: target.uri}'
+      updates: {target.member_count: +1}
+    visibility: public
+    cost: 1
+
+  - action_id: label_apply            # via subscribed labeler service (incl. Ozone)
+    actor: User                       # actor is the labeler service account DID
+    target: [Post, User, List]
+    verb: create
+    preconditions:
+      actor_is_subscribed_labeler: true
+      label_value_declared: true       # labeler must declare vocab (e.g. !hide, porn, spam, !no-unauthenticated)
+    effects:
+      creates: 'Label{src: actor.did, uri_target: target.uri, val: label_value}'
+      queues_moderation: true
+      feeds_scorer_signal: true         # labels feed negative_feedback / quality signals downstream
+    visibility: public                 # label records are public; viewers choose which labelers to honor
+    cost: 2
+
+  - action_id: label_ack              # negation of a prior label (!neg)
+    actor: User
+    target: Label
+    verb: create
+    preconditions:
+      actor_is_labeler_owner: true
+      target_exists: true
+    effects:
+      creates: 'Label{neg: true, uri_target: target.uri_target}'
+      queues_moderation: true
+    visibility: public
+    cost: 1
+
+  - action_id: report
+    actor: User
+    target: [Post, User]
+    verb: create
+    preconditions:
+      account_not_suspended: true
+      reason_declared: true             # reason ∈ {spam, abuse, underage, ...} per lexicon
+    effects:
+      queues_moderation: true           # enters moderation queue; NOT a public record
+      feeds_scorer_signal: false        # reports are private; never enter feed signals directly
+    visibility: private_to_moderation
+    cost: 1
+
+  - action_id: threadgate_set
+    actor: User
+    target: Post
+    verb: create
+    preconditions:
+      actor_is_post_author: true
+      gate_rules_valid: true            # allow: mentions | following | lists | none
+    effects:
+      updates: {target.gate_rules: gate_rules}   # reply audience restriction
+      feeds_scorer_signal: false
+    visibility: public
+    cost: 1
+
+  - action_id: postgate_set
+    actor: User
+    target: Post
+    verb: create
+    preconditions:
+      actor_is_post_author: true
+      gate_rules_valid: true            # who may quote/embed this post
+    effects:
+      updates: {target.post_gate_rules: gate_rules}
+    visibility: public
+    cost: 1
+
+  - action_id: dislike                # private negative signal — introduced Nov 2025
+    actor: User
+    target: Post
+    verb: react
+    preconditions:
+      account_not_suspended: true
+      target_exists: true
+      not_blocked_either_way: true
+    effects:
+      creates: 'Dislike{author_did: actor.did, subject_uri: target.uri}'
+      feeds_scorer_signal: true         # PRIVATE signal — feeds negative_feedback family only
+      queues_moderation: false
+    visibility: private_to_actor       # dislike records are NEVER public in the repo/stream
+    cost: 1
+
+  - action_id: custom_feed_subscribe
+    actor: User
+    target: List                        # conceptual target: feed generator record
+    verb: relational
+    preconditions:
+      feed_generator_exists: true       # generator is open-source WASM/TS, first-class
+      not_blocked_either_way: true
+    effects:
+      updates: {actor.custom_feeds: +generator_uri}
+      feeds_scorer_signal: false        # affects only the subscriber's view
+    visibility: public                  # subscription visible via actor's feed prefs
+    cost: 1
+
+  - action_id: notification_read
+    actor: User
+    target: null
+    verb: consume
+    preconditions:
+      notification_exists: true
+    effects:
+      updates: {notification.seen_at: now}
+    visibility: private_to_actor
+    cost: 0
+
+# ---------------------------------------------------------------------------
+# Feed
+# ---------------------------------------------------------------------------
+feed:
+  kind: hybrid          # Following = chronological; Discover = ranked; custom feeds = generator-defined
+  retrieval:
+    # Following feed
+    - source: in_network
+      quota_ratio: 1.0  # chronological over authors the user follows, merged with reposts
+      provenance: inferred
+      applies_to: following
+    # Discover feed — public_ranked_feed
+    - source: candidate_pool            # unlabeled public posts within freshness window
+      quota_ratio: 0.45
+      provenance: inferred
+      applies_to: discover
+    - source: trending                  # popularity velocity over recent window
+      quota_ratio: 0.25
+      provenance: inferred
+      applies_to: discover
+    - source: graph_proximity           # authors liked/reposted by followed accounts (documented heuristic)
+      quota_ratio: 0.20
+      provenance: inferred
+      applies_to: discover
+    - source: custom_feed_generator     # subscribed open-source generators first-class
+      quota_ratio: 0.10
+      provenance: inferred
+      applies_to: discover_and_custom
+  signal_schema:
+    # canonical 10 families — Bluesky exposes most; private dislikes feed negative_feedback.
+    - {name: recency,                 type: float, weight: 0.20, provenance: documented}
+    - {name: engagement_count,        type: float, weight: 0.18, provenance: documented}   # like/repost/reply counts public
+    - {name: attention_dwell,         type: float, weight: 0.10, provenance: inferred}    # appview view-time telemetry NOT public → weak proxy
+    - {name: shares_private,          type: float, weight: 0.05, provenance: inferred}    # shares not observable; reposts used instead
+    - {name: author_affinity,         type: float, weight: 0.15, provenance: documented}   # follow graph + interactions public
+    - {name: topic_graph,             type: float, weight: 0.12, provenance: inferred}    # derived from facets/links/langs
+    - {name: negative_feedback,       type: float, weight: 0.12, provenance: documented}   # dislikes (private) + labels + reports
+    - {name: popularity_velocity,     type: float, weight: 0.10, provenance: documented}   # repost/like velocity over window
+    - {name: content_type_prior,      type: float, weight: 0.05, provenance: prior}        # post vs reply vs quote vs media mix
+    - {name: quality_satisfaction,    type: float, weight: 0.08, provenance: inferred}    # proxy: label-free dwell + no-dislike ratio
+    # custom signals
+    - {name: custom_label_penalty,           type: float, weight: 0.10, provenance: documented}   # subscribed-labeler negative labels
+    - {name: custom_thread_context_boost,    type: float, weight: 0.05, provenance: inferred}     # replies in active threads
+    - {name: custom_feed_membership,  type: bool,  weight: 1.00, provenance: documented}   # generator inclusion = hard boost in custom feeds
+  scorer:
+    plugin: bluesky_discover          # Following uses plugin: chronological
+    params:
+      freshness_window_seconds: 86400
+      candidate_pool_size: 5000
+      graph_proximity_hops: 2
+      trending_window_hours: 24
+      min_engagement_threshold: 3
+      dislike_penalty_multiplier: 5.0  # private dislikes weigh heavily in negative_feedback
+      label_hide_strict: true         # !hide labels from subscribed labelers remove from Discover
+      weights_w_pk: {                 # tunable per-signal weights (paper §feed params)
+        recency: 0.20, engagement_count: 0.18, attention_dwell: 0.10,
+        shares_private: 0.05, author_affinity: 0.15, topic_graph: 0.12,
+        negative_feedback: 0.12, popularity_velocity: 0.10,
+        content_type_prior: 0.05, quality_satisfaction: 0.08,
+        label_penalty: 0.10, thread_context_boost: 0.05
+      }
+  params:
+    following_sort: reverse_chronological
+    discover_page_size: 50
+    repost_merge_window_seconds: 300
+    quote_in_feed: true               # quote posts render with embedded record
+    labeler_default_subscriptions: [atproto_official]   # documented default labeler set
+
+# ---------------------------------------------------------------------------
+# Content constraints
+# ---------------------------------------------------------------------------
+content_constraints:
+  max_length_chars: 300
+  length_unit: graphemes              # ALSO bounded by utf8_bytes below — both enforced
+  max_length_utf8_bytes: 3000         # app.bsky.feed.post text byte cap (pre-grapheme era)
+  media_policy: >-
+    Embed union: images (max 4, each ≤2MB, supported types jpeg/png/webp/gif),
+    video (max 1, ≤100MB via video service), external link card (max 1, ≤300-char title),
+    quoted record (max 1 embedded post, optionally with its own media ≤4 imgs/1 video).
+    Reply+embed allowed; labeler-hidden embeds filtered per viewer subscriptions.
+  max_media_per_post: 4               # images per embed.images; video/external count as embed types
+  max_video_bytes: 104857600          # 100 MiB
+  max_image_bytes: 2097152            # 2 MiB per image
+  max_alt_text_chars: 1000
+  edit_window_seconds: null           # NO EDITING — records are immutable; delete+repost only
+  max_deletion_grace_days: null       # records can be tombstoned; PDS may GC per repo policy
+  facets_max: 8                       # link/mention/hashtag facet objects per post (approx; lexicon bound)
+  reply_depth_unbounded: true         # threads unbounded; UI truncates
+
+# ---------------------------------------------------------------------------
+# Visibility model
+# ---------------------------------------------------------------------------
+visibility_model:
+  default_scope: broadcast            # posts public to network; repo records public by design
+  rules:
+    - scope: public_broadcast
+      predicate: post has no restricting labels AND no block/mute between viewer and author
+      grants: everyone
+    - scope: threadgate_restricted
+      predicate: ancestor post has threadgate rules (mentions | following | list-membership)
+      grants: users satisfying threadgate predicate
+    - scope: postgate_restricted
+      predicate: quoted/embedded record target has postgate rules
+      grants: users satisfying postgate predicate
+    - scope: labeler_hidden
+      predicate: subject carries !hide (or configured severity) label from a labeler the VIEWER subscribes to
+      grants: users not honoring that labeler
+    - scope: blocked
+      predicate: block record exists in EITHER direction between viewer and author
+      grants: no one (content fully suppressed both ways)
+    - scope: muted
+      predicate: mute record exists viewer→author (or author in muted list)
+      grants: suppressed from feeds/notifications; profile still reachable
+    - scope: private_repo_data
+      predicate: actor's own likes/saved posts/mutes/custom feed prefs/reports
+      grants: actor only          # likes/saves are NOT broadcast; they live in repo but scoped views
+
+# ---------------------------------------------------------------------------
+# Moderation
+# ---------------------------------------------------------------------------
+moderation:
+  metadata_only: false               # public records — full content observable via firehose
+  model: >-
+    Pluggable per-user labeler services (app.bsky.labeler / Ozone) + repo-level PDS enforcement.
+    Label records are public, signed by labeler DID; viewers subscribe to labeler sets.
+    Ozone = ATProto-native moderation service (labels, automod rules, takedowns via PLC/Repo).
+  tiers:
+    - {tier: 0, name: none,                          action: allow}
+    - {tier: 1, name: informational_label,          action: label_only}        # e.g. porn, sexual, graphic-media
+    - {tier: 2, name: sensitive_label,              action: label_only}        # !warn — collapsed behind click
+    - {tier: 3, name: hide_label,                   action: downrank}           # !hide — removed for honoring viewers
+    - {tier: 4, name: do_not_promote,               action: downrank}           # !no-promote — Discover exclusion
+    - {tier: 5, name: takedown_or_suspend,         action: remove_and_sanction} # repo takedown / account suspension via PLC
+  label_vocabularies:
+    - atproto_official   # !hide, !warn, !no-promote, dmca-violation, ...
+    - ozone_preset       # spam, abuse, underage, impersonation, ...
+    - community_labelers # user-configured third-party labeler DID sets
+  enforcement_points:
+    - post
+    - reply
+    - repost
+    - like
+    - quote
+    - follow
+    - list_create
+    - list_add_member
+    - label_apply
+    - label_ack
+    - report
+    - threadgate_set
+    - postgate_set
+    - dislike
+    - custom_feed_subscribe
+  automod:
+    supported: true                 # Ozone automod rules on firehose stream
+    scope: [posts, profiles, lists]
+  private_signals:
+    - dislikes                      # never public; only visible to actor + feed scorer
+    - reports                       # private moderation queue only
+    - mutes                         # viewer-local
+    - view_history                  # not exposed via public API
+
+# ---------------------------------------------------------------------------
+# Demographics / data availability
+# ---------------------------------------------------------------------------
+demographics:
+  mau: "~41.4M accounts (2025); ~3.5M DAU"
+  notes: >-
+    Smaller and more niche than X; skew tech/academic/journalist/indie-web.
+    Strong European + US English concentration; multilingual growth (Japanese, Portuguese).
+    No ad-driven growth loop; federation-adjacent positioning (ATProto interop) drives niche density.
+data_availability:
+  tier: 1                          # FULLY OBSERVABLE — best validation candidate
+  sources:
+    - "Jetstream firehose: wss://jetstream*.bsky.network — complete repo event stream"
+    - "Firehose archive: tiago.zip ~550M posts (documented academic dump)"
+    - "OSoMe Twitter/Bluesky collection (Indiana University) — ongoing crawl"
+    - "Graze social media archive — Bluesky included"
+    - "app.bsky.feed.searchPosts / getTimeline public API + label hydration endpoints"
+    - "PLC directory + PDS repo CAR files — full record history, self-authenticating"
+  observability_notes: >-
+    Every public record is self-authenticating (repo signatures + Merkle proofs) → ground-truth
+    validation possible. Likes/reposts/follows/blocks/mutes/lists/labels all public records.
+    ONLY private signals: dislikes, reports, saves, mutes-as-viewer-state, notification state.
+    Discover ranking algorithm is undisclosed → treat weights as priors to calibrate.

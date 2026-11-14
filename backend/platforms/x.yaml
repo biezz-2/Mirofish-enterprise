@@ -1,0 +1,734 @@
+# PlatformSpec: X (Twitter)
+# Schema: SPEC_SCHEMA.md v1.0
+# Structure adapted from the paper's Appendix B X exemplar (public ranked feed,
+# Phoenix ranking pipeline). Weights/parameters carry provenance labels:
+#   documented = observed in X engineering disclosures / open-sourced code
+#   inferred   = derived from published analyses, leaks, or reverse engineering
+#   prior      = hand-set modeling assumption, not a measured value
+
+spec_version: "1.0"
+platform_id: x
+display_name: "X (Twitter)"
+archetype: public_ranked_feed
+privacy_tier: public
+delivery_mode: pull
+graph_visibility: public
+temporal_model: event_driven
+encryption: none          # E2EE only via optional DM encryption modes; timeline is plaintext
+timezone_anchor: UTC
+
+# ---------------------------------------------------------------------------
+# Entities
+# ---------------------------------------------------------------------------
+entities:
+  - entity_type: User
+    primary_key: [user_id]
+    attributes:
+      user_id:          {type: string, unique: true, pattern: "^[0-9]{1,20}$"}
+      handle:           {type: string, unique: true, max_length: 15, pattern: "^[A-Za-z0-9_]{1,15}$"}
+      display_name:     {type: string, max_length: 50, nullable: true}
+      created_at:       {type: integer, description: "unix seconds"}
+      is_verified:      {type: boolean, default: false}
+      follower_count:   {type: integer, min: 0, default: 0}
+      following_count:  {type: integer, min: 0, default: 0}
+      protected:        {type: boolean, default: false}
+      suspended:        {type: boolean, default: false}
+
+  - entity_type: Post
+    primary_key: [post_id]
+    attributes:
+      post_id:          {type: string, unique: true}
+      author_id:        {type: string, ref: "User.user_id"}
+      text:             {type: string, max_length: 280}
+      created_at:       {type: integer}
+      reply_to_id:      {type: string, nullable: true, ref: "Post.post_id"}
+      quote_of_id:      {type: string, nullable: true, ref: "Post.post_id"}
+      repost_of_id:     {type: string, nullable: true, ref: "Post.post_id"}
+      is_poll:          {type: boolean, default: false}
+      poll_options:     {type: array, items: {type: string}, nullable: true}
+      media_count:      {type: integer, min: 0, default: 0}
+      like_count:       {type: integer, min: 0, default: 0}
+      repost_count:     {type: integer, min: 0, default: 0}
+      reply_count:      {type: integer, min: 0, default: 0}
+      quote_count:      {type: integer, min: 0, default: 0}
+      view_count:       {type: integer, min: 0, nullable: true}
+      community_id:     {type: string, nullable: true, ref: "Community.community_id"}
+
+  - entity_type: Community
+    primary_key: [community_id]
+    attributes:
+      community_id:     {type: string, unique: true}
+      name:             {type: string, max_length: 50}
+      member_count:     {type: integer, min: 0, default: 0}
+
+  - entity_type: Conversation
+    primary_key: [conversation_id]
+    attributes:
+      conversation_id:  {type: string, unique: true}
+      kind:             {type: enum, enum: [direct, group]}
+      created_at:       {type: integer}
+
+  - entity_type: Message
+    primary_key: [message_id]
+    attributes:
+      message_id:       {type: string, unique: true}
+      conversation_id:  {type: string, ref: "Conversation.conversation_id"}
+      sender_id:        {type: string, ref: "User.user_id"}
+      text:             {type: string, max_length: 10000}
+      created_at:       {type: integer}
+
+  - entity_type: Follow
+    primary_key: [follower_id, followee_id]
+    attributes:
+      follower_id:      {type: string, ref: "User.user_id"}
+      followee_id:      {type: string, ref: "User.user_id"}
+      created_at:       {type: integer}
+
+  - entity_type: Like
+    primary_key: [user_id, post_id]
+    attributes:
+      user_id:          {type: string, ref: "User.user_id"}
+      post_id:          {type: string, ref: "Post.post_id"}
+      created_at:       {type: integer}
+
+  - entity_type: Bookmark
+    primary_key: [user_id, post_id]
+    attributes:
+      user_id:          {type: string, ref: "User.user_id"}
+      post_id:          {type: string, ref: "Post.post_id"}
+      created_at:       {type: integer}
+
+  - entity_type: Block
+    primary_key: [blocker_id, blocked_id]
+    attributes:
+      blocker_id:       {type: string, ref: "User.user_id"}
+      blocked_id:       {type: string, ref: "User.user_id"}
+      created_at:       {type: integer}
+
+  - entity_type: Mute
+    primary_key: [muter_id, muted_id]
+    attributes:
+      muter_id:         {type: string, ref: "User.user_id"}
+      muted_id:         {type: string, ref: "User.user_id"}
+      created_at:       {type: integer}
+
+  - entity_type: NegativeFeedback
+    primary_key: [user_id, post_id, kind]
+    attributes:
+      user_id:          {type: string, ref: "User.user_id"}
+      post_id:          {type: string, ref: "Post.post_id"}
+      kind:             {type: enum, enum: [not_interested, report, hide_reply]}
+      created_at:       {type: integer}
+
+  - entity_type: FeedImpression
+    primary_key: [user_id, post_id, session_id]
+    attributes:
+      user_id:          {type: string, ref: "User.user_id"}
+      post_id:          {type: string, ref: "Post.post_id"}
+      session_id:       {type: string}
+      dwell_ms:         {type: integer, min: 0, default: 0}
+      actions_taken:    {type: array, items: {type: string}, default: []}
+      created_at:       {type: integer}
+
+  - entity_type: PollVote
+    primary_key: [user_id, poll_post_id]
+    attributes:
+      user_id:          {type: string, ref: "User.user_id"}
+      poll_post_id:     {type: string, ref: "Post.post_id"}
+      option_index:     {type: integer, min: 0}
+      created_at:       {type: integer}
+
+  - entity_type: Membership
+    primary_key: [user_id, community_id]
+    attributes:
+      user_id:          {type: string, ref: "User.user_id"}
+      community_id:     {type: string, ref: "Community.community_id"}
+      created_at:       {type: integer}
+
+# ---------------------------------------------------------------------------
+# Relations
+# ---------------------------------------------------------------------------
+relations:
+  - relation_type: authored_post
+    from: User
+    to: Post
+    cardinality: one_to_many
+    semantics: authorship
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: follows
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: directed_follow_graph
+    transitive: false
+    symmetric_effect: false
+    attributes: {mutual: {type: boolean, default: false}}
+
+  - relation_type: likes
+    from: User
+    to: Post
+    cardinality: many_to_many
+    semantics: positive_reaction
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: bookmarks
+    from: User
+    to: Post
+    cardinality: many_to_many
+    semantics: private_save
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: blocks
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: hard_exclusion
+    transitive: false
+    symmetric_effect: true
+    attributes: {bidirectional_content_removal: true}
+
+  - relation_type: mutes
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: feed_filter
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: negative_feedback
+    from: User
+    to: Post
+    cardinality: many_to_many
+    semantics: downrank_signal
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: replies_to
+    from: Post
+    to: Post
+    cardinality: many_to_many
+    semantics: thread_link
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: quotes
+    from: Post
+    to: Post
+    cardinality: many_to_many
+    semantics: quote_link
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: reposts
+    from: Post
+    to: Post
+    cardinality: many_to_many
+    semantics: amplification
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: member_of
+    from: User
+    to: Community
+    cardinality: many_to_many
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: sends_message
+    from: User
+    to: Conversation
+    cardinality: many_to_many
+    semantics: bidirectional_opt_in
+    transitive: false
+    symmetric_effect: false
+
+# ---------------------------------------------------------------------------
+# Actions
+# verb groups: consume | react | amplify | create | relational
+# ---------------------------------------------------------------------------
+actions:
+  - action_id: view_feed
+    actor: User
+    target: null
+    verb: consume
+    preconditions:
+      authenticated: true
+      suspended: false
+    effects:
+      creates: {FeedImpression: {post_id: "candidate", dwell_ms: 0}}
+      feeds_scorer_signal: true     # recency/engagement_count observations
+    visibility: private
+    cost: 1
+
+  - action_id: dwell_on_post
+    actor: User
+    target: Post
+    verb: consume
+    preconditions:
+      authenticated: true
+      suspended: false
+    effects:
+      increments: {FeedImpression.dwell_ms: "delta"}
+      feeds_scorer_signal: true     # attention_dwell family
+    visibility: private
+    cost: 1
+
+  - action_id: post
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      authenticated: true
+      suspended: false
+      text_length_chars: "<= 280"
+      not_blocked_by_author: null  # n/a for root posts
+    effects:
+      creates: {Post: {author_id: "actor", reply_to_id: null, quote_of_id: null}}
+      queues_moderation: true
+      feeds_scorer_signal: true     # author_affinity / content_type_prior
+    visibility: public              # subject to author protection rules
+    cost: 5
+
+  - action_id: reply
+    actor: User
+    target: Post
+    verb: create
+    preconditions:
+      authenticated: true
+      suspended: false
+      text_length_chars: "<= 280"
+      target_exists: true
+      target_not_blocked: true
+      target_not_protected_or_following: true
+    effects:
+      creates: {Post: {reply_to_id: "target"}}
+      increments: {Post.reply_count: 1}
+      queues_moderation: true
+      feeds_scorer_signal: true     # Phoenix weight: reply = 5.0
+    visibility: public
+    cost: 5
+
+  - action_id: quote
+    actor: User
+    target: Post
+    verb: create
+    preconditions:
+      authenticated: true
+      suspended: false
+      text_length_chars: "<= 280"
+      target_exists: true
+      target_not_blocked: true
+    effects:
+      creates: {Post: {quote_of_id: "target"}}
+      increments: {Post.quote_count: 1}
+      queues_moderation: true
+      feeds_scorer_signal: true     # Phoenix weight: quote = 5.0
+    visibility: public
+    cost: 5
+
+  - action_id: repost
+    actor: User
+    target: Post
+    verb: amplify
+    preconditions:
+      authenticated: true
+      suspended: false
+      target_exists: true
+      target_not_blocked: true
+      not_already_reposted: true
+    effects:
+      creates: {Post: {repost_of_id: "target", text: ""}}
+      increments: {Post.repost_count: 1}
+      feeds_scorer_signal: true     # Phoenix weight: repost = 1.0
+    visibility: public
+    cost: 3
+
+  - action_id: like
+    actor: User
+    target: Post
+    verb: react
+    preconditions:
+      authenticated: true
+      suspended: false
+      target_exists: true
+      not_already_liked: true
+    effects:
+      creates: {Like: {user_id: "actor", post_id: "target"}}
+      increments: {Post.like_count: 1}
+      feeds_scorer_signal: true     # Phoenix weight: like = 0.5
+    visibility: private             # like lists may be public per user setting
+    cost: 1
+
+  - action_id: unlike
+    actor: User
+    target: Post
+    verb: react
+    preconditions:
+      authenticated: true
+      already_liked: true
+    effects:
+      deletes: {Like: {user_id: "actor", post_id: "target"}}
+      decrements: {Post.like_count: 1}
+    visibility: private
+    cost: 1
+
+  - action_id: bookmark
+    actor: User
+    target: Post
+    verb: react
+    preconditions:
+      authenticated: true
+      target_exists: true
+      not_already_bookmarked: true
+    effects:
+      creates: {Bookmark: {user_id: "actor", post_id: "target"}}
+      feeds_scorer_signal: true     # private save; weak positive prior
+    visibility: private
+    cost: 1
+
+  - action_id: follow
+    actor: User
+    target: User
+    verb: relational
+    preconditions:
+      authenticated: true
+      suspended: false
+      target_exists: true
+      not_self: true
+      not_already_following: true
+      target_not_blocking_actor: true
+    effects:
+      creates: {Follow: {follower_id: "actor", followee_id: "target"}}
+      feeds_scorer_signal: true     # Phoenix weight: follow_author = 4.0
+    visibility: public              # follow graph is public unless protected account
+    cost: 2
+
+  - action_id: unfollow
+    actor: User
+    target: User
+    verb: relational
+    preconditions:
+      authenticated: true
+      already_following: true
+    effects:
+      deletes: {Follow: {follower_id: "actor", followee_id: "target"}}
+    visibility: public
+    cost: 1
+
+  - action_id: block
+    actor: User
+    target: User
+    verb: relational
+    preconditions:
+      authenticated: true
+      not_self: true
+      not_already_blocked: true
+    effects:
+      creates: {Block: {blocker_id: "actor", blocked_id: "target"}}
+      cascades: [unfollow_both_directions, remove_dm_conversation]
+      feeds_scorer_signal: true     # Phoenix weight: block = -31.2
+      queues_moderation: true
+    visibility: private
+    cost: 2
+
+  - action_id: unblock
+    actor: User
+    target: User
+    verb: relational
+    preconditions:
+      authenticated: true
+      already_blocked: true
+    effects:
+      deletes: {Block: {blocker_id: "actor", blocked_id: "target"}}
+    visibility: private
+    cost: 1
+
+  - action_id: mute
+    actor: User
+    target: User
+    verb: relational
+    preconditions:
+      authenticated: true
+      not_self: true
+      not_already_muted: true
+    effects:
+      creates: {Mute: {muter_id: "actor", muted_id: "target"}}
+      feeds_scorer_signal: true     # Phoenix weight: mute = -58.8
+    visibility: private
+    cost: 1
+
+  - action_id: unmute
+    actor: User
+    target: User
+    verb: relational
+    preconditions:
+      authenticated: true
+      already_muted: true
+    effects:
+      deletes: {Mute: {muter_id: "actor", muted_id: "target"}}
+    visibility: private
+    cost: 1
+
+  - action_id: not_interested
+    actor: User
+    target: Post
+    verb: react
+    preconditions:
+      authenticated: true
+      target_exists: true
+    effects:
+      creates: {NegativeFeedback: {kind: "not_interested"}}
+      feeds_scorer_signal: true     # Phoenix weight: not_interested = -47.52
+    visibility: private
+    cost: 1
+
+  - action_id: report
+    actor: User
+    target: [Post, User]
+    verb: react
+    preconditions:
+      authenticated: true
+      target_exists: true
+    effects:
+      creates: {NegativeFeedback: {kind: "report"}}
+      queues_moderation: true
+      feeds_scorer_signal: true     # Phoenix weight: report = -234.0 (strongest negative)
+    visibility: private
+    cost: 2
+
+  - action_id: poll_vote
+    actor: User
+    target: Post
+    verb: react
+    preconditions:
+      authenticated: true
+      target_is_poll: true
+      not_already_voted: true
+      option_index_valid: true
+    effects:
+      creates: {PollVote: {user_id: "actor", poll_post_id: "target"}}
+      feeds_scorer_signal: true     # engagement_count family
+    visibility: public              # aggregate tallies public; individual votes private
+    cost: 1
+
+  - action_id: dm_send
+    actor: User
+    target: Conversation
+    verb: create
+    preconditions:
+      authenticated: true
+      suspended: false
+      target_exists: true
+      actor_is_participant: true
+      no_block_between_participants: true
+      text_length_chars: "<= 10000"
+    effects:
+      creates: {Message: {conversation_id: "target", sender_id: "actor"}}
+      queues_moderation: true       # reported-content scanning applies
+      feeds_scorer_signal: true     # Phoenix weight: dm_share = 5.0 (when shared externally)
+    visibility: conversation        # E2EE-capable for verified participants
+    cost: 3
+
+  - action_id: copy_link
+    actor: User
+    target: Post
+    verb: consume
+    preconditions:
+      authenticated: true
+      target_exists: true
+    effects:
+      feeds_scorer_signal: true     # Phoenix weight: copy_link = 20.0 (highest positive)
+    visibility: private
+    cost: 1
+
+  - action_id: share_external
+    actor: User
+    target: Post
+    verb: amplify
+    preconditions:
+      authenticated: true
+      target_exists: true
+    effects:
+      feeds_scorer_signal: true     # off-platform share; weight folded into share=2.0
+    visibility: private
+    cost: 1
+
+  - action_id: join_community
+    actor: User
+    target: Community
+    verb: relational
+    preconditions:
+      authenticated: true
+      target_exists: true
+      not_already_member: true
+    effects:
+      creates: {Membership: {user_id: "actor", community_id: "target"}}
+      feeds_scorer_signal: true     # topic_graph / community affinity prior
+    visibility: public
+    cost: 1
+
+  - action_id: leave_community
+    actor: User
+    target: Community
+    verb: relational
+    preconditions:
+      authenticated: true
+      already_member: true
+    effects:
+      deletes: {Membership: {user_id: "actor", community_id: "target"}}
+    visibility: public
+    cost: 1
+
+# ---------------------------------------------------------------------------
+# Feed — Phoenix pipeline (public ranked feed, hybrid retrieval)
+# ---------------------------------------------------------------------------
+feed:
+  kind: hybrid
+  retrieval:
+    - source: in_network
+      quota_ratio: 0.40             # posts from followed accounts + lists; ~30-50% of surface
+      provenance: inferred
+      provenance: inferred          # X describes "For you" as mix of in-network + out-of-network
+    - source: candidate_pool
+      quota_ratio: 0.55             # ~1500-6000 candidates sourced per request via
+      provenance: inferred
+                                    # SimClusters, TwHIN, relationship graphs (documented
+                                    # in X's open-sourced recommendation repo, 2023)
+      provenance: documented
+    - source: trending
+      quota_ratio: 0.05             # "Explore"/trending injection
+      provenance: inferred
+      provenance: inferred
+  signal_schema:
+    # Canonical 10 families (paper §6.1); only observable families listed.
+    - {name: recency,                 type: float, weight: 0.05, provenance: inferred}
+    - {name: engagement_count,        type: float, weight: 0.15, provenance: documented}
+    - {name: attention_dwell,         type: float, weight: 0.10, provenance: inferred}
+    - {name: shares_private,          type: float, weight: 0.05, provenance: inferred}
+    - {name: author_affinity,         type: float, weight: 0.20, provenance: documented}
+    - {name: topic_graph,             type: float, weight: 0.15, provenance: documented}
+    - {name: negative_feedback,       type: float, weight: -0.10, provenance: documented}
+    - {name: popularity_velocity,     type: float, weight: 0.10, provenance: inferred}
+    - {name: content_type_prior,      type: float, weight: 0.05, provenance: inferred}
+    - {name: quality_satisfaction,    type: float, weight: 0.05, provenance: prior}
+    # Custom X-specific families observable via Phoenix weights:
+    - {name: custom_copy_link_intent,        type: float, weight: 20.0,  provenance: inferred}
+    - {name: custom_conversational_reply,    type: float, weight: 5.0,   provenance: inferred}
+    - {name: custom_dm_share,                type: float, weight: 5.0,   provenance: inferred}
+    - {name: custom_follow_author_intent,    type: float, weight: 4.0,   provenance: inferred}
+    - {name: custom_share_external,          type: float, weight: 2.0,   provenance: inferred}
+    - {name: custom_repost,                  type: float, weight: 1.0,   provenance: inferred}
+    - {name: custom_like,                    type: float, weight: 0.5,   provenance: inferred}
+    - {name: custom_click_dwell,             type: float, weight: 0.4,   provenance: inferred}
+    - {name: custom_report,                  type: float, weight: -234.0, provenance: inferred}
+    - {name: custom_mute,                    type: float, weight: -58.8,  provenance: inferred}
+    - {name: custom_not_interested,          type: float, weight: -47.52, provenance: inferred}
+    - {name: custom_block,                   type: float, weight: -31.2,  provenance: inferred}
+  scorer:
+    plugin: custom:phoenix           # Grok-based transformer + weighted engagement sum
+    params:
+      grok_layers: 2
+      feature_count: 6000            # ~6k features per candidate (documented)
+      candidate_pool_min: 1500
+      candidate_pool_max: 6000
+      dpp_diversification: true      # Determinantal Point Process MMR-style rerank
+      author_diversity_decay: true   # consecutive same-author down-weighting
+      out_of_network_discount: 0.5   # OON candidates receive multiplicative discount
+      new_author_boost: 1.2          # small-author exploration boost
+      safety_filters: [adult_content, violence, spam, civic_integrity]
+  params:
+    provenance: documented                 # weights from xai-org/x-algorithm params.rs (leaked Phoenix)
+    weights:                          # Phoenix per-action engagement weights
+      copy_link: 20.0
+      reply: 5.0
+      quote: 5.0
+      dm_share: 5.0
+      follow_author: 4.0
+      share: 2.0
+      repost: 1.0
+      like: 0.5
+      click_dwell: 0.4
+      report: -234.0
+      mute: -58.8
+    negative_weights:
+      not_interested: -47.52
+      block: -31.2
+
+# ---------------------------------------------------------------------------
+# Content constraints
+# ---------------------------------------------------------------------------
+content_constraints:
+  max_length_chars: 280              # chars (Twitter counts weighted chars; CJK ~2/char)
+  length_unit: chars
+  premium_long_posts:                # X Premium allows longer posts; modeled as exception
+    enabled: true
+    max_length_chars: 25000
+  media_policy: images_video_gif_polls
+  max_media_per_post: 4
+  max_video_seconds: 140
+  edit_window_seconds: null          # edits allowed (Premium: 1hr window, historically)
+  reply_depth_unbounded: true
+  dm_max_length_chars: 10000
+  poll_max_options: 4
+  poll_max_length_chars: 25
+
+# ---------------------------------------------------------------------------
+# Visibility model
+# ---------------------------------------------------------------------------
+visibility_model:
+  default_scope: broadcast
+  rules:
+    - {scope: public, predicate: "account not protected; post not from suspended user", grants: null}
+    - {scope: followers, predicate: "author.protected == true", grants: "follows(follower=viewer, followee=author)"}
+    - {scope: mutuals, predicate: "author restricts replies to verified followers", grants: "mutual_follow"}
+    - {scope: conversation, predicate: "DM or private group", grants: "conversation_participant"}
+    - {scope: blocked_excluded, predicate: "block relation exists either direction", grants: null, effect: "hard_exclusion"}
+    - {scope: muted_excluded, predicate: "mute relation exists viewer->author", grants: null, effect: "feed_filter_only"}
+    - {scope: community_only, predicate: "post.community_id set and community private", grants: "member_of(community)"}
+
+# ---------------------------------------------------------------------------
+# Moderation
+# ---------------------------------------------------------------------------
+moderation:
+  tiers:
+    - {tier: 0, name: allow, action: allow}
+    - {tier: 1, name: label_only, action: label_only}          # e.g. misleading-media labels
+    - {tier: 2, name: downrank, action: downrank}              # reduced For-You distribution
+    - {tier: 3, name: remove_and_sanction, action: remove_and_sanction}
+  enforcement_points:
+    - post
+    - reply
+    - quote
+    - dm_send
+    - report
+  metadata_only: false
+  notes: >
+    Timeline content is plaintext and moderator-visible. DMs may be E2EE for
+    verified participants; reports carry message metadata regardless.
+    Community Notes operate as open, collaborative fact-check annotations
+    (public dataset at communitynotes.twitterapi.io).
+
+# ---------------------------------------------------------------------------
+# Demographics / data availability
+# ---------------------------------------------------------------------------
+demographics:
+  mau: "~335M monetizable daily active users (mDAU); ~600M+ total users claimed"
+  notes: >
+    Heavily lurker-skewed: industry estimates put passive consumption at
+    ~60%+ of sessions. Heavy skew toward news/politics/journalism and
+    real-time event discourse. Verified/premium subset materially alters
+    reach distribution via algorithmic boosts.
+
+data_availability:
+  tier: 2                             # paid/limited API; rich but expensive
+  sources:
+    - "X API v2 (pay-per-use; ~$0.005-$0.010/post read; enterprise tiers $42K+/mo for full firehose)"
+    - "X API v2 filtered stream (1% sample free-ish; full-archive search gated)"
+    - "Community Notes open dataset (communitynotes.twitterapi.io)"
+    - "User archive export (GDPR/CCPA self-download, per-account)"
+    - "Phoenix open-source ranking repo (github.com/twitter/the-algorithm, 2023 snapshot)"

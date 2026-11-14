@@ -1,0 +1,628 @@
+# PlatformSpec v1.0 — Threads (Meta)
+# Source: research summary provided by parent agent; weights marked
+# `provenance: inferred|prior` are NOT documented production values.
+spec_version: "1.0"
+platform_id: threads
+display_name: Threads
+archetype: public_ranked_feed
+privacy_tier: public
+delivery_mode: pull
+graph_visibility: public
+temporal_model: event_driven
+encryption: none
+timezone_anchor: UTC
+
+# ---------------------------------------------------------------------------
+# Entities
+# ---------------------------------------------------------------------------
+entities:
+  - entity_type: User
+    primary_key: [user_id]
+    attributes:
+      user_id:    {type: string, pattern: "^th_[A-Za-z0-9]+$", unique: true}
+      username:   {type: string, unique: true, max_length: 30}
+      instagram_account_id:
+        {type: string, nullable: true, ref: InstagramAccount.account_id,
+         notes: "Identity is coupled to an Instagram (or Fediverse ActivityPub) account; username often mirrors IG handle."}
+      created_at: {type: string, format: "ISO8601"}
+      is_private: {type: boolean, default: false}
+      activitypub_actor_id: {type: string, nullable: true}
+      followers_count:   {type: integer, min: 0, default: 0}
+      following_count:   {type: integer, min: 0, default: 0}
+      profile_views_count: {type: integer, min: 0, default: 0, nullable: true,
+         notes: "Visible to the owner; serves as cross-signal into FYP ranking."}
+
+  - entity_type: Post
+    primary_key: [post_id]
+    attributes:
+      post_id:   {type: string, unique: true}
+      author_id: {type: string, ref: User.user_id}
+      created_at: {type: string, format: "ISO8601"}
+      edited_at:  {type: string, format: "ISO8601", nullable: true}
+      text:      {type: string, nullable: true}
+      media:
+        type: object
+        nullable: true
+        notes: "Polymorphic union: TEXT_POST | IMAGE | VIDEO | CAROUSEL_ALBUM | AUDIO | REPOST_FACADE."
+        union:
+          TEXT_POST:     {media: none}
+          IMAGE:         {media: [image]}
+          VIDEO:         {media: [video]}
+          CAROUSEL_ALBUM: {media: [image_or_video], min_items: 2, max_items: 20}
+          AUDIO:         {media: [audio]}
+          REPOST_FACADE: {media: reference_to_original_post}
+      reply_to_post_id: {type: string, ref: Post.post_id, nullable: true}
+      reply_control: {type: enum, enum: [everyone, following, mentioned, author_only, followers_only],
+                      default: everyone}
+      language: {type: string, nullable: true}
+      crossshare_to_ig: {type: boolean, default: false,
+                         notes: "Set at create time; shares content object to linked IG account."}
+      is_edited: {type: boolean, default: false}
+      content_warnings: {type: array, items: {type: string}, default: []}
+
+  - entity_type: Follow
+    primary_key: [follower_id, followee_id]
+    attributes:
+      follower_id: {type: string, ref: User.user_id}
+      followee_id: {type: string, ref: User.user_id}
+      created_at:  {type: string, format: "ISO8601"}
+      status:      {type: enum, enum: [active, requested, blocked], default: active}
+
+  - entity_type: CustomFeed
+    primary_key: [feed_id]
+    attributes:
+      feed_id:    {type: string, unique: true}
+      owner_id:   {type: string, ref: User.user_id}
+      name:       {type: string, max_length: 50}
+      description: {type: string, max_length: 200, nullable: true}
+      is_public:  {type: boolean, default: false,
+                   notes: "Public feeds are subscribable by other users since Feb-2025."}
+      topic_terms: {type: array, items: {type: string}}
+      created_at: {type: string, format: "ISO8601"}
+
+  - entity_type: CustomFeedSubscription
+    primary_key: [subscriber_id, custom_feed_id]
+    attributes:
+      subscriber_id:  {type: string, ref: User.user_id}
+      custom_feed_id: {type: string, ref: CustomFeed.feed_id}
+      created_at:     {type: string, format: "ISO8601"}
+
+  - entity_type: Like
+    primary_key: [user_id, post_id]
+    attributes:
+      user_id:    {type: string, ref: User.user_id}
+      post_id:    {type: string, ref: Post.post_id}
+      created_at: {type: string, format: "ISO8601"}
+      is_undo:    {type: boolean, default: false}
+      notes: "Visibility: private to author and liker. API gap: Threads API has NO like-mutation endpoints; observed only via engagement signals (likely in-app/feed-surface derived)."
+
+  - entity_type: Reply
+    primary_key: [reply_post_id]
+    attributes:
+      reply_post_id: {type: string, ref: Post.post_id}
+      parent_post_id: {type: string, ref: Post.post_id}
+      author_id:     {type: string, ref: User.user_id}
+      created_at:    {type: string, format: "ISO8601"}
+      gated_by:      {type: enum, enum: [everyone, following, mentioned, author_only, followers_only],
+                      ref_post_field: Post.reply_control}
+
+  - entity_type: Repost
+    primary_key: [user_id, post_id]
+    attributes:
+      user_id:    {type: string, ref: User.user_id}
+      post_id:    {type: string, ref: Post.post_id}
+      created_id: {type: string, format: "ISO8601"}
+      facade_post_id: {type: string, ref: Post.post_id, nullable: true,
+                       notes: "REPOST_FACADE media type is a synthetic Post wrapper."}
+
+  - entity_type: Skip
+    primary_key: [user_id, post_id, impression_session_id]
+    attributes:
+      user_id:    {type: string, ref: User.user_id}
+      post_id:    {type: string, ref: Post.post_id}
+      session_id: {type: string}
+      dwell_ms:   {type: integer, min: 0, nullable: true}
+      skipped_at: {type: string, format: "ISO8601"}
+      notes: "Negative-feedback signal for FYP predictions; skip = user scrolled past without meaningful dwell."
+
+  - entity_type: Block
+    primary_key: [blocker_id, blocked_id]
+    attributes:
+      blocker_id: {type: string, ref: User.user_id}
+      blocked_id: {type: string, ref: User.user_id}
+      created_at: {type: string, format: "ISO8601"}
+      carry_over_from_ig: {type: boolean, default: false,
+         notes: "Instagram blocks carry over to Threads identity."}
+
+  - entity_type: Mute
+    primary_key: [muter_id, muted_id]
+    attributes:
+      muter_id:  {type: string, ref: User.user_id}
+      muted_id:  {type: string, ref: User.user_id}
+      created_at: {type: string, format: "ISO8601"}
+
+  - entity_type: Report
+    primary_key: [report_id]
+    attributes:
+      report_id:   {type: string, unique: true}
+      reporter_id: {type: string, ref: User.user_id}
+      target_type: {type: enum, enum: [post, user, reply]}
+      target_id:   {type: string}
+      reason:      {type: string}
+      created_at:  {type: string, format: "ISO8601"}
+      status:      {type: enum, enum: [open, reviewed, actioned, dismissed], default: open}
+
+# ---------------------------------------------------------------------------
+# Relations
+# ---------------------------------------------------------------------------
+relations:
+  - relation_type: authored
+    from: User
+    to: Post
+    cardinality: one_to_many
+    semantics: authorship
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: follows
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: directed_follow_graph
+    transitive: false
+    symmetric_effect: false
+    attributes:
+      notes: "Public follow graph. Following feed is chronological over this set (Nov-2024 rebalance toward followed content)."
+
+  - relation_type: blocks
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: hard_exclusion
+    transitive: false
+    symmetric_effect: false
+    attributes:
+      notes: "Symmetric exclusion in practice (IG-coupled); also carried over from Instagram."
+
+  - relation_type: mutes
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: visibility_gate
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: likes
+    from: User
+    to: Post
+    cardinality: many_to_many
+    semantics: engagement_private
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: replies_to
+    from: Post
+    to: Post
+    cardinality: many_to_one
+    semantics: thread_conversation
+    transitive: true
+    symmetric_effect: false
+
+  - relation_type: reposts
+    from: User
+    to: Post
+    cardinality: many_to_many
+    semantics: amplification_public
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: owns_feed
+    from: User
+    to: CustomFeed
+    cardinality: one_to_many
+    semantics: ownership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: subscribes_feed
+    from: User
+    to: CustomFeed
+    cardinality: many_to_many
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+    attributes:
+      notes: "Only is_public=true CustomFeeds are subscribable (Feb-2025)."
+
+  - relation_type: repost_facade_of
+    from: Post          # REPOST_FACADE media type
+    to: Post
+    cardinality: many_to_one
+    semantics: facade_wrapper
+    transitive: false
+    symmetric_effect: false
+
+# ---------------------------------------------------------------------------
+# Actions  (nested-logit groups: consume | react | amplify | create | relational)
+# ---------------------------------------------------------------------------
+actions:
+  # -- consume -------------------------------------------------------------
+  - action_id: consume_feed_item
+    actor: User
+    target: [Post]
+    verb: consume
+    preconditions:
+      - not_blocked_mutual
+      - post_visible_to_user_scope
+      - feed_item_within_ttl
+    effects:
+      feeds_scorer_signal: true        # dwell, like-probability observations
+    visibility: private
+    cost: 1
+
+  - action_id: skip_feed_item
+    actor: User
+    target: [Post]
+    verb: consume
+    preconditions:
+      - impression_recorded
+    effects:
+      creates: "Skip{dwell_ms: observed}"
+      feeds_scorer_signal: true        # negative feedback
+    visibility: private
+    cost: 0
+
+  # -- react ---------------------------------------------------------------
+  - action_id: like_post
+    actor: User
+    target: [Post]
+    verb: react
+    preconditions:
+      - post_visible_to_user_scope
+      - not_blocked_or_muted
+    effects:
+      creates: Like{}
+      increments: {post.like_count: 1, user.likes_given: 1}
+      feeds_scorer_signal: true        # like prediction (one of FYP probabilistic targets)
+    visibility: private_to_author_and_liker
+    cost: 1
+
+  - action_id: unlike_post
+    actor: User
+    target: [Post]
+    verb: react
+    preconditions:
+      - like_exists
+    effects:
+      updates: {Like.is_undo: true}
+      increments: {post.like_count: -1}
+      feeds_scorer_signal: true
+    visibility: private_to_author_and_liker
+    cost: 1
+
+  - action_id: reply_to_post
+    actor: User
+    target: [Post]
+    verb: create
+    preconditions:
+      - post_visible_to_user_scope
+      - reply_control_allows_actor:
+          everyone:           true
+          following:          requires_follow_of_author
+          mentioned:          requires_mention_of_actor
+          author_only:        requires_actor_is_author
+          followers_only:     requires_actor_is_follower_of_author
+      - text_within_byte_limit
+      - media_within_policy
+    effects:
+      creates: "Post{reply_to_post_id: target.id, media: union_payload}"
+      increments: {post.reply_count: 1}
+      feeds_scorer_signal: true        # reply-click prediction family
+    visibility: per_post_reply_control
+    cost: 2
+
+  - action_id: create_post
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      - account_not_restricted
+      - text_within_byte_limit       # 500 UTF-8 BYTES, not chars
+      - media_within_policy         # video <=5min & <=1GB; carousel 2-20 items
+    effects:
+      creates: "Post{author_id: actor.id, media: union_payload, crossshare_to_ig: actor.crossshare_flag}"
+      feeds_scorer_signal: true      # popularity_velocity, engagement_count seeds
+      queues_moderation: true
+    visibility: per_reply_control_and_visibility_scope
+    cost: 3
+
+  - action_id: edit_post
+    actor: User
+    target: [Post]
+    verb: create
+    preconditions:
+      - actor_is_author
+      - within_edit_window            # 15 minutes
+    effects:
+      updates: {Post.text: new, Post.media: new, Post.edited_at: now, Post.is_edited: true}
+      queues_moderation: true
+    visibility: same_as_original
+    cost: 2
+
+  # -- amplify -------------------------------------------------------------
+  - action_id: repost_post
+    actor: User
+    target: [Post]
+    verb: amplify
+    preconditions:
+      - post_visible_to_user_scope
+      - not_blocked_or_muted
+    effects:
+      creates: Repost{}
+      creates: "Post{media: REPOST_FACADE, repost_of: target.id}"  # facade wrapper
+      increments: {post.repost_count: 1}
+      feeds_scorer_signal: true        # shares/amplification signal
+    visibility: public
+    cost: 1
+
+  - action_id: quote_repost
+    actor: User
+    target: [Post]
+    verb: amplify
+    preconditions:
+      - post_visible_to_user_scope
+      - text_within_byte_limit
+    effects:
+      creates: "Post{reply_to_post_id: target.id, media: quote_payload}"
+      feeds_scorer_signal: true
+    visibility: per_reply_control
+    cost: 2
+
+  # -- relational ----------------------------------------------------------
+  - action_id: follow_user
+    actor: User
+    target: [User]
+    verb: relational
+    preconditions:
+      - target_not_private_or_approved
+      - not_blocked_mutual
+    effects:
+      creates: "Follow{status: active_or_requested}"
+      increments: {target.followers_count: 1, actor.following_count: 1}
+      feeds_scorer_signal: true        # follow-author prediction family
+    visibility: public
+    cost: 1
+
+  - action_id: unfollow_user
+    actor: User
+    target: [User]
+    verb: relational
+    preconditions:
+      - follow_exists
+    effects:
+      updates: {Follow.status: removed}
+      increments: {target.followers_count: -1, actor.following_count: -1}
+      feeds_scorer_signal: true
+    visibility: public
+    cost: 1
+
+  - action_id: block_user
+    actor: User
+    target: [User]
+    verb: relational
+    preconditions: {}
+    effects:
+      creates: "Block{carry_over_from_ig: actor.ig_linked}"
+      updates: {Follow.status: blocked, all mutual follows removed}
+      queues_moderation: true
+    visibility: private
+    cost: 1
+
+  - action_id: mute_user
+    actor: User
+    target: [User]
+    verb: relational
+    preconditions: {}
+    effects:
+      creates: Mute{}
+    visibility: private
+    cost: 0
+
+  - action_id: report_content
+    actor: User
+    target: [Post, User]
+    verb: relational
+    preconditions:
+      - target_exists
+    effects:
+      creates: "Report{status: open}"
+      queues_moderation: true
+    visibility: private
+    cost: 1
+
+  - action_id: create_custom_feed
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      - topic_terms_nonempty
+    effects:
+      creates: "CustomFeed{is_public: actor.choice}"
+    visibility: public_if_is_public
+    cost: 2
+
+  - action_id: subscribe_custom_feed
+    actor: User
+    target: [CustomFeed]
+    verb: relational
+    preconditions:
+      - target.is_public == true
+    effects:
+      creates: CustomFeedSubscription{}
+      feeds_scorer_signal: true        # explicit topic preference
+    visibility: private
+    cost: 1
+
+  - action_id: crossshare_to_instagram
+    actor: User
+    target: [Post]
+    verb: amplify
+    preconditions:
+      - actor.ig_account_linked
+      - actor.is_author_of_post
+      - within_crossshare_window
+    effects:
+      external_effect: "creates Instagram media object referencing Threads post"
+      feeds_scorer_signal: true
+    visibility: per_instagram_scope
+    cost: 1
+
+# ---------------------------------------------------------------------------
+# Feed — hybrid: For-You ranked + Following chronological + custom feeds
+# ---------------------------------------------------------------------------
+feed:
+  kind: hybrid
+  retrieval:
+    - source: in_network            # Following feed: chronological over follow graph
+      quota_ratio: 0.34             # inferred: Nov-2024 rebalance restored followed share
+      provenance: inferred
+      ordering: chronological
+      notes: "Following tab is strictly chronological over followed accounts since Nov-2024 rebalance."
+    - source: candidate_pool        # For You: ML candidate generation
+      quota_ratio: 0.50             # inferred
+      provenance: inferred
+      notes: "FYP is fully ranked; candidate pool drawn from public graph + topic signals."
+    - source: custom_feeds          # user-created + subscribed public feeds (Feb-2025)
+      quota_ratio: 0.16             # inferred
+      provenance: inferred
+  signal_schema:
+    # Documented FYP prediction targets (Meta engineering disclosures):
+    # P(like), P(reply-click), P(follow-author), P(profile-click), P(skip)
+    # — all mapped onto canonical families below.
+    - {name: engagement_count,       type: float, weight: 0.20, provenance: inferred,
+       notes: "7-day engagement window aggregates likes/replies/reposts on author's recent posts."}
+    - {name: popularity_velocity,    type: float, weight: 0.15, provenance: inferred,
+       notes: "Early velocity of likes/replies in first hours post-publish."}
+    - {name: author_affinity,        type: float, weight: 0.15, provenance: inferred,
+       notes: "User<->author interaction history; profile-click prediction target."}
+    - {name: topic_graph,            type: float, weight: 0.12, provenance: inferred,
+       notes: "Content topic vs user interest graph; custom-feed topic_terms reinforce."}
+    - {name: recency,                type: float, weight: 0.10, provenance: inferred}
+    - {name: attention_dwell,        type: float, weight: 0.08, provenance: inferred,
+       notes: "Dwell time on impressions; skip prediction target."}
+    - {name: content_type_prior,     type: float, weight: 0.08, provenance: inferred,
+       notes: "Prior per media union type (TEXT_POST/IMAGE/VIDEO/CAROUSEL_ALBUM/AUDIO/REPOST_FACADE)."}
+    - {name: negative_feedback,      type: float, weight: 0.06, provenance: inferred,
+       notes: "Skips, mutes, blocks, 'show less' style signals."}
+    - {name: shares_private,         type: float, weight: 0.03, provenance: inferred,
+       notes: "Reposts/quotes observed; private share channels not observable."}
+    - {name: quality_satisfaction,   type: float, weight: 0.03, provenance: prior,
+       notes: "Surrogate: session continuation after impression."}
+  scorer:
+    plugin: custom
+    params:
+      prediction_targets: [like_probability, reply_click_probability,
+                           follow_author_probability, profile_click_probability,
+                           skip_probability]
+      media_liked_window_minutes: 15      # documented: media liked within 15-min window
+      media_liked_window_max: 100         # documented: up to 100 liked media items
+      engagement_window_days: 7           # documented: 7-day engagement window
+      cross_signal_instagram_profile_views: true  # documented: IG profile views feed ranking
+      following_tab_mode: chronological   # documented: chronological since Nov-2024
+      custom_feed_subscription_public: true # documented: public feeds subscribable since Feb-2025
+  params:
+    w_following_tab: 0.34
+    w_for_you: 0.50
+    w_custom_feeds: 0.16
+    edit_window_minutes: 15
+    text_max_utf8_bytes: 500
+    video_max_seconds: 300
+    video_max_bytes: 1073741824
+    carousel_min_items: 2
+    carousel_max_items: 20
+
+# ---------------------------------------------------------------------------
+# Content constraints — hard limits enforced at precondition time
+# ---------------------------------------------------------------------------
+content_constraints:
+  max_length_chars: null
+  length_unit: utf8_bytes
+  max_text_utf8_bytes: 500          # BYTES not characters — multibyte text truncates earlier
+  media_policy: >-
+    Polymorphic union: TEXT_POST | IMAGE | VIDEO | CAROUSEL_ALBUM | AUDIO | REPOST_FACADE.
+    VIDEO <= 300s and <= 1 GiB. CAROUSEL_ALBUM 2-20 mixed image/video items.
+    REPOST_FACADE is a synthetic Post wrapper, not uploaded media.
+  max_media_per_post: 20            # carousel upper bound; single-type posts = 1
+  edit_window_seconds: 900          # 15 minutes
+  video_max_seconds: 300
+  video_max_bytes: 1073741824       # 1 GiB
+  carousel_min_items: 2
+  carousel_max_items: 20
+  reply_controls: [everyone, following, mentioned, author_only, followers_only]
+
+# ---------------------------------------------------------------------------
+# Visibility model
+# ---------------------------------------------------------------------------
+visibility_model:
+  default_scope: broadcast          # public posts visible to all non-blocked users
+  rules:
+    - {scope: public,            predicate: "post.reply_control == everyone OR top-level post", grants: none}
+    - {scope: followers_only,    predicate: "post.reply_control == followers_only on replies; private-account posts", grants: follows}
+    - {scope: following,         predicate: "post.reply_control == following", grants: follows_author}
+    - {scope: mentioned,         predicate: "post.reply_control == mentioned", grants: mentioned_in_thread}
+    - {scope: author_only,       predicate: "post.reply_control == author_only", grants: is_author}
+    - {scope: private_likes,     predicate: "Like entities", grants: author_or_liker_only}
+    - {scope: private_skips,     predicate: "Skip entities", grants: self_only}
+    - {scope: hard_exclusion,    predicate: "any Block relation (incl. IG-carried)", grants: none}
+    - {scope: mute_filter,       predicate: "Mute relation", grants: feed_suppression_not_visibility}
+
+# ---------------------------------------------------------------------------
+# Moderation
+# ---------------------------------------------------------------------------
+moderation:
+  tiers:
+    - {tier: 0, name: allow, action: allow}
+    - {tier: 1, name: reduce_distribution, action: downrank,
+       notes: "Probationary/ borderline content downranked in FYP."}
+    - {tier: 2, name: label, action: label_only,
+       notes: "Sensitive-content labels; interstitials on media."}
+    - {tier: 3, name: remove, action: remove_and_sanction}
+    - {tier: 4, name: account_action, action: suspend_or_ban}
+  enforcement_points: [create_post, reply_to_post, edit_post, repost_post,
+                       quote_repost, report_content, block_user]
+  metadata_only: false              # public platform — content bodies observable
+  notes: >-
+    Meta integrity stack shared with Instagram; Community Standards enforcement.
+    IG-coupled identity means IG strikes can cascade to Threads account.
+
+# ---------------------------------------------------------------------------
+# Demographics / data availability
+# ---------------------------------------------------------------------------
+demographics:
+  mau: ">400M monthly active users"
+  notes: >-
+    Skews 25-34 age band; strong overlap with Instagram user base due to
+    coupled identity. Global reach; largest growth in Asia/Latin America.
+data_availability:
+  tier: 3
+  sources:
+    - "Meta Content Library (gated academic/researcher access)"
+    - "Threads API (limited: no like/follow mutation endpoints; read gaps on engagement)"
+    - "CrowdTangle successor tooling (limited Threads coverage)"
+  api_gaps:
+    - "No like/unlike mutation endpoints in official API."
+    - "No follow/unfollow mutation endpoints in official API."
+    - "Engagement counts (likes, replies) partially exposed; skip/dwell NOT observable externally."
+    - "FYP ranking internals opaque; only prediction-target families documented."
+
+# ---------------------------------------------------------------------------
+# Cross-platform coupling
+# ---------------------------------------------------------------------------
+cross_platform:
+  instagram:
+    identity_coupled: true
+    blocks_carry_over: true
+    crossshare_to_ig: true           # create-time flag + dedicated action
+    profile_view_signal: true        # IG profile views feed Threads ranking
+  fediverse:
+    activitypub_opt_in: true         # users may expose account via ActivityPub

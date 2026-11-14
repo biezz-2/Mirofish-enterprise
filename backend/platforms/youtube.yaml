@@ -1,0 +1,682 @@
+# PlatformSpec v1.0 — YouTube
+# References: YouTube recommendation system public disclosures (Creator Insider,
+# Alphabet earnings calls, "How YouTube Works" pages), Data API v3 docs,
+# "valued watch time" / satisfaction survey methodology (4-5 star model).
+spec_version: "1.0"
+platform_id: youtube
+display_name: YouTube
+archetype: public_ranked_feed
+privacy_tier: public
+delivery_mode: pull            # feed materialization; ranking done platform-side at request time
+graph_visibility: public       # channels/videos/comments public by default; watch history private
+temporal_model: round_based    # feed surfaces materialized per session/scroll
+encryption: none               # server-side; not E2EE
+timezone_anchor: UTC
+
+entities:
+  - entity_type: User
+    primary_key: [user_id]
+    attributes:
+      user_id:
+        type: string
+        unique: true
+        pattern: "^[A-Za-z0-9_-]{11,}$"   # e.g. channels.id style, inferred
+      is_logged_in:
+        type: boolean
+        default: false   # ~2.5B logged-in users per disclosures; anonymous sessions exist
+      account_created_at:
+        type: integer    # unix seconds
+        nullable: true
+      country:
+        type: string
+        nullable: true   # coarse geo, per privacy policy
+      birth_year_bucket:
+        type: enum
+        nullable: true
+        enum: [under18, 18-24, 25-34, 35-44, 45-54, 55-64, 65plus, unknown]
+      notification_prefs:
+        type: object
+        default: {}      # per-channel notification state
+      watch_history_enabled:
+        type: boolean
+        default: true
+      base_rates:
+        type: object     # per-user behavioral base rates used to normalize signals
+        nullable: true
+        default: {}
+        # keys (inferred): watch_time_rate, ctr_rate, dislike_rate, survey_star_rate
+
+  - entity_type: Channel
+    primary_key: [channel_id]
+    attributes:
+      channel_id:
+        type: string
+        unique: true
+        pattern: "^[A-Za-z0-9_-]{24}$"
+      title:
+        type: string
+        max_length: 100
+      subscriber_count:
+        type: integer
+        min: 0
+      video_count:
+        type: integer
+        min: 0
+        default: 0
+      topic_tags:
+        type: array
+        items: {type: string}
+        default: []
+      monetized:
+        type: boolean
+        default: false
+      verified:
+        type: boolean
+        default: false
+      channel_created_at:
+        type: integer
+      strike_count:
+        type: integer
+        min: 0
+        default: 0   # moderation strikes; drives demotion/removal tiers
+      trust_tier:
+        type: enum
+        enum: [unverified, ypp, ypp_premium, trusted, prohibited]
+        default: unverified
+
+  - entity_type: Video
+    primary_key: [video_id]
+    attributes:
+      video_id:
+        type: string
+        unique: true        # 11-char YouTube ID
+      channel_id:
+        type: string
+        ref: Channel.channel_id
+      title:
+        type: string
+        max_length: 100     # chars, documented
+      description:
+        type: string
+        max_length: 5000    # chars, documented
+      duration_seconds:
+        type: integer
+        min: 1
+        max: 43200          # <= 12h documented limit
+      is_short:
+        type: boolean
+        default: false
+      category_id:
+        type: string
+        nullable: true      # legacy category taxonomy
+      language:
+        type: string
+        nullable: true
+      upload_status:
+        type: enum
+        enum: [processing, public, unlisted, private, scheduled, removed]
+        default: processing
+      published_at:
+        type: integer       # unix seconds
+        nullable: true
+      made_for_kids:
+        type: boolean
+        default: false
+      age_restricted:
+        type: boolean
+        default: false
+      # engagement counters (aggregated; per-user normalization happens server-side)
+      view_count:
+        type: integer
+        min: 0
+        default: 0
+      like_count:
+        type: integer
+        min: 0
+        default: 0
+      dislike_count:
+        type: integer        # publicly hidden since 2021 but internally retained (inferred)
+        min: 0
+        default: 0
+      comment_count:
+        type: integer
+        min: 0
+        default: 0
+      share_count:
+        type: integer
+        min: 0
+        default: 0
+      # satisfaction signals
+      valued_watch_time_seconds:
+        type: float
+        min: 0
+        default: 0           # "valued watch time" from satisfaction surveys
+        provenance: documented
+      survey_star_rating:
+        type: float
+        min: 1
+        max: 5
+        nullable: true       # 4-5 star model documented
+      survey_response_count:
+        type: integer
+        min: 0
+        default: 0
+      not_interested_count:
+        type: integer
+        min: 0
+        default: 0           # Home surface only
+      new_video_flag:
+        type: boolean
+        default: false       # special ranking pathways for new uploads
+      fact_check_label:
+        type: enum
+        enum: [none, misinformation, borderline, age_restricted_info]
+        default: none
+      demotion_factor:
+        type: float
+        min: 0.0
+        max: 1.0
+        default: 1.0         # <1 = suppressed by moderation/takedown-risk logic
+      removal_reason:
+        type: string
+        nullable: true
+
+  - entity_type: Comment
+    primary_key: [comment_id]
+    attributes:
+      comment_id:
+        type: string
+        unique: true
+      video_id:
+        type: string
+        ref: Video.video_id
+      author_id:
+        type: string
+        ref: User.user_id
+        nullable: true       # channel comments carry channel_id instead
+      channel_id:
+        type: string
+        ref: Channel.channel_id
+        nullable: true
+      body:
+        type: string
+        max_length: 10000    # chars, documented-ish (inferred exact cap)
+      like_count:
+        type: integer
+        min: 0
+        default: 0
+      reply_count:
+        type: integer
+        min: 0
+        default: 0
+      published_at:
+        type: integer
+      held_for_review:
+        type: boolean
+        default: false
+      removed:
+        type: boolean
+        default: false
+
+  - entity_type: Playlist
+    primary_key: [playlist_id]
+    attributes:
+      playlist_id:
+        type: string
+        unique: true
+      owner_id:
+        type: string        # user or channel id, loosely typed
+      title:
+        type: string
+        max_length: 150
+      visibility:
+        type: enum
+        enum: [public, unlisted, private]
+        default: private
+      item_count:
+        type: integer
+        min: 0
+        default: 0
+
+  - entity_type: Subscription
+    primary_key: [user_id, channel_id]
+    attributes:
+      user_id:
+        type: string
+        ref: User.user_id
+      channel_id:
+        type: string
+        ref: Channel.channel_id
+      notifications:
+        type: enum
+        enum: [all, personalized, none]
+        default: personalized
+      subscribed_at:
+        type: integer
+
+  - entity_type: WatchEvent
+    primary_key: [event_id]
+    attributes:
+      event_id:
+        type: string
+        unique: true
+      user_id:
+        type: string
+        ref: User.user_id
+        nullable: true       # anonymous watch events exist
+      video_id:
+        type: string
+        ref: Video.video_id
+      surface:
+        type: enum           # which feed surface generated the impression
+        enum: [home, up_next, shorts, search, notifications, external, unknown]
+      session_id:
+        type: string
+      watch_start_at:
+        type: integer
+      watch_seconds:
+        type: float          # raw watch time
+        min: 0
+      valued_watch_seconds:
+        type: float          # portion counted toward satisfaction objective
+        min: 0
+        nullable: true
+      completion_ratio:
+        type: float
+        min: 0.0
+        max: 1.0
+        nullable: true
+      autoplay_chain_depth:
+        type: integer
+        min: 0
+        default: 0           # position in Up Next autoplay chain
+      impression_rank:
+        type: integer
+        min: 0               # position within surface feed
+
+  - entity_type: FeedbackEvent
+    primary_key: [event_id]
+    attributes:
+      event_id:
+        type: string
+        unique: true
+      user_id:
+        type: string
+        ref: User.user_id
+      video_id:
+        type: string
+        ref: Video.video_id
+        nullable: true
+      surface:
+        type: enum
+        enum: [home, up_next, shorts, search, notifications]
+      kind:
+        type: enum
+        enum: [not_interested, dont_recommend_channel, survey_star,
+               survey_dont_show, report, share_external]
+      star_rating:
+        type: integer
+        min: 1
+        max: 5
+        nullable: true       # survey 4-5 star model
+      created_at:
+        type: integer
+
+  - entity_type: CommunityPost
+    primary_key: [post_id]
+    attributes:
+      post_id:
+        type: string
+        unique: true
+      channel_id:
+        type: string
+        ref: Channel.channel_id
+      body:
+        type: string
+        max_length: 5000     # community post char limit, documented
+      poll_options:
+        type: array
+        items: {type: string}
+        nullable: true
+      published_at:
+        type: integer
+      removed:
+        type: boolean
+        default: false
+
+relations:
+  - relation_type: channel_owns_video
+    from: Channel
+    to: Video
+    cardinality: one_to_many
+    semantics: authorship
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: user_subscribes_channel
+    from: User
+    to: Channel
+    cardinality: many_to_many   # via Subscription entity
+    semantics: directed_follow_graph
+    transitive: false
+    symmetric_effect: false
+    attributes: {notifications: enum}
+
+  - relation_type: user_watches_video
+    from: User
+    to: Video
+    cardinality: many_to_many   # via WatchEvent; also anonymous edge case
+    semantics: consumption_history
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: video_has_comment
+    from: Video
+    to: Comment
+    cardinality: one_to_many
+    semantics: thread_membership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: user_gives_feedback
+    from: User
+    to: Video
+    cardinality: many_to_many   # via FeedbackEvent
+    semantics: negative_feedback_edge
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: playlist_contains_video
+    from: Playlist
+    to: Video
+    cardinality: many_to_many
+    semantics: ordered_membership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: channel_publishes_post
+    from: Channel
+    to: CommunityPost
+    cardinality: one_to_many
+    semantics: authorship
+    transitive: false
+    symmetric_effect: false
+
+actions:
+  - action_id: watch_video
+    actor: User
+    target: Video
+    verb: consume
+    preconditions:
+      video.upload_status: public
+      video.removal_reason: null
+      content_policy: passed        # age-restricted/made-for-kids checks
+    effects:
+      creates: {WatchEvent: {}}
+      increments: {Video.view_count: 1}
+      feeds_scorer_signal: true      # watch_seconds, completion_ratio, dwell
+    visibility: public
+    cost: 1
+
+  - action_id: like_video
+    actor: User
+    target: Video
+    verb: react
+    preconditions: {video.upload_status: public}
+    effects:
+      increments: {Video.like_count: 1}
+      feeds_scorer_signal: true
+    visibility: public
+    cost: 1
+
+  - action_id: dislike_video
+    actor: User
+    target: Video
+    verb: react
+    preconditions: {video.upload_status: public}
+    effects:
+      increments: {Video.dislike_count: 1}
+      feeds_scorer_signal: true     # negative signal; hidden publicly, used internally
+    visibility: private_to_creator   # count hidden from public UI since 2021
+    cost: 1
+
+  - action_id: comment_on_video
+    actor: User
+    target: Video
+    verb: create
+    preconditions:
+      video.comments_enabled: true
+      video.upload_status: public
+    effects:
+      creates: {Comment: {}}
+      increments: {Video.comment_count: 1}
+      queues_moderation: true        # held_for_review possible
+    visibility: public
+    cost: 2
+
+  - action_id: subscribe_channel
+    actor: User
+    target: Channel
+    verb: relational
+    preconditions: {}
+    effects:
+      creates: {Subscription: {}}
+      feeds_scorer_signal: true      # subscription is a strong author_affinity signal
+    visibility: private             # subscriber lists not public
+    cost: 1
+
+  - action_id: share_video_external
+    actor: User
+    target: Video
+    verb: amplify
+    preconditions: {}
+    effects:
+      increments: {Video.share_count: 1}
+      creates: {FeedbackEvent: {kind: share_external}}
+      feeds_scorer_signal: true      # external shares weighted in discovery (documented)
+    visibility: public
+    cost: 1
+
+  - action_id: mark_not_interested
+    actor: User
+    target: Video
+    verb: react
+    preconditions:
+      surface: home                # ONLY available on Home surface, NOT Up Next (documented)
+    effects:
+      increments: {Video.not_interested_count: 1}
+      creates: {FeedbackEvent: {kind: not_interested}}
+      feeds_scorer_signal: true     # strong negative_feedback / author suppression
+    visibility: private
+    cost: 1
+
+  - action_id: submit_satisfaction_survey
+    actor: User
+    target: Video
+    verb: react
+    preconditions: {}
+    effects:
+      creates: {FeedbackEvent: {kind: survey_star}}
+      increments: {Video.survey_response_count: 1}
+      feeds_scorer_signal: true     # 4-5 star model feeds valued watch time
+    visibility: private
+    cost: 0
+
+  - action_id: upload_video
+    actor: Channel
+    target: null
+    verb: create
+    preconditions:
+      channel.strike_count: "< 3"    # strikes escalate toward termination
+      duration_seconds: "<= 43200"   # 12h cap
+      is_short_duration: "<= 180"    # Shorts <=3min
+    effects:
+      creates: {Video: {upload_status: processing, new_video_flag: true}}
+      queues_moderation: true        # upload pipeline + new-video special pathways
+    visibility: public_when_processed
+    cost: 10
+
+  - action_id: post_community_update
+    actor: Channel
+    target: null
+    verb: create
+    preconditions:
+      body_length: "<= 5000"
+    effects:
+      creates: {CommunityPost: {}}
+      feeds_scorer_signal: true
+    visibility: public
+    cost: 2
+
+feed:
+  kind: hybrid                 # five distinct surfaces share one backend but differ in policy
+  retrieval:
+    # Per-surface candidate pools (quota ratios approximate; inferred)
+    - source: in_network_subscriptions
+      quota_ratio: 0.20         # subscribed channels on Home
+      provenance: inferred
+    - source: watch_history_collaborative
+      quota_ratio: 0.35         # videos similar to user's watch history
+      provenance: inferred
+    - source: trending
+      quota_ratio: 0.15         # velocity-driven candidates
+      provenance: inferred
+    - source: topic_graph
+      quota_ratio: 0.15         # topic/channel affinity graph
+      provenance: inferred
+    - source: new_video_pathway
+      quota_ratio: 0.10         # special pathways for fresh uploads (documented)
+      provenance: inferred
+    - source: notifications_queue
+      quota_ratio: 0.05         # notification-driven candidates on Home/Up Next
+      provenance: inferred
+  signal_schema:
+    # Canonical 10 families; all normalized by per-user base rates server-side.
+    - {name: recency,               type: float, weight: 0.10, provenance: inferred}
+    - {name: engagement_count,      type: float, weight: 0.15, provenance: inferred}
+    - {name: attention_dwell,       type: float, weight: 0.20, provenance: documented}
+      # raw watch time; primary objective precursor
+    - {name: shares_private,        type: float, weight: 0.10, provenance: inferred}
+      # external shares proxy for private sharing
+    - {name: author_affinity,       type: float, weight: 0.15, provenance: documented}
+      # subscription + watch-history affinity to channel
+    - {name: topic_graph,           type: float, weight: 0.10, provenance: inferred}
+    - {name: negative_feedback,     type: float, weight: -0.15, provenance: documented}
+      # not_interested/dislike/dont_recommend; Home-only for NI
+    - {name: popularity_velocity,   type: float, weight: 0.05, provenance: inferred}
+      # view velocity; feeds trending & new-video boost
+    - {name: content_type_prior,    type: float, weight: 0.05, provenance: inferred}
+      # shorts vs longform vs live priors per user
+    - {name: quality_satisfaction,  type: float, weight: 0.15, provenance: documented}
+      # valued watch time + survey 4-5 star model; satisfaction > raw watch time
+  scorer:
+    plugin: custom                # YouTube's proprietary multi-stage ranker
+    params:
+      objective: expected_watch_time_per_impression   # documented shift to valued watch time
+      satisfaction_over_raw: true                     # survey-informed satisfaction weighting
+      base_rate_normalization: true                   # per-user base rates normalize signals
+      new_video_boost: true                           # special pathways for new uploads
+      autoplay_chain_penalty: true                    # Up Next favors session continuation
+      survey_model: four_to_five_star
+      estimated_signals_per_day: 80000000              # ~80M ranking signals/day (disclosed scale)
+      provenance: documented                          # objective & survey model; weights inferred
+  surfaces:
+    # Five materialized surfaces; feed.kind=hybrid covers all
+    - name: home
+      description: Personalized homepage grid
+      notes: Only surface where "Not interested" feedback is accepted
+    - name: up_next
+      description: Watch-page suggestions + autoplay chain
+      notes: Autoplay chain continuation heavily weighted; no Not interested control
+    - name: shorts
+      description: Vertical swipe feed, videos <=3min
+      notes: Full-screen swipe; session watch-time maximization
+    - name: search
+      description: Query results; blend of relevance + personalization + freshness
+      notes: Query intent dominates; freshness boost for new uploads
+    - name: notifications
+      description: Bell-icon activity feed (uploads, comments, community posts)
+      notes: Mostly chronological subscription activity, not ranked discovery
+  params:
+    max_home_candidates: 500       # inferred
+    dwell_half_life_seconds: 60    # inferred
+    autoplay_continuation_weight: 0.25  # inferred
+    satisfaction_survey_weight: 0.15   # inferred
+
+content_constraints:
+  max_length_chars: 5000          # community post body (chars); video descriptions 5000 chars
+  length_unit: chars
+  title_max_chars: 100
+  description_max_chars: 5000
+  comment_max_chars: 10000
+  shorts_max_seconds: 180         # <=3min
+  video_max_seconds: 43200        # <=12h
+  community_post_max_chars: 5000
+  max_media_per_post: 0           # N/A — media is the video itself
+  media_policy: "Video uploads: most codecs/containers; live streams supported; community posts support images (up to 8) — inferred"
+  edit_window_seconds: null       # titles/descriptions/tags editable indefinitely; video content immutable post-publish
+  min_video_seconds: 1            # practically; Shorts must be <=180s to classify as Shorts
+
+visibility_model:
+  default_scope: broadcast        # public videos/comments default; watch history always private
+  rules:
+    - {scope: public, predicate: "video.upload_status == public and not removed", grants: everyone}
+    - {scope: unlisted, predicate: "video.upload_status == unlisted — link-only access", grants: link_holder}
+    - {scope: private, predicate: "video.upload_status == private", grants: owner_or_invited}
+    - {scope: subscribers_only, predicate: "community post / some features gated to subscribers", grants: subscription}
+    - {scope: watch_history, predicate: "per-user watch/search history", grants: owner_only}
+    - {scope: age_restricted, predicate: "video.age_restricted", grants: signed_in_adult}
+    - {scope: made_for_kids, predicate: "video.made_for_kids — comments disabled, limited ads personalization", grants: everyone_but_no_comments}
+
+moderation:
+  tiers:
+    - {tier: 0, name: allow, action: allow}
+    - {tier: 1, name: label_only, action: label_only}
+      # e.g. borderline misinformation labeled; limited ads
+    - {tier: 2, name: demotion, action: downrank}
+      # demoted in recommendations/search; demotion_factor < 1.0
+    - {tier: 3, name: fact_check_intervention, action: boost_authoritative}
+      # fact-check boost: authoritative sources surfaced above borderline claims
+    - {tier: 4, name: age_restrict, action: label_only}
+    - {tier: 5, name: removal_strike, action: remove_and_sanction}
+      # removal + strike on channel; 3 strikes -> termination
+    - {tier: 6, name: channel_termination, action: remove_and_sanction}
+  enforcement_points: [upload_video, comment_on_video, post_community_update, watch_video]
+  metadata_only: false
+  notes: >
+    Dec-2024 public-interest loosening: YouTube reduced content removals/demotions
+    for "public interest" content by ~50% (disclosed by CEO Neal Mohan), shifting
+    toward labeling + reduced monetization rather than removal. Fact-checking on
+    US elections content paused late 2024 (disclosed). Demotion applies via
+    demotion_factor on Video; removal sets upload_status=removed + removal_reason.
+    Moderation is platform-side; no client metadata encryption.
+
+demographics:
+  mau: "~2.5B logged-in monthly users (disclosed scale; total incl. logged-out higher — inferred)"
+  notes: >
+    Global reach; ~80M ranking signals processed per day (disclosed scale).
+    Strong skew to mobile/TV surfaces. Age/birth-year buckets available
+    server-side for kids-content enforcement.
+
+data_availability:
+  tier: 2                     # rich server-side telemetry exists; public API exposes only aggregates
+  sources:
+    - "YouTube Data API v3 (public) — videos, channels, comments, playlists, search"
+    - "YouTube Analytics API (owner-scoped) — watch time, traffic sources, demographics for own channel"
+    - "YouTube Reporting API (bulk owner reports)"
+    - "Internal signals: valued watch time, satisfaction surveys, per-user base rates (not public)"
+  api_quota:
+    units_per_day: 10000      # Data API v3 default quota, documented
+    cost_examples:
+      search_list: 100
+      videos_list: 1
+      comment_threads_list: 1
+    note: Quota heavily constrains bulk pulls; simulations should prefer aggregates.
+
+provenance_note: >
+  Documented facts: expected-watch-time objective, valued watch time & 4-5 star
+  satisfaction survey model, five surfaces, "Not interested" Home-only, Shorts
+  <=3min, video <=12h, community post ~5000 chars, Data API v3 10k units/day,
+  ~2.5B logged-in users, ~80M signals/day, Dec-2024 public-interest ~50%
+  reduction. Inferred: all numeric weights, retrieval quota ratios, candidate
+  pool sizes, exact caps (comment length), base-rate key names.

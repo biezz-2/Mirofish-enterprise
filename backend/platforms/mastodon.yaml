@@ -1,0 +1,702 @@
+# PlatformSpec — Mastodon (ActivityPub federation)
+# Schema: SPEC_SCHEMA.md v1.0
+#
+# Source basis (documented, public):
+#  - ActivityPub federation: actors identified as user@instance (WebFinger + AP
+#    URIs); statuses federate to remote instances based on visibility scope.
+#  - Statuses: <=500 chars (URLs rewritten/weighted as 23 chars in the counter),
+#    <=4 media attachments, polls <=4 options, content-warning (CW/spoiler)
+#    support, sensitive-media flag, language tag, edit history preserved
+#    publicly, deletion propagates (tombstone).
+#  - Visibility enum: public | unlisted | private | direct.
+#    * public   -> federates to all subscribed instances + public timelines
+#    * unlisted -> federates but excluded from public timelines/Explore
+#    * private  -> followers-only (requires approved follow when actor locked)
+#    * direct   -> mentioned users only (1:1 / small group)
+#  - Feeds:
+#    * Home timeline: PURELY chronological reverse-ordered, no ranking.
+#    * Notifications: chronological, per-account.
+#    * Explore/trending: instance-local, computed from boosts+favourites with
+#      time decay; community-scoped (per-instance), NOT personalized.
+#  - Streaming API: `public` (local public stream), `user` (home),
+#    `user:notification`.
+#  - Moderation: per-instance only (instance rules, community blocklists,
+#    severities silence / suspend / reject_media). NO global authority.
+#  - Demographics (~2024 public estimates): ~8-9M accounts, ~10K instances,
+#    ~1.5M monthly active users. Data tier 1: OSoMe archive (~475GB),
+#    FediData datasets, instances.social instance directory.
+#
+# NOTE on `feed:`: schema defines a single primary feed. Mastodon has three
+# surfaces; `feed` below models HOME (chronological, the archetype-defining
+# surface). Notifications and Explore are documented under `additional_feeds`.
+
+spec_version: "1.0"
+platform_id: mastodon
+display_name: Mastodon
+archetype: chronological
+privacy_tier: public
+delivery_mode: pull
+graph_visibility: public
+temporal_model: event_driven
+encryption: none          # plaintext at rest/in transit via HTTPS; no E2EE
+timezone_anchor: UTC
+
+# ---------------------------------------------------------------------------
+# Entities
+# ---------------------------------------------------------------------------
+entities:
+  - entity_type: Instance
+    primary_key: [domain]
+    attributes:
+      domain:            {type: string, unique: true, pattern: "^[a-z0-9.-]+$"}
+      title:             {type: string, nullable: true}
+      software:          {type: enum, enum: [mastodon, glitchsoc, misskey, fedibird, other], default: mastodon}
+      version:           {type: string, nullable: true}
+      open_registrations: {type: boolean, default: true}
+      locale:            {type: string, default: "en"}
+      users_count:       {type: integer, min: 0}
+      active_users_count: {type: integer, min: 0}
+      created_at:        {type: string, format: datetime}
+
+  - entity_type: Account
+    primary_key: [account_id]
+    attributes:
+      account_id:        {type: string, unique: true, pattern: "^[^@]+@[^@]+$"}  # user@domain
+      username:          {type: string, max_length: 30}
+      domain:            {type: string, ref: Instance.domain}
+      display_name:      {type: string, nullable: true}
+      bio:               {type: string, nullable: true, max_length: 500}
+      avatar_url:        {type: string, nullable: true}
+      header_url:        {type: string, nullable: true}
+      followers_count:   {type: integer, min: 0, default: 0}
+      following_count:   {type: integer, min: 0, default: 0}
+      statuses_count:    {type: integer, min: 0, default: 0}
+      locked:            {type: boolean, default: false}   # requires follow approval
+      silenced:          {type: boolean, default: false}   # instance-level: limited visibility
+      suspended:         {type: boolean, default: false}   # instance-level: deactivated
+      bot:               {type: boolean, default: false}
+      created_at:        {type: string, format: datetime}
+
+  - entity_type: Status
+    primary_key: [status_id]
+    attributes:
+      status_id:         {type: string, unique: true}      # AP URI / URL
+      author:            {type: string, ref: Account.account_id}
+      content:           {type: string, max_length: 500}   # HTML/plaintext; URLs count 23 chars
+      visibility:        {type: enum, enum: [public, unlisted, private, direct], default: public}
+      in_reply_to:       {type: string, nullable: true, ref: Status.status_id}
+      language:          {type: string, nullable: true}
+      sensitive:         {type: boolean, default: false}   # CW/spoiler flag
+      spoiler_text:      {type: string, nullable: true, max_length: 100}
+      favourites_count:  {type: integer, min: 0, default: 0}
+      reblogs_count:     {type: integer, min: 0, default: 0}
+      replies_count:     {type: integer, min: 0, default: 0}
+      bookmarks_count:   {type: integer, min: 0, default: 0}
+      pinned:            {type: boolean, default: false}
+      local:             {type: boolean, default: true}    # authored on home instance
+      deleted:           {type: boolean, default: false}   # tombstone state
+      created_at:        {type: string, format: datetime}
+      edited_at:         {type: string, nullable: true, format: datetime}
+      edit_history:      {type: array, items: {type: object}}  # public edit revisions (content at edit time)
+
+  - entity_type: MediaAttachment
+    primary_key: [media_id]
+    attributes:
+      media_id:          {type: string, unique: true}
+      status:            {type: string, ref: Status.status_id}
+      type:              {type: enum, enum: [image, gif, video]}
+      url:               {type: string}
+      description:       {type: string, nullable: true}    # alt text
+      duration_seconds:  {type: float, nullable: true, min: 0}
+      width:             {type: integer, nullable: true, min: 0}
+      height:            {type: integer, nullable: true, min: 0}
+
+  - entity_type: Poll
+    primary_key: [poll_id]
+    attributes:
+      poll_id:           {type: string, unique: true}
+      status:            {type: string, ref: Status.status_id}
+      expires_at:        {type: string, nullable: true, format: datetime}
+      multiple:          {type: boolean, default: false}
+      closed_at:         {type: string, nullable: true, format: datetime}
+      votes_count:       {type: integer, min: 0, default: 0}
+      created_at:        {type: string, format: datetime}
+
+  - entity_type: PollOption
+    primary_key: [option_id]
+    attributes:
+      option_id:         {type: string, unique: true}
+      poll:              {type: string, ref: Poll.poll_id}
+      title:             {type: string, max_length: 50}
+      votes_count:       {type: integer, min: 0, default: 0}
+
+  - entity_type: Notification
+    primary_key: [notification_id]
+    attributes:
+      notification_id:   {type: string, unique: true}
+      account:           {type: string, ref: Account.account_id}
+      type:              {type: enum, enum: [mention, reply, favourite, boost, follow, follow_request, poll, report, moderation_warning, domain_block, sign_up, quote]}
+      actor:             {type: string, nullable: true, ref: Account.account_id}
+      status:            {type: string, nullable: true, ref: Status.status_id}
+      read:              {type: boolean, default: false}
+      created_at:        {type: string, format: datetime}
+
+  - entity_type: Report
+    primary_key: [report_id]
+    attributes:
+      report_id:         {type: string, unique: true}
+      reporter:          {type: string, ref: Account.account_id}
+      target_status:     {type: string, nullable: true, ref: Status.status_id}
+      target_account:    {type: string, nullable: true, ref: Account.account_id}
+      category:          {type: enum, enum: [spam, harassment, hate_speech, targeted_harassment, violence, illegal_content, other]}
+      reason:            {type: string, nullable: true}
+      status:            {type: enum, enum: [pending, actioned, dismissed, escalated], default: pending}
+      created_at:        {type: string, format: datetime}
+
+  - entity_type: ModerationAction
+    primary_key: [action_id]
+    attributes:
+      action_id:         {type: string, unique: true}
+      instance:          {type: string, ref: Instance.domain}
+      subject_type:      {type: enum, enum: [account, status, domain, report]}
+      subject_id:        {type: string}                     # account_id | status_id | domain
+      severity:          {type: enum, enum: [silence, suspend, reject_media]}
+      expires_at:        {type: string, nullable: true, format: datetime}  # null = permanent
+      reason:            {type: string, nullable: true}
+      created_by:        {type: string, nullable: true, ref: Account.account_id}  # moderator account
+      created_at:        {type: string, format: datetime}
+
+  - entity_type: CommunityBlocklistEntry
+    primary_key: [entry_id]
+    attributes:
+      entry_id:          {type: string, unique: true}
+      list_domain:       {type: string, ref: Instance.domain}        # blocklist publisher
+      list_name:         {type: string, nullable: true}              # e.g. "fediblock", "The Bad Space"
+      target_domain:     {type: string, nullable: true}              # blocked domain, if domain-scoped
+      target_status_id:  {type: string, nullable: true, ref: Status.status_id}  # blocked post, if post-scoped
+      severity:          {type: enum, enum: [silence, suspend, reject_media]}
+      expires_at:        {type: string, nullable: true, format: datetime}
+
+# ---------------------------------------------------------------------------
+# Relations
+# ---------------------------------------------------------------------------
+relations:
+  - relation_type: account_member_of_instance
+    from: Account
+    to: Instance
+    cardinality: many_to_one
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: account_authors_status
+    from: Account
+    to: Status
+    cardinality: one_to_many
+    semantics: authorship
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: status_replies_to_status
+    from: Status
+    to: Status
+    cardinality: many_to_one
+    semantics: reply_thread
+    transitive: false                # reply chains are direct, not inferred transitively
+    symmetric_effect: false
+
+  - relation_type: status_has_media
+    from: Status
+    to: MediaAttachment
+    cardinality: one_to_many
+    semantics: containment
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: status_has_poll
+    from: Status
+    to: Poll
+    cardinality: one_to_one
+    semantics: containment
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: poll_has_option
+    from: Poll
+    to: PollOption
+    cardinality: one_to_many
+    semantics: containment
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: follows
+    from: Account
+    to: Account
+    cardinality: many_to_many
+    semantics: directed_follow_graph
+    transitive: false                # no transitive follow visibility on Mastodon
+    symmetric_effect: false          # follow != followed-back; locked accounts need approval
+
+  - relation_type: boosts
+    from: Account
+    to: Status
+    cardinality: many_to_many
+    semantics: amplify
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: favourites
+    from: Account
+    to: Status
+    cardinality: many_to_many
+    semantics: react
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: bookmarks
+    from: Account
+    to: Status
+    cardinality: many_to_many
+    semantics: react
+    transitive: false
+    symmetric_effect: false
+    attributes: {private: true}      # bookmarks are never federated/visible to others
+
+  - relation_type: mutes
+    from: Account
+    to: Account
+    cardinality: many_to_many
+    semantics: visibility_gate        # hides target's posts/notifications for the muter only
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: blocks
+    from: Account
+    to: Account
+    cardinality: many_to_many
+    semantics: hard_exclusion         # mutual invisibility + unfollow; blocks federation of interactions
+    transitive: false
+    symmetric_effect: true
+
+  - relation_type: reports
+    from: Report
+    to: Status
+    cardinality: many_to_one
+    semantics: moderation_flag
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: instance_moderates_account
+    from: ModerationAction
+    to: Account
+    cardinality: many_to_one
+    semantics: instance_scoped_sanction   # applies ONLY on the acting instance; no global authority
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: instance_blocks_domain
+    from: Instance
+    to: Instance
+    cardinality: many_to_many
+    semantics: domain_sanction             # instance-level domain_block / allow / suspend policy
+    transitive: false
+    symmetric_effect: false
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+actions:
+  - action_id: status_create
+    actor: Account
+    target: null
+    verb: create
+    preconditions:
+      not_suspended: true
+      content_length_max: 500            # chars; URLs counted as 23
+      max_media: 4
+      max_poll_options: 4
+      poll_requires_status: true
+    effects:
+      creates: "Status{visibility: ${visibility}, deleted: false, local: true}"
+      increments: [Account.statuses_count, Instance.users_count]   # users_count only on first status; soft counter
+      feeds_scorer_signal: true          # contributes to Explore trending score
+    visibility: "${visibility}"          # public|unlisted|private|direct
+    cost: 3
+
+  - action_id: status_edit
+    actor: Account
+    target: Status
+    verb: create                          # mutates authored content; grouped with create
+    preconditions:
+      author_is_actor: true
+      not_deleted: true
+      content_length_max: 500
+    effects:
+      updates: [Status.content, Status.edited_at, Status.edit_history]   # history is public
+      creates: "Notification{type: mention}"   # only for mentioned users on significant edits
+      feeds_scorer_signal: false
+    visibility: "inherit_target"           # edit cannot widen visibility
+    cost: 2
+
+  - action_id: status_delete
+    actor: Account
+    target: Status
+    verb: create                          # state mutation on authored content
+    preconditions:
+      author_is_actor: true
+      not_deleted: true
+    effects:
+      updates: [Status.deleted]           # tombstone; propagates to remote instances
+      creates: "Notification{type: moderation_warning}"   # to boosted/favourited rebloggers where required
+      feeds_scorer_signal: false
+    visibility: "instance_local_then_federated"
+    cost: 1
+
+  - action_id: status_reply
+    actor: Account
+    target: Status
+    verb: create
+    preconditions:
+      not_suspended: true
+      target_not_deleted: true
+      can_view_target: true              # visibility gate evaluated on the parent
+      content_length_max: 500
+    effects:
+      creates: "Status{in_reply_to: ${target.status_id}, visibility: inherit_or_direct}"
+      increments: [Status.replies_count, "Notification{type: reply}"]
+      feeds_scorer_signal: true
+    visibility: "direct"                  # Mastodon replies default to direct unless widened
+    cost: 3
+
+  - action_id: status_boost
+    actor: Account
+    target: Status
+    verb: amplify
+    preconditions:
+      can_view_target: true
+      not_blocked_either_direction: true
+      target_not_deleted: true
+    effects:
+      creates: "Status{visibility: boost_of_target}"   # AP Announce; carries original visibility
+      increments: [Status.reblogs_count]
+      creates: "Notification{type: boost}"
+      feeds_scorer_signal: true          # primary Explore trending input
+    visibility: "inherit_target"
+    cost: 2
+
+  - action_id: status_favourite
+    actor: Account
+    target: Status
+    verb: react
+    preconditions:
+      can_view_target: true
+      not_blocked_either_direction: true
+      target_not_deleted: true
+    effects:
+      increments: [Status.favourites_count]
+      creates: "Notification{type: favourite}"
+      feeds_scorer_signal: true          # secondary Explore trending input
+    visibility: "private_to_actor"        # favourites never federated
+    cost: 1
+
+  - action_id: status_bookmark
+    actor: Account
+    target: Status
+    verb: react
+    preconditions:
+      can_view_target: true
+    effects:
+      creates: "Bookmark{private: true}"
+      increments: [Status.bookmarks_count]
+      feeds_scorer_signal: false         # bookmarks excluded from trending score
+    visibility: "private_to_actor"
+    cost: 1
+
+  - action_id: status_pin
+    actor: Account
+    target: Status
+    verb: react
+    preconditions:
+      author_is_actor: true
+      not_deleted: true
+    effects:
+      updates: [Status.pinned]           # pinned posts shown atop actor profile
+      feeds_scorer_signal: false
+    visibility: "profile_only"
+    cost: 1
+
+  - action_id: poll_vote
+    actor: Account
+    target: PollOption
+    verb: react
+    preconditions:
+      can_view_poll_status: true
+      poll_open: true                    # not expired, not closed
+      not_already_voted: true
+      multiple_allowed_if_set: true
+    effects:
+      increments: [PollOption.votes_count, Poll.votes_count]
+      creates: "Notification{type: poll}"
+      feeds_scorer_signal: false
+    visibility: "private_to_actor"        # vote choice not federated publicly
+    cost: 1
+
+  - action_id: follow_request
+    actor: Account
+    target: Account
+    verb: relational
+    preconditions:
+      not_blocked_either_direction: true
+      target_not_suspended: true
+    effects:
+      creates: "FollowRequest{pending: true}"   # pending=true if target.locked or instance policy
+      creates: "Notification{type: follow_request}"
+      feeds_scorer_signal: false
+    visibility: "pending_until_accepted"
+    cost: 1
+
+  - action_id: follow_accept
+    actor: Account
+    target: Account                          # pending FollowRequest from `actor`
+    verb: relational
+    preconditions:
+      pending_follow_request_exists: true
+    effects:
+      creates: "Follow{approved: true}"
+      increments: [Account.followers_count, Account.following_count]
+      creates: "Notification{type: follow}"
+      feeds_scorer_signal: false
+    visibility: "followers_scope"
+    cost: 1
+
+  - action_id: unfollow
+    actor: Account
+    target: Account
+    verb: relational
+    preconditions:
+      following_exists: true
+    effects:
+      deletes: Follow
+      decrements: [Account.followers_count, Account.following_count]
+      feeds_scorer_signal: false
+    visibility: "n/a"
+    cost: 1
+
+  - action_id: mute
+    actor: Account
+    target: Account
+    verb: relational
+    preconditions:
+      target_exists: true
+    effects:
+      creates: "Mute{private: true}"           # hides target posts + notifications for actor only
+      feeds_scorer_signal: false
+    visibility: "private_to_actor"
+    cost: 1
+
+  - action_id: block
+    actor: Account
+    target: Account
+    verb: relational
+    preconditions:
+      target_exists: true
+    effects:
+      creates: "Block{mutual: true}"           # auto-unfollows both directions
+      deletes: [Follow, FollowRequest]
+      creates: "Notification{type: domain_block}"   # AP Undo/Block propagates to shared instances
+      feeds_scorer_signal: false
+    visibility: "hard_exclusion"
+    cost: 1
+
+  - action_id: report
+    actor: Account
+    target: Status
+    verb: relational
+    preconditions:
+      can_view_target: true
+      target_not_own: true
+    effects:
+      creates: "Report{status: pending}"
+      queues_moderation: true               # enters instance moderator queue ONLY (no global authority)
+      feeds_scorer_signal: false
+    visibility: "moderator_only"
+    cost: 1
+
+  - action_id: instance_domain_block
+    actor: Account                          # instance moderator/admin
+    target: Instance
+    verb: relational
+    preconditions:
+      actor_is_instance_moderator: true
+      target_domain_not_self: true
+    effects:
+      creates: "InstanceDomainPolicy{policy: silence_or_suspend}"
+      creates: "ModerationAction{severity: ${severity}}"
+      feeds_scorer_signal: false            # reduces remote content in home/explore on this instance
+    visibility: "instance_scoped"
+    cost: 4
+
+  - action_id: instance_domain_allow
+    actor: Account
+    target: Instance
+    verb: relational
+    preconditions:
+      actor_is_instance_moderator: true
+    effects:
+      creates: "InstanceDomainPolicy{policy: allow}"   # whitelist; bypasses federation restrictions on this instance
+      feeds_scorer_signal: false
+    visibility: "instance_scoped"
+    cost: 3
+
+  - action_id: instance_domain_suspend
+    actor: Account
+    target: Instance
+    verb: relational
+    preconditions:
+      actor_is_instance_moderator: true
+    effects:
+      creates: "InstanceDomainPolicy{policy: suspend}"
+      creates: "ModerationAction{severity: suspend}"   # all accounts on target domain suspended locally
+      feeds_scorer_signal: false
+    visibility: "instance_scoped"
+    cost: 4
+
+# ---------------------------------------------------------------------------
+# Feed — primary surface: HOME timeline
+# Mastodon home is PURELY chronological: reverse-chronological merge of
+# followed accounts' posts + boosts, filtered by mutes/blocks/domain policy.
+# No scorer, no ML ranking. Notifications are chronological. Explore is
+# instance-local trending (see additional_feeds.explore).
+# ---------------------------------------------------------------------------
+feed:
+  kind: chronological
+  signal_schema:
+    - {name: recency, type: timestamp, provenance: documented}
+  scorer:
+    plugin: chronological
+    params: {}
+  params:
+    ordering: reverse_chronological
+    sources:
+      - followed_accounts_statuses   # incl. federated statuses from followed remote accounts
+      - followed_accounts_boosts     # boosts appear as their own entries
+    filters:
+      - exclude_muted_authors
+      - exclude_blocked_either_direction
+      - exclude_suspended_accounts
+      - exclude_domain_blocked
+      - exclude_direct_visibility    # DMs never enter home
+      - honor_instance_domain_policy # silence/suspend reduce visibility locally
+    personalization: none             # the control condition: algorithm-free
+
+# Additional feed surfaces (same schema family; kind values per schema enum)
+additional_feeds:
+  notifications:
+    kind: chronological
+    signal_schema:
+      - {name: recency, type: timestamp, provenance: documented}
+    scorer: {plugin: chronological, params: {}}
+    params:
+      ordering: reverse_chronological
+      sources: [mentions, replies, favourites, boosts, follows, follow_requests, polls, moderation, domain_blocks]
+      filters: [exclude_muted_authors, exclude_blocked]
+      note: "Streaming API channel user:notification; per-account; chronological"
+
+  explore:
+    kind: discover
+    signal_schema:
+      - {name: popularity_velocity, type: count, weight: 1.0,
+         provenance: documented, description: "boosts + favourites on status within decay window"}
+      - {name: recency, type: timestamp, weight: 1.0,
+         provenance: documented, description: "exponential time decay of engagement"}
+    scorer:
+      plugin: custom
+      params:
+        formula: "score = (reblogs_count + favourites_count) * exp(-lambda * age_hours)"
+        lambda: 0.05                    # inferred: typical half-life ~14h; exact constant undocumented
+        scope: instance_local           # community-scoped trending, NOT personalized
+    params:
+      eligibility:
+        - visibility: public_only       # unlisted/private/direct excluded
+        - authored_on_instance: true    # local posts only on most instances
+        - not_sensitive_unless_opted_in
+      filters: [exclude_muted, exclude_blocked, exclude_domain_blocked, exclude_suspended]
+      note: "Trending computed per-instance from local+federated public posts; no per-user personalization"
+
+  public_stream:
+    kind: chronological
+    signal_schema:
+      - {name: recency, type: timestamp, provenance: documented}
+    scorer: {plugin: chronological, params: {}}
+    params:
+      note: "Streaming API `public` channel: firehose of local public posts; unauthenticated-readable subset"
+
+# ---------------------------------------------------------------------------
+# Content constraints
+# ---------------------------------------------------------------------------
+content_constraints:
+  max_length_chars: 500
+  length_unit: chars
+  length_note: "Mastodon counts characters; URLs are weighted as 23 chars each in the counter (grapheme clusters for emoji; no byte limit in spec, enforced per-instance config)"
+  max_media_per_post: 4
+  media_policy: "images/gif/video; max video duration ~2min (instance-configurable); per-instance upload size limits (default ~16-99MB)"
+  poll_max_options: 4
+  poll_option_max_length: 50
+  poll_max_duration_days: 7
+  edit_window_seconds: null              # edits allowed indefinitely; full public edit history retained
+  cw_spoiler_support: true               # sensitive flag + spoiler_text; CW hides content behind click-through
+  visibility_enum: [public, unlisted, private, direct]
+  delete_propagation: federated_tombstone
+
+# ---------------------------------------------------------------------------
+# Privacy / visibility model
+# ---------------------------------------------------------------------------
+visibility_model:
+  default_scope: broadcast               # public posts federate to all subscribed instances
+  rules:
+    - {scope: public,   predicate: "anyone, including logged-out and remote instances", grants: none}
+    - {scope: unlisted, predicate: "anyone with the link; excluded from public timelines/Explore/trending", grants: none}
+    - {scope: private,  predicate: "followers of the author only; requires approved follow when author.locked", grants: "follow (approved)"}
+    - {scope: direct,   predicate: "mentioned users only (author + mentions + their followers when widened); DM semantics", grants: "mention"}
+    - {scope: account_locked, predicate: "all follows require manual approval; default post visibility suggested private", grants: "follow_accept"}
+    - {scope: silenced, predicate: "instance moderation: posts limited to followers-only on that instance", grants: "moderation_action:silence"}
+    - {scope: suspended, predicate: "account deactivated on that instance only; content may persist on remote instances", grants: "moderation_action:suspend"}
+    - {scope: blocked, predicate: "mutual hard exclusion: hides content both directions, unfollows, blocks interactions", grants: "block"}
+    - {scope: muted,   predicate: "actor-local hide of target's posts/notifications; no federation effect", grants: "mute (self-applied)"}
+
+# ---------------------------------------------------------------------------
+# Moderation — per-instance only; NO global authority
+# ---------------------------------------------------------------------------
+moderation:
+  tiers:
+    - {tier: 1, name: warn,              action: label_only}
+    - {tier: 2, name: silence,           action: downrank}        # visibility limited to followers on that instance
+    - {tier: 3, name: reject_media,      action: downrank}        # media attachments removed, text kept
+    - {tier: 4, name: suspend,           action: remove_and_sanction}  # account deactivated locally
+    - {tier: 5, name: domain_sanction,   action: remove_and_sanction}  # whole remote domain silenced/suspended locally
+  enforcement_points: [report, status_create, status_edit, instance_domain_block, instance_domain_allow, instance_domain_suspend]
+  metadata_only: false                   # content is public plaintext; moderation sees full content
+  rules:
+    scope: per_instance                   # each instance enforces its own rules + adopted community blocklists
+    community_blocklists: true            # e.g. fediblock, The Bad Space — imported per-instance opt-in
+    blocklist_severities: [silence, suspend, reject_media]
+    report_queue: instance_local_moderators
+    no_global_authority: true             # suspended on instance A may remain fully active on instance B
+    cw_friction: "CW/spoiler is author-applied; instances may require CW for sensitive media via rules"
+
+# ---------------------------------------------------------------------------
+# Demographics & data availability
+# ---------------------------------------------------------------------------
+demographics:
+  mau: "~1.5M monthly active users (public estimates ~2024; smaller than Bluesky/X)"
+  accounts: "~8-9M total accounts across ~10K instances"
+  instances: "~10,000 active instances; highly fragmented, instance choice shapes exposure"
+  notes: "Federated graph: follower edges cross instances; no single global timeline. Instance-level domain policies create heterogeneous visibility of the same content. Engagement concentrated on large instances (mastodon.social, mstdn.jp, hachyderm.io historically)."
+
+data_availability:
+  tier: 1
+  sources:
+    - "OSoMe (Open source Observatory of the MicroBlogosphere) — ~475GB ActivityPub archive dumps"
+    - "FediData — community-collected Mastodon datasets"
+    - "instances.social — instance directory/metadata"
+    - "Instance-local REST API (posts, accounts, timelines) + streaming API (public/user/user:notification)"

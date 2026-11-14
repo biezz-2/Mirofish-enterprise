@@ -1,0 +1,904 @@
+# PlatformSpec — Facebook (Meta)
+# Conforms to docs/SPEC_SCHEMA.md v1.0
+#
+# Source notes (provenance):
+#  - Ranking: documented via Meta/MSI publications + 2021 algorithm leak
+#    (inventory → signal extraction → 100+ prediction models → blended score).
+#  - MSI interaction weights (like=1, reaction/reshare=5, RSVP=15,
+#    significant interaction=30, × relationship factor 0.5 same-group /
+#    0.3 stranger): LEAKED, not officially documented — marked inferred-leaked.
+#  - Groups: independent ranking + suggested-groups recommender: documented.
+#  - Content limits (~63k chars post, 10 photos/1 video, Reels 3–90s,
+#    Stories 60s): documented via Meta help pages.
+#  - Moderation: 3-tier (fact-check label → demotion → 90-day repeat penalty):
+#    documented; US third-party fact-checking ended Jan 2025 → Community Notes.
+#  - Market demographics (~68% of US adults; GenX/Boomer skew): documented
+#    (Pew Research).
+#  - Data tier 3: aggregate-only; SSO URL dataset 57M URLs; Content Library gated.
+
+spec_version: "1.0"
+platform_id: facebook
+display_name: Facebook
+archetype: public_ranked_feed
+privacy_tier: semi_public          # friends-only posts are common; profile posts default
+                                   # friends-of-friends reachable depending on settings
+delivery_mode: pull
+graph_visibility: private          # social graph is not publicly enumerable;
+                                   # entity existence is public but edges are private
+temporal_model: event_driven       # continuous ranking updates; no fixed rounds
+encryption: none                   # TLS in transit; at-rest server-side only;
+                                   # Secret Conversations / Messenger E2E are separate
+timezone_anchor: UTC
+
+entities:
+  - entity_type: User
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        pattern: "^[0-9]+$"        # numeric profile id
+        unique: true
+      username:
+        type: string
+        max_length: 50
+        nullable: true             # optional vanity username
+      display_name:
+        type: string
+        max_length: 255
+      created_at:
+        type: string               # ISO-8601
+      is_page:
+        type: boolean
+        default: false             # False → User; True → Page entity parallel
+      verified:
+        type: boolean
+        default: false
+      friend_count:
+        type: integer
+        min: 0
+        default: 0
+      settings:
+        type: object               # privacy knobs: audience defaults, feed prefs
+        default: {}
+
+  - entity_type: Page
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        pattern: "^[0-9]+$"
+        unique: true
+      name:
+        type: string
+        max_length: 255
+      category:
+        type: string
+        max_length: 255
+        nullable: true
+      follower_count:
+        type: integer
+        min: 0
+        default: 0
+      verification:
+        type: enum
+        enum: [none, blue_verified, gray_verified]
+        default: none
+      owner_user_id:
+        type: string
+        nullable: true             # ref: User.id (managing user, if any)
+      is_news_media:
+        type: boolean
+        default: false             # news/media pages get additional distribution rules
+
+  - entity_type: Group
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        pattern: "^[0-9]+$"
+        unique: true
+      name:
+        type: string
+        max_length: 255
+      privacy:
+        type: enum
+        enum: [public, private]    # public = content+membership enumerable;
+                                   # private = members-only visibility
+      member_count:
+        type: integer
+        min: 0
+        default: 0
+      posting_policy:
+        type: enum
+        enum: [any_member, admins_only, moderated]
+        default: any_member
+      has_own_ranking:
+        type: boolean
+        default: true              # Groups run a SEPARATE ranking pipeline
+                                   # and a suggested-groups recommender
+
+  - entity_type: Event
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        pattern: "^[0-9]+$"
+        unique: true
+      title:
+        type: string
+        max_length: 255
+      host_id:
+        type: string
+        ref: User.id
+      location:
+        type: object               # {type: online|physical, ...}
+        default: {type: online}
+      start_time:
+        type: string               # ISO-8601
+      rsvp_count:
+        type: object               # {going, interested, maybe}
+        default: {going: 0, interested: 0, maybe: 0}
+
+  - entity_type: MarketplaceListing
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        unique: true
+      seller_id:
+        type: string
+        ref: User.id
+      title:
+        type: string
+        max_length: 200             # Marketplace title limit (documented)
+      price:
+        type: object               # {amount, currency, negotiable}
+        nullable: true
+      category:
+        type: string
+        max_length: 255
+        nullable: true
+      status:
+        type: enum
+        enum: [active, sold, expired, removed]
+        default: active
+      # NOTE: no public Marketplace API — discovery only via scraping or
+      # user-shared listings; model as terminal node in feed.
+
+  - entity_type: Post
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        pattern: "^[0-9]+$"
+        unique: true
+      author_type:
+        type: enum
+        enum: [User, Page]
+      author_id:
+        type: string
+      parent_type:
+        type: enum
+        enum: [none, post, group, page]
+        default: none
+      parent_id:
+        type: string
+        nullable: true
+      content_type:
+        type: enum
+        enum: [text, photo, video, reel, story, link, live]
+      text:
+        type: string
+        max_length: 63206           # ~63k char practical limit (documented)
+      created_at:
+        type: string               # ISO-8601
+      audience:
+        type: enum
+        enum: [public, friends, friends_except, specific_friends,
+               only_me, custom]
+        default: friends           # friends-only is the modal default
+      media_count:
+        type: integer
+        min: 0
+        default: 0
+      reaction_counts:
+        type: object               # {like, love, care, haha, wow, sad, angry}
+        default: {}
+      share_count:
+        type: integer
+        default: 0
+      comment_count:
+        type: integer
+        default: 0
+      dwell_ms:
+        type: float
+        nullable: true             # server-observed attention dwell
+      moderation_state:
+        type: enum
+        enum: [clean, fact_check_labeled, demoted, reduced_distribution,
+               removed]
+        default: clean
+      community_note_id:
+        type: string
+        nullable: true             # attached Community Note if any
+
+  - entity_type: Story
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        unique: true
+      author_id:
+        type: string
+        ref: User.id
+      content_type:
+        type: enum
+        enum: [photo, video, text, link]
+      created_at:
+        type: string
+      expires_at:
+        type: string               # 24h after creation (documented)
+      media_duration_seconds:
+        type: float
+        max: 60.0                  # Stories media limit ~60s (documented)
+        nullable: true
+      audience:
+        type: enum
+        enum: [public, friends, custom]
+        default: friends
+
+  - entity_type: Comment
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        pattern: "^[0-9]+$"
+        unique: true
+      post_id:
+        type: string
+        ref: Post.id
+      author_id:
+        type: string
+        ref: User.id
+      parent_comment_id:
+        type: string
+        ref: Comment.id
+        nullable: true
+      text:
+        type: string
+        max_length: 8000
+      created_at:
+        type: string
+      like_count:
+        type: integer
+        default: 0
+      moderation_state:
+        type: enum
+        enum: [clean, pending, removed, fact_check_labeled]
+        default: clean
+
+  - entity_type: Reaction
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        unique: true
+      actor_id:
+        type: string
+        ref: User.id
+      target_type:
+        type: enum
+        enum: [post, comment]
+      target_id:
+        type: string
+      reaction_type:
+        type: enum
+        enum: [like, love, care, haha, wow, sad, angry]
+      created_at:
+        type: string
+      # MSI weighting context: reaction ≈ 5 × like weight in ranking
+      # (leaked MSI algorithm, see feed.params.msi_weights).
+
+  - entity_type: Friendship
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        unique: true
+      user_a:
+        type: string
+        ref: User.id
+      user_b:
+        type: string
+        ref: User.id
+      status:
+        type: enum
+        enum: [pending_outgoing, pending_incoming, friends]
+        default: pending_outgoing
+      since:
+        type: string               # ISO-8601
+      # symmetric edge; friend graph is directed_follow_graph equivalent
+      # for retrieval scoping but edges are mutual by default.
+
+  - entity_type: GroupMembership
+    primary_key: [group_id, user_id]
+    attributes:
+      group_id:
+        type: string
+        ref: Group.id
+      user_id:
+        type: string
+        ref: User.id
+      role:
+        type: enum
+        enum: [member, moderator, admin]
+        default: member
+      joined_at:
+        type: string
+      # relationship factor in group ranking: same-group pairs get
+      # weight 0.5 vs stranger 0.3 (leaked MSI).
+
+  - entity_type: Follow
+    primary_key: [follower_id, followee_id]
+    attributes:
+      follower_id:
+        type: string
+        ref: User.id
+      followee_id:
+        type: string
+        ref: User.id              # User or Page id namespace
+      since:
+        type: string
+      notifications_enabled:
+        type: boolean
+        default: false
+
+  - entity_type: RSVP
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        unique: true
+      actor_id:
+        type: string
+        ref: User.id
+      event_id:
+        type: string
+        ref: Event.id
+      status:
+        type: enum
+        enum: [going, interested, maybe, not_going]
+      updated_at:
+        type: string
+      # RSVP = 15 in leaked MSI interaction weights (3× reaction).
+
+  - entity_type: FriendRequest
+    primary_key: [id]
+    attributes:
+      id:
+        type: string
+        unique: true
+      from_id:
+        type: string
+        ref: User.id
+      to_id:
+        type: string
+        ref: User.id
+      status:
+        type: enum
+        enum: [pending, accepted, declined, ignored]
+        default: pending
+      created_at:
+        type: string
+
+relations:
+  - relation_type: friendship
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: mutual_affiliation_gate   # friendship gates default audience
+    transitive: false                    # friends-of-friends reachable via
+                                         # separate FoF visibility rule
+    symmetric_effect: true
+    attributes: {via: Friendship.status}
+
+  - relation_type: group_membership
+    from: User
+    to: Group
+    cardinality: many_to_many
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+    attributes: {role: GroupMembership.role}
+
+  - relation_type: follow
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: directed_follow_graph     # follows are one-directional
+    transitive: false
+    symmetric_effect: false
+    attributes: {notifications_enabled: Follow.notifications_enabled}
+
+  - relation_type: page_follows_user_content
+    from: User
+    to: Page
+    cardinality: many_to_many
+    semantics: directed_follow_graph     # page followers; Page posts enter feed
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: page_ownership
+    from: Page
+    to: User
+    cardinality: many_to_one
+    semantics: ownership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: posts_in_group
+    from: Post
+    to: Group
+    cardinality: many_to_one
+    semantics: container_scoping       # group posts ranked by group pipeline
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: posts_on_page
+    from: Post
+    to: Page
+    cardinality: many_to_one
+    semantics: container_scoping
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: comments_on_post
+    from: Comment
+    to: Post
+    cardinality: many_to_one
+    semantics: containment
+    transitive: true                    # nested comment threads
+    symmetric_effect: false
+
+  - relation_type: reacts_to
+    from: Reaction
+    to: Post
+    cardinality: many_to_many
+    semantics: edge_weight_signal      # feeds MSI scoring directly
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: rsvp_to_event
+    from: RSVP
+    to: Event
+    cardinality: many_to_many
+    semantics: edge_weight_signal      # RSVP weight = 15 (MSI leak)
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: marketplace_listing_owned
+    from: MarketplaceListing
+    to: User
+    cardinality: many_to_one
+    semantics: ownership
+    transitive: false
+    symmetric_effect: false
+
+actions:
+  - action_id: create_post
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      entity_active: true
+      content_length_chars_max: 63206
+      media_count_max: 10             # photos; 1 video OR reel slot (see media_policy)
+      audience_in: [public, friends, friends_except, specific_friends,
+                    only_me, custom]
+    effects:
+      creates: "Post{moderation_state: clean}"
+      feeds_scorer_signal: true       # enters inventory stage of ranking
+      queues_moderation: true
+    visibility: "per Post.audience"
+    cost: 1
+
+  - action_id: react_to_post
+    actor: User
+    target: Post
+    verb: react
+    preconditions:
+      visibility_visible: true        # post must be visible to actor
+      not_own_content: true           # cannot react to own post
+      reaction_type_in: [like, love, care, haha, wow, sad, angry]
+    effects:
+      creates: Reaction
+      feeds_scorer_signal: true       # MSI weight ≈ 5 × like
+    visibility: broadcast_to_author_network
+    cost: 1
+
+  - action_id: react_to_comment
+    actor: User
+    target: Comment
+    verb: react
+    preconditions:
+      visibility_visible: true
+      reaction_type_in: [like, love, wow, sad, angry]
+    effects:
+      creates: Reaction
+      feeds_scorer_signal: true
+    visibility: broadcast_to_comment_author
+    cost: 1
+
+  - action_id: comment_on_post
+    actor: User
+    target: Post
+    verb: create
+    preconditions:
+      visibility_visible: true
+      comments_enabled: true
+      content_length_chars_max: 8000
+    effects:
+      creates: Comment
+      feeds_scorer_signal: true       # significant-interaction class signal
+      queues_moderation: true
+    visibility: "same as parent Post audience"
+    cost: 1
+
+  - action_id: share_post
+    actor: User
+    target: Post
+    verb: amplify
+    preconditions:
+      visibility_visible: true
+      sharable: true                  # share restrictions on some posts
+    effects:
+      increments: Post.share_count
+      creates: "Post{parent_type: post, parent_id: <original>}"
+      feeds_scorer_signal: true       # MSI weight ≈ 5 (reshare class)
+      queues_moderation: true
+    visibility: "per new Post.audience"
+    cost: 1
+
+  - action_id: send_friend_request
+    actor: User
+    target: User
+    verb: relational
+    preconditions:
+      not_already_friends: true
+      no_pending_request: true
+    effects:
+      creates: "FriendRequest{status: pending}"
+    visibility: pairwise
+    cost: 0
+
+  - action_id: accept_friend_request
+    actor: User
+    target: FriendRequest
+    verb: relational
+    preconditions:
+      request_status: pending
+      actor_is_recipient: true
+    effects:
+      updates: FriendRequest.status = accepted
+      creates: "Friendship{status: friends}"
+    visibility: pairwise
+    cost: 0
+
+  - action_id: join_group
+    actor: User
+    target: Group
+    verb: relational
+    preconditions:
+      group_privacy_in: [public, private]
+      not_already_member: true
+    effects:
+      creates: "GroupMembership{role: member}"
+      queues_moderation: true         # private groups may require approval
+    visibility: group_members
+    cost: 0
+
+  - action_id: post_in_group
+    actor: User
+    target: Group
+    verb: create
+    preconditions:
+      group_membership: true
+      group_posting_policy_allows: true
+      content_length_chars_max: 63206
+    effects:
+      creates: "Post{parent_type: group}"
+      feeds_scorer_signal: true       # scored by GROUP ranking pipeline,
+                                      # not main News Feed
+      queues_moderation: true
+    visibility: group_members
+    cost: 1
+
+  - action_id: create_event
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      entity_active: true
+    effects:
+      creates: "Event{rsvp_count: {going: 0, interested: 0, maybe: 0}}"
+      feeds_scorer_signal: true
+      queues_moderation: true
+    visibility: "per event audience setting"
+    cost: 1
+
+  - action_id: rsvp_event
+    actor: User
+    target: Event
+    verb: react
+    preconditions:
+      event_exists: true
+      status_in: [going, interested, maybe, not_going]
+    effects:
+      creates: RSVP
+      increments: Event.rsvp_count.<status>
+      feeds_scorer_signal: true       # MSI weight = 15
+    visibility: event_audience
+    cost: 1
+
+  - action_id: publish_story
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      media_duration_seconds_max: 60.0
+      audience_in: [public, friends, custom]
+    effects:
+      creates: "Story{expires_at: created_at + 24h}"
+      feeds_scorer_signal: true       # separate Stories ranking surface
+    visibility: "per Story.audience"
+    cost: 1
+
+  - action_id: publish_reel
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      media_duration_seconds_min: 3.0
+      media_duration_seconds_max: 90.0
+      vertical_aspect: true
+    effects:
+      creates: "Post{content_type: reel}"
+      feeds_scorer_signal: true       # Reels ranked by engagement-velocity
+                                      # models within dedicated surface
+      queues_moderation: true
+    visibility: public               # Reels default public-discoverable
+    cost: 1
+
+  - action_id: create_marketplace_listing
+    actor: User
+    target: null
+    verb: create
+    preconditions:
+      entity_active: true
+      title_length_chars_max: 200
+      prohibited_category_check: pass
+    effects:
+      creates: "MarketplaceListing{status: active}"
+      queues_moderation: true
+    visibility: location_scoped        # no API; Marketplace is its own
+                                       # surface, NOT part of News Feed
+    cost: 1
+
+  - action_id: follow_page
+    actor: User
+    target: Page
+    verb: relational
+    preconditions:
+      not_already_following: true
+    effects:
+      creates: "Follow{followee_id: <page_id>}"
+      feeds_scorer_signal: true       # Page posts enter follower feeds
+    visibility: pairwise
+    cost: 0
+
+feed:
+  kind: ranked
+  retrieval:
+    # 4-STAGE PIPELINE (documented via Meta/MSI):
+    #   Stage 1: INVENTORY — collect candidate posts from friends, pages
+    #            followed, groups, watched/engaged sources
+    #   Stage 2: SIGNALS — extract ~10k raw signals per candidate
+    #   Stage 3: PREDICTION — 100+ ML models predict P(like/comment/share/...)
+    #   Stage 4: SCORE — weighted blend of model outputs + heuristics
+    - source: friends_posts
+      quota_ratio: 0.35             # friends' content: largest share (inferred)
+      provenance: inferred
+      provenance: inferred
+    - source: followed_pages
+      quota_ratio: 0.25             # pages user follows (inferred)
+      provenance: inferred
+      provenance: inferred
+    - source: groups_joined
+      quota_ratio: 0.15             # group content ranked by group pipeline
+      provenance: inferred
+      provenance: inferred
+    - source: engagement_history_pool
+      quota_ratio: 0.15             # content similar to past dwell/shares
+      provenance: inferred
+      provenance: inferred
+    - source: suggested_content
+      quota_ratio: 0.10             # discovery / "suggested for you" +
+      provenance: inferred
+                                   # suggested-groups recommender output
+      provenance: inferred
+  signal_schema:
+    # Canonical 10 families where Facebook exposes them; custom MSI signals added.
+    - {name: recency, type: float, weight: 0.15, provenance: documented}
+    - {name: engagement_count, type: float, weight: 0.20, provenance: documented}
+    - {name: attention_dwell, type: float, weight: 0.20, provenance: documented}
+      # FB tracks view time per post; high dwell = strong positive signal
+    - {name: shares_private, type: float, weight: 0.15, provenance: documented}
+      # Messenger shares ("sent to friend") weighted heavily — documented
+      # as strongest intent signal
+    - {name: author_affinity, type: float, weight: 0.15, provenance: documented}
+      # relationship factor: same-group 0.5, stranger 0.3 (MSI leak, inferred)
+    - {name: topic_graph, type: float, weight: 0.05, provenance: inferred}
+    - {name: negative_feedback, type: float, weight: -0.10, provenance: documented}
+      # hide/snooze/report/"see less" subtract
+    - {name: popularity_velocity, type: float, weight: 0.05, provenance: inferred}
+    - {name: content_type_prior, type: float, weight: 0.03, provenance: inferred}
+      # reels/video boosted vs plain text (documented policy direction)
+    - {name: quality_satisfaction, type: float, weight: 0.02, provenance: inferred}
+    # Custom FB-specific signal families:
+    - {name: custom_msi_interaction_weight, type: float, weight: 1.0,
+       provenance: inferred}
+      # Leaked MSI weights (not official docs):
+      #   like = 1, reaction/reshare = 5, RSVP = 15, significant interaction = 30
+      #   multiplied by relationship factor (same-group 0.5, stranger 0.3)
+    - {name: custom_civic_content_flag, type: boolean, weight: -0.30,
+       provenance: documented}
+      # civic/political content demotion policy (post-2021 documented)
+    - {name: custom_group_membership_bonus, type: float, weight: 0.10,
+       provenance: inferred}
+      # group posts ranked within group pipeline; cross-posted group
+      # content gets membership-aware boost in main feed
+  scorer:
+    plugin: custom:facebook_msi_blend
+    params:
+      msi_weights:
+        like: 1
+        reaction_or_reshare: 5
+        rsvp: 15
+        significant_interaction: 30        # e.g., long comment, share-to-Messenger
+        relationship_factor:
+          same_group: 0.5                  # LEAKED — not officially documented
+          stranger: 0.3                    # LEAKED — not officially documented
+      prediction_models_count: 100          # documented: "100+ prediction models"
+      pipeline_stages: 4                    # inventory → signals → models → score
+      group_pipeline_separate: true         # Groups have own ranking +
+                                            # suggested-groups recommender
+      reels_surface_separate_ranking: true
+      stories_surface_separate_ranking: true
+      marketplace_outside_feed: true        # Marketplace is NOT in News Feed
+  params:
+    inventory_sources: [friends, followed_pages, groups, engagement_pool,
+                        suggested]
+    negative_feedback_actions: [hide_post, snooze, see_less, report,
+                                unfollow, hide_all_from_author]
+    demotion_factors:
+      civic_content: -0.30                 # documented civic demotion
+      fact_check_label: -0.50              # documented label → reduced reach
+      repeat_violator_90d: -0.80           # documented repeat-offender penalty
+      sensationalism_prior: -0.05          # inferred
+    boost_factors:
+      original_video: +0.10                # documented push for original video
+      meaningful_interaction: +0.20        # comments>reactions weighting (inferred)
+      friends_sharing_to_friends: +0.15    # inferred from shares_private weight
+    freshness_half_life_hours: 48           # inferred; news-heavy skew shorter
+
+content_constraints:
+  max_length_chars: 63206                  # chars (UTF-16 code units ~ FB limit)
+  length_unit: chars
+  media_policy: >
+    Up to 10 photos OR 1 video per post. Reels are vertical video 3–90s.
+    Stories media max ~60s, expire after 24h. Live video supported.
+    Marketplace listings: title ≤200 chars, description ≤5000 chars,
+    up to 10 photos.
+  max_media_per_post: 10
+  edit_window_seconds: null                # posts editable indefinitely by author;
+                                           # edits create new version, ranking resets
+                                           # partially (inferred)
+  comment_max_length_chars: 8000
+  reel_duration_seconds: [3, 90]
+  story_duration_seconds_max: 60
+  story_ttl_seconds: 86400
+  marketplace_title_max_chars: 200
+  marketplace_description_max_chars: 5000
+  max_friends: 5000                        # documented soft cap
+  max_groups: 10000                        # documented soft cap
+
+visibility_model:
+  default_scope: friends                   # friends-only is the modal user default;
+                                           # Pages default public
+  rules:
+    - scope: public
+      predicate: "audience == public OR author is Page with public setting"
+      grants: anyone
+    - scope: friends
+      predicate: "audience == friends AND actor is Friendship.status == friends"
+      grants: mutual_friendship
+    - scope: friends_of_friends
+      predicate: "friends_except/custom subsets; FoF reachable for some defaults"
+      grants: shared_friend
+    - scope: group_members
+      predicate: "Post.parent_type == group AND actor in GroupMembership"
+      grants: group_membership
+    - scope: page_followers
+      predicate: "Post.author_type == Page AND actor follows Page"
+      grants: page_follow
+    - scope: story_friends
+      predicate: "Story.audience == friends; 24h expiry enforced"
+      grants: mutual_friendship
+    - scope: only_me
+      predicate: "audience == only_me"
+      grants: self
+    - scope: marketplace_local
+      predicate: "listing visible within seller's marketplace region"
+      grants: geographic_proximity
+
+moderation:
+  tiers:
+    - tier: 1
+      name: fact_check_label
+      action: label_only
+      description: >
+        Content flagged by fact-checkers (or Community Notes post-Jan-2025
+        in US) receives a label; reach reduced but content remains.
+        US third-party fact-checking program ended Jan 2025; replaced by
+        crowdsourced Community Notes.
+    - tier: 2
+      name: demotion
+      action: downrank
+      description: >
+        Borderline-violating or repeatedly-flagged content is demoted in
+        ranking (score multiplier applied in stage-4 blend). Civic content
+        carries standing demotion.
+    - tier: 3
+      name: repeat_penalty_90d
+      action: remove_and_sanction
+      description: >
+        Accounts that repeatedly violate within 90 days receive escalating
+        penalties: content removal, distribution reduction, potential
+        account restriction.
+  enforcement_points:
+    - create_post
+    - react_to_post
+    - comment_on_post
+    - share_post
+    - post_in_group
+    - publish_story
+    - publish_reel
+    - create_marketplace_listing
+    - create_event
+  metadata_only: false                 # no E2EE on News Feed; Messenger
+                                       # Secret Conversations are separate
+  notes: >
+    Oversight Board can review/remove content. Community Notes shown only
+    when raters from diverse perspectives agree. Civic/political content
+    subject to additional demotion and "state-controlled media" labels.
+
+demographics:
+  mau: "~3.0B MAU (Meta reported, 2024)"
+  notes: >
+    ~68% of US adults use Facebook (Pew Research). Skews GenX/Boomer vs
+    younger platforms. US remains largest single market; India/SEA large
+    but lower ARPU. Marketplace strongest in US/Canada.
+
+data_availability:
+  tier: 3                            # aggregate-only; no per-user feed dump
+  sources:
+    - "Facebook SSO URLs dataset: ~57M shared URLs, aggregate statistics only"
+    - "CrowdTangle (discontinued Aug 2024, archived datasets)"
+    - "Meta Content Library — gated academic/researcher access only"
+    - "Ad Library — public ad transparency (ads only, not organic)"
+    - "Graph API — requires app review; user-level data only with
+       explicit user consent (friends lists, posts)"
+  notes: >
+    Tier 3 rationale: no public firehose, no per-post impression counts,
+    ranking inputs (dwell, negative feedback) unobservable externally.
+    Researchers rely on voluntary data donations and archives.

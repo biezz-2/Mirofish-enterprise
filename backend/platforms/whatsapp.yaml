@@ -1,0 +1,684 @@
+# PlatformSpec v1.0 — WhatsApp (Meta)
+# Archetype: private_push_feed — no feed ranking; write-time fan-out into
+# per-recipient inboxes ordered by inbox rules (pinned > unread > recency).
+# All conversation content is E2E-encrypted; moderation is metadata-only.
+
+spec_version: "1.0"
+platform_id: whatsapp
+display_name: "WhatsApp"
+archetype: private_push_feed
+privacy_tier: private
+delivery_mode: push
+graph_visibility: private
+temporal_model: event_driven
+encryption: e2e
+timezone_anchor: UTC
+
+entities:
+  - entity_type: User
+    primary_key: [user_id]
+    attributes:
+      user_id:
+        type: string
+        unique: true
+        pattern: "^[0-9]{10,15}$"   # E.164 digits, no '+'
+      display_name: {type: string, max_length: 139, nullable: true}
+      phone_hash: {type: string, unique: true, nullable: true}
+      about: {type: string, max_length: 139, nullable: true}
+      photo_url: {type: string, nullable: true}
+      privacy_tier_set:
+        type: array
+        items: {type: string}
+        default: ["last_seen_none", "profile_photo_contacts", "about_none", "groups_add_by_my_contacts"]
+      business_account: {type: boolean, default: false}
+
+  - entity_type: Contact
+    primary_key: [owner_id, contact_id]
+    attributes:
+      owner_id: {type: string, ref: "User.user_id"}
+      contact_id: {type: string, ref: "User.user_id"}
+      address_book_flag: {type: boolean, default: false}
+      saved_name: {type: string, nullable: true}
+      blocked: {type: boolean, default: false}
+
+  - entity_type: Chat
+    primary_key: [chat_id]
+    attributes:
+      chat_id: {type: string, unique: true}
+      kind:
+        type: enum
+        enum: [dm, group, channel, broadcast_list, status]
+      title: {type: string, max_length: 25, nullable: true}   # group/channel title
+      description: {type: string, max_length: 512, nullable: true}
+      owner_id: {type: string, ref: "User.user_id", nullable: true}   # channel owner / broadcast owner
+      max_members:
+        type: integer
+        default: 1024
+        notes: "groups ≤1024 (meta layer up to 2000 on some accounts); broadcast_list ≤256"
+      member_count: {type: integer, min: 0}
+      is_muted: {type: boolean, default: false}
+      is_archived: {type: boolean, default: false}
+      is_pinned: {type: boolean, default: false}
+      is_silent_mode: {type: boolean, default: false}        # never mute / silence notifications
+      created_at: {type: string}
+
+  - entity_type: ChatMember
+    primary_key: [chat_id, user_id]
+    attributes:
+      chat_id: {type: string, ref: "Chat.chat_id"}
+      user_id: {type: string, ref: "User.user_id"}
+      role:
+        type: enum
+        enum: [member, admin, owner, superadmin]
+        default: member
+      joined_at: {type: string}
+      is_muted: {type: boolean, default: false}
+      custom_notifications: {type: boolean, default: false}
+
+  - entity_type: Message
+    primary_key: [message_id]
+    attributes:
+      message_id: {type: string, unique: true}
+      chat_id: {type: string, ref: "Chat.chat_id"}
+      sender_id: {type: string, ref: "User.user_id", nullable: true}   # null for system/broadcast
+      kind:
+        type: enum
+        enum: [text, image, video, audio, voice, document, sticker,
+               location, contact_card, poll, poll_vote, reaction, system]
+      body: {type: string, max_length: 65536, nullable: true}         # encrypted at rest
+      body_ciphertext_ref: {type: string, nullable: true}            # E2EE blob reference
+      media_urls: {type: array, items: {type: string}, nullable: true}
+      duration_seconds: {type: integer, min: 0, nullable: true}
+      reply_to: {type: string, ref: "Message.message_id", nullable: true}
+      forward_count: {type: integer, min: 0, default: 0}              # server-side heuristic counter
+      forwarded_from_chat_id: {type: string, ref: "Chat.chat_id", nullable: true}
+      forwarded_label_visible: {type: boolean, default: true}        # FMT label shown (~5 forwards)
+      is_ephemeral: {type: boolean, default: false}
+      disappearing_seconds: {type: integer, enum: [86400, 604800, 7776000], nullable: true}
+      sent_at: {type: string}
+      delivered_at: {type: string, nullable: true}
+      read_at: {type: string, nullable: true}
+
+  - entity_type: Reaction
+    primary_key: [message_id, user_id]
+    attributes:
+      message_id: {type: string, ref: "Message.message_id"}
+      user_id: {type: string, ref: "User.user_id"}
+      emoji: {type: string, max_length: 16, nullable: true}    # null = removed reaction
+      reacted_at: {type: string}
+
+  - entity_type: StatusUpdate
+    primary_key: [status_id]
+    attributes:
+      status_id: {type: string, unique: true}
+      owner_id: {type: string, ref: "User.user_id"}
+      kind: {type: enum, enum: [text, image, video]}
+      body: {type: string, max_length: 700, nullable: true}
+      media_urls: {type: array, items: {type: string}, nullable: true}
+      audience: {type: enum, enum: [contacts, contacts_except, specific], default: contacts}
+      excluded_user_ids: {type: array, items: {type: string}, nullable: true}
+      view_count: {type: integer, min: 0, default: 0}
+      posted_at: {type: string}
+      expires_at: {type: string}      # ~24h
+
+  - entity_type: Poll
+    primary_key: [poll_id]
+    attributes:
+      poll_id: {type: string, unique: true}
+      chat_id: {type: string, ref: "Chat.chat_id"}
+      creator_id: {type: string, ref: "User.user_id"}
+      question: {type: string, max_length: 255}
+      options: {type: array, items: {type: string}, min_items: 2, max_items: 12}
+      allow_multiple: {type: boolean, default: false}
+      max_selections: {type: integer, min: 1, nullable: true}
+      created_at: {type: string}
+
+  - entity_type: PollVote
+    primary_key: [poll_id, user_id]
+    attributes:
+      poll_id: {type: string, ref: "Poll.poll_id"}
+      user_id: {type: string, ref: "User.user_id"}
+      option_indices: {type: array, items: {type: integer}, min: 0}
+      voted_at: {type: string}
+
+  - entity_type: Report
+    primary_key: [report_id]
+    attributes:
+      report_id: {type: string, unique: true}
+      reporter_id: {type: string, ref: "User.user_id"}
+      target_kind: {type: enum, enum: [message, user, group]}
+      target_message_id: {type: string, ref: "Message.message_id", nullable: true}
+      target_user_id: {type: string, ref: "User.user_id", nullable: true}
+      target_chat_id: {type: string, ref: "Chat.chat_id", nullable: true}
+      category: {type: enum, enum: [spam, harassment, hate, scam, child_safety, other]}
+      note: {type: string, max_length: 1024, nullable: true}
+      message_fingerprint: {type: string, nullable: true}   # hash of reported ciphertext+metadata
+      created_at: {type: string}
+
+  - entity_type: Block
+    primary_key: [blocker_id, blocked_id]
+    attributes:
+      blocker_id: {type: string, ref: "User.user_id"}
+      blocked_id: {type: string, ref: "User.user_id"}
+      created_at: {type: string}
+
+relations:
+  - relation_type: contact_of
+    from: User
+    to: Contact
+    cardinality: one_to_many
+    semantics: directed_follow_graph
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: membership
+    from: ChatMember
+    to: Chat
+    cardinality: many_to_one
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: dm_between
+    from: Chat
+    to: User
+    cardinality: many_to_many
+    semantics: bidirectional_opt_in
+    transitive: false
+    symmetric_effect: true
+    attributes: {chat_kind: dm}
+
+  - relation_type: group_member_of
+    from: ChatMember
+    to: Chat
+    cardinality: many_to_one
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+    attributes: {role_field: role}
+
+  - relation_type: channel_followed
+    from: User
+    to: Chat
+    cardinality: many_to_many
+    semantics: one_way_follow          # channel subscribers are read-only
+    transitive: false
+    symmetric_effect: false
+    attributes: {chat_kind: channel}
+
+  - relation_type: blocked_by
+    from: User
+    to: User
+    cardinality: many_to_many
+    semantics: hard_exclusion
+    transitive: false
+    symmetric_effect: false
+    attributes: {via: Block}
+
+  - relation_type: community_parent
+    from: Chat
+    to: Chat
+    cardinality: many_to_one
+    semantics: grouping               # announcement/community parent groups
+    transitive: false
+    symmetric_effect: false
+    attributes: {chat_kind: community}
+
+  - relation_type: community_unit
+    from: Chat
+    to: Chat
+    cardinality: many_to_many
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+    attributes: {parent_kind: community, child_kind: group}
+
+  - relation_type: status_audience
+    from: StatusUpdate
+    to: User
+    cardinality: many_to_many
+    semantics: visibility_gate
+    transitive: false
+    symmetric_effect: false
+    attributes: {audience_field: audience}
+
+  - relation_type: message_in_chat
+    from: Message
+    to: Chat
+    cardinality: many_to_one
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+
+  - relation_type: poll_in_chat
+    from: Poll
+    to: Chat
+    cardinality: many_to_one
+    semantics: membership
+    transitive: false
+    symmetric_effect: false
+
+actions:
+  # ---- verb: consume ----
+  - action_id: open_app
+    actor: User
+    target: null
+    verb: consume
+    preconditions: {registered: true}
+    effects: {feeds_scorer_signal: false}
+    visibility: self
+    cost: 1
+
+  - action_id: read_chat
+    actor: User
+    target: [Chat, Message]
+    verb: consume
+    preconditions:
+      member_or_follower: true        # ChatMember, or channel follower
+      not_blocked: true
+    effects:
+      updates: read_at
+      feeds_scorer_signal: false      # no ranking signal on WhatsApp
+    visibility: conversation
+    cost: 1
+
+  - action_id: view_status
+    actor: User
+    target: [StatusUpdate, User]
+    verb: consume
+    preconditions: {in_audience: true, not_blocked: true}
+    effects: {increments: StatusUpdate.view_count}
+    visibility: status_audience
+    cost: 1
+
+  # ---- verb: react ----
+  - action_id: react_emoji
+    actor: User
+    target: Message
+    verb: react
+    preconditions: {can_send_in_chat: true, not_blocked: true}
+    effects:
+      creates: Reaction
+      queues_moderation: false
+      feeds_scorer_signal: false
+    visibility: conversation
+    cost: 1
+
+  - action_id: vote_poll
+    actor: User
+    target: Poll
+    verb: react
+    preconditions:
+      member_of_chat: true
+      poll_open: true
+      options_valid: true
+      respects_max_selections: true
+    effects:
+      creates: PollVote
+      queues_moderation: false
+    visibility: conversation
+    cost: 2
+
+  # ---- verb: amplify ----
+  - action_id: forward_message
+    actor: User
+    target: [Message, Chat]
+    verb: amplify
+    preconditions:
+      can_send_in_source: true
+      target_chat_membership: true
+      forward_count_lt: 5             # WhatsApp caps at 5 chats per forward
+      not_blocked: true
+    effects:
+      creates: Message                # kind=forwarded, forwarded_from_chat_id set
+      increments: Message.forward_count
+      queues_moderation: true         # forward heuristics feed spam detection
+      feeds_scorer_signal: false
+    visibility: conversation
+    cost: 3
+
+  - action_id: status_post
+    actor: User
+    target: StatusUpdate
+    verb: amplify
+    preconditions:
+      audience_valid: true
+      media_or_text_present: true
+    effects:
+      creates: StatusUpdate
+      visibility: status_audience
+    cost: 3
+
+  - action_id: join_channel
+    actor: User
+    target: Chat
+    verb: amplify
+    preconditions:
+      chat_kind: channel
+      not_member: true
+    effects:
+      creates: ChatMember              # role=member, read-only
+      visibility: conversation
+    cost: 2
+
+  # ---- verb: create ----
+  - action_id: send_text
+    actor: User
+    target: Chat
+    verb: create
+    preconditions:
+      can_send_in_chat: true          # member of group/dm/list; NOT channel follower-only
+      chat_kind_in: [dm, group, broadcast_list]
+      not_blocked: true
+      not_muted_silence_only: false
+      body_length_le: 65536            # chars
+    effects:
+      creates: Message                # kind=text, E2EE ciphertext stored
+      queues_moderation: true         # metadata-only (fingerprints/reports)
+      feeds_scorer_signal: false
+    visibility: conversation
+    cost: 2
+
+  - action_id: send_media
+    actor: User
+    target: Chat
+    verb: create
+    preconditions:
+      can_send_in_chat: true
+      chat_kind_in: [dm, group, broadcast_list]
+      media_type_in: [image, video, audio, document, sticker]
+      media_size_within_limit: true
+      max_media_per_message_le: 1     # one media item per message envelope
+    effects:
+      creates: Message
+      queues_moderation: true
+      feeds_scorer_signal: false
+    visibility: conversation
+    cost: 3
+
+  - action_id: send_voice
+    actor: User
+    target: Chat
+    verb: create
+    preconditions:
+      can_send_in_chat: true
+      chat_kind_in: [dm, group, broadcast_list]
+      duration_seconds_le: 900
+    effects:
+      creates: Message                # kind=voice, opus audio blob
+      queues_moderation: true
+      feeds_scorer_signal: false
+    visibility: conversation
+    cost: 3
+
+  - action_id: create_poll
+    actor: User
+    target: Chat
+    verb: create
+    preconditions:
+      member_of_chat: true
+      chat_kind_in: [group, dm]       # polls not in channels/lists/status
+      options_count_between: [2, 12]
+    effects:
+      creates: Poll
+      visibility: conversation
+    cost: 3
+
+  - action_id: create_group
+    actor: User
+    target: Chat
+    verb: create
+    preconditions:
+      group_count_below_limit: true
+    effects:
+      creates: Chat                    # kind=group, creator=owner role
+      creates: ChatMember
+    cost: 5
+
+  - action_id: create_broadcast_list
+    actor: User
+    target: Chat
+    verb: create
+    preconditions:
+      recipient_count_le: 256
+      recipients_in_contacts: true
+    effects:
+      creates: Chat                    # kind=broadcast_list, one-way fan-out
+      creates: ChatMember
+    cost: 5
+
+  - action_id: create_channel
+    actor: User
+    target: Chat
+    verb: create
+    preconditions:
+      channel_creation_allowed: true
+    effects:
+      creates: Chat                    # kind=channel, owner role
+      creates: ChatMember
+    cost: 5
+
+  - action_id: create_community
+    actor: User
+    target: Chat
+    verb: create
+    preconditions: {community_creation_allowed: true}
+    effects:
+      creates: Chat                    # kind=community parent + announcement group
+      creates: ChatMember
+    cost: 8
+
+  # ---- verb: relational ----
+  - action_id: reply_to_message
+    actor: User
+    target: Message
+    verb: relational
+    preconditions:
+      can_send_in_chat: true
+      target_in_same_chat: true
+      not_blocked: true
+    effects:
+      creates: Message                # reply_to set
+      queues_moderation: true
+    visibility: conversation
+    cost: 2
+
+  - action_id: forward_bypass_save_resend
+    actor: User
+    target: [Message, Chat]
+    verb: relational
+    preconditions:
+      can_send_in_target_chat: true
+      not_blocked: true
+    effects:
+      creates: Message                # kind=text/media re-uploaded; forward_count NOT incremented
+      notes: "documented bypass of the ~5-forward FMT label"
+      queues_moderation: true         # near-duplicate/content fingerprint heuristics apply
+    visibility: conversation
+    cost: 4
+
+  - action_id: admin_ops
+    actor: User
+    target: [Chat, ChatMember]
+    verb: relational
+    preconditions:
+      role_in: [admin, owner, superadmin]
+      op_in: [add_member, remove_member, promote_admin, demote_admin,
+              edit_group_info, set_announcement_mode, clear_chat,
+              delete_message_for_everyone, change_number_phone]
+    effects:
+      updates: <op-specific field on Chat/ChatMember>
+      queues_moderation: true
+    visibility: group_members
+    cost: 3
+
+  - action_id: report_content
+    actor: User
+    target: [Message, User, Chat]
+    verb: relational
+    preconditions: {target_exists: true}
+    effects:
+      creates: Report                 # metadata + message_fingerprint only (E2EE)
+      queues_moderation: true
+      feeds_scorer_signal: false
+    visibility: moderation_queue
+    cost: 2
+
+  - action_id: block_user
+    actor: User
+    target: User
+    verb: relational
+    preconditions: {not_self: true}
+    effects:
+      creates: Block
+      visibility: self
+    cost: 1
+
+  - action_id: set_privacy
+    actor: User
+    target: User
+    verb: relational
+    preconditions: {valid_privacy_tier: true}
+    effects: {updates: privacy_tier_set}
+    visibility: self
+    cost: 1
+
+feed:
+  kind: push                          # no retrieval/scorer — delivery_model below
+  signal_schema:
+    # Push delivery: only inbox-ordering signals exist. Signals WhatsApp does
+    # NOT expose (topic graph, popularity velocity, content-type priors,
+    # shares_private for ranking, quality satisfaction) are omitted per schema.
+    - {name: recency,              type: timestamp,  weight: null, provenance: documented}
+    - {name: engagement_count,     type: integer,   weight: null, provenance: documented}
+    - {name: author_affinity,      type: float,     weight: null, provenance: inferred}
+    - {name: negative_feedback,    type: boolean,   weight: null, provenance: documented}   # mute/report/block
+    - {name: custom_unread_state,  type: object,    weight: null, provenance: documented}   # pinned/unread/muted
+  delivery_model:
+    mode: write_time_fanout          # message is replicated to each recipient inbox at send time
+    inbox_rules:
+      ordering:
+        - {priority: 1, key: pinned,            direction: first}   # pinned chats always top
+        - {priority: 2, key: unread_count,       direction: desc}    # unread bubble count
+        - {priority: 3, key: last_message_at,    direction: desc}    # recency tiebreak
+      pins:
+        max_pinned_chats: 3                     # user-pinned chats float above all
+        auto_pin_announcements: true            # announcement-only groups may auto-pin
+      mutes:
+        muted_chat: "silent — delivered but no notification sound/banner"
+        muted_group_member: "per-member notification suppression"
+        silent_mode_chat: "never-mute override (is_silent_mode)"
+        indefinite_mute: true                   # mute can be indefinite or 8h
+      unread_counts:
+        badge_per_chat: true
+        aggregated_badge: true                  # app icon total
+      broadcast_lists:
+        delivery: one_way_fanout                # sender->recipients, replies invisible to sender
+      channels:
+        delivery: one_way_broadcast              # admin posts -> followers; followers cannot reply
+      communities:
+        announcement_group: read_only_for_members  # only admins post
+      status:
+        delivery: audience_restricted_24h
+      disappearing_messages:
+        windows_seconds: [86400, 604800, 7776000]
+        applies_to: [text, media, voice]
+  params:
+    max_group_members: 1024
+    max_broadcast_recipients: 256
+    max_forward_chats_per_action: 5
+    forward_label_threshold: 5                   # ~5 forwards shows "Forwarded" FMT label
+    text_max_chars: 65536
+
+content_constraints:
+  max_length_chars: 65536                        # chars (UTF-16 code units on client)
+  length_unit: chars
+  media_policy: |
+    images, video, audio, documents, stickers, GIFs, locations, contact cards.
+    Documents up to ~2GB (server-dependent); media sent via E2EE blob store.
+  max_media_per_post: 1                          # one media envelope per message
+  edit_window_seconds: null                      # WhatsApp has no message editing
+  delete_for_everyone_window_seconds: 172800     # ~48h, admin-only in groups
+  voice_max_seconds: 900                         # 15 min voice notes
+  status_max_chars: 700
+  group_title_max_chars: 25
+  description_max_chars: 512
+  poll_options_min: 2
+  poll_options_max: 12
+  forward_limit_per_action: 5                    # chats per forward operation
+
+visibility_model:
+  default_scope: conversation
+  rules:
+    - {scope: dm,              predicate: "exactly the two participants (or group member set)", grants: dm_between}
+    - {scope: group_members,   predicate: "any ChatMember of kind=group", grants: group_member_of}
+    - {scope: broadcast_list,  predicate: "sender + listed recipients only; replies not relayed", grants: membership}
+    - {scope: channel_followers, predicate: "channel subscribers read admin posts only", grants: channel_followed}
+    - {scope: status_audience, predicate: "contacts / contacts-except / explicit list, 24h TTL", grants: status_audience}
+    - {scope: community,       predicate: "community announcement group read-only for members", grants: community_unit}
+    - {scope: self,            predicate: "actor's own inbox/settings only", grants: null}
+    - {scope: moderation_queue, predicate: "report metadata only — ciphertext never leaves device", grants: moderation}
+  privacy_controls:
+    last_seen: [everyone, my_contacts, nobody]
+    profile_photo: [everyone, my_contacts, nobody]
+    about: [everyone, my_contacts, nobody]
+    groups_add_by: [everyone, my_contacts, my_contacts_except, nobody]
+    read_receipts: toggleable                         # blue ticks can be disabled
+    live_location: opt_in_with_timer
+    disappearing_default: per_chat
+
+moderation:
+  tiers:
+    - {tier: 0, name: allow,                 action: allow}
+    - {tier: 1, name: rate_limit,            action: throttle}        # forward/spam velocity caps
+    - {tier: 2, name: label_only,            action: label_only}      # FMT "forwarded" label, frequent-forward notice
+    - {tier: 3, name: restrict_delivery,     action: downrank}        # limit broadcast reach of flagged accounts
+    - {tier: 4, name: account_action,        action: remove_and_sanction}  # ban/suspend on report clusters
+  enforcement_points:
+    - forward_message
+    - forward_bypass_save_resend
+    - send_text
+    - send_media
+    - send_voice
+    - create_broadcast_list
+    - report_content
+    - admin_ops
+  metadata_only: true                           # E2EE: server sees ciphertext + envelope metadata only
+  observable_signals:
+    - message_fingerprints                    # hash-based near-duplicate detection across forwards
+    - forward_count_and_chains                # >5 forwards triggers label; chains tracked heuristically
+    - send_velocity_and_burst_patterns
+    - recipient_overlap_graphs                 # broadcast-list fan-out patterns
+    - report_volume_by_target                  # user/group report clusters
+    - account_age_and_device_integrity
+    - banned_hash_propagation                 # device-level ban evasion detection
+  not_observable:
+    - message_plaintext
+    - media_content
+    - reaction semantics beyond counts
+    - poll option text (encrypted)
+  user_controls:
+    - block_user
+    - report_content
+    - mute_chat
+    - admin_remove_member
+    - group_invite_approval ("approve new members")
+
+demographics:
+  mau: "~2.78 billion monthly active users (2024-2025 reported range)"
+  notes: |
+    Largest messaging platform globally. Indonesia is the top market by
+    penetration (~87-91% of the population uses WhatsApp; ~200M+ users).
+    India, Brazil, Mexico, US also top-5. Skews mobile-first; business API
+    (WhatsApp Business) is a significant B2B surface. Groups up to 1024,
+    channels for one-way broadcast, communities as group-of-groups.
+
+data_availability:
+  tier: 4                                       # near-blind: E2EE + private graph
+  sources:
+    - "No public message corpus — all DM/group content is E2E-encrypted"
+    - "Public WhatsApp Groups directory listings (opt-in public groups only)"
+    - "Crowd-sourced opt-in datasets (e.g., donated chat exports for research)"
+    - "Meta transparency reports (enforcement counts, not content)"
+    - "Business API aggregate statistics (opt-in business accounts only)"
+    - "Academic datasets built on voluntary exports (e.g., WhatsApp chat corpora)"
