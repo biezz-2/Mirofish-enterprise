@@ -125,7 +125,7 @@
         "severity": null,
         "finding_ref": null,
         "assignee": "HERMES",
-        "notes": "Recheck 2026-11-09 21:44 WIB (cron): Jules session STABLE (completed 2026-10-28T09:40:19Z). PR #48 OPEN di GitHub. Paritas kamus 905 zh / 905 en / 905 id (100%). Vite build 7.3.7 PASS in 6.70s. 15 file Vue masih memiliki 827 baris CJK di main. F-006 BLOCKER tetap aktif (namespace process.*/platform.* missing). Verdict: CONDITIONAL.",
+        "notes": "Recheck 2026-11-09 21:44 WIB (cron): Jules session STABLE (completed 2026-10-28T09:40:19Z). PR #48 OPEN di GitHub. Paritas kamus 905 zh / 905 en / 905 id (100%). Vite build 7.3.7 PASS in 6.70s. 15 file Vue masih memiliki 827 baris CJK di main. F-006 BLOCKER tetap aktif (namespace process.*/platform.* missing). Verdict: CONDITIONAL. | 2026-11-14 09:48 WIB: Jules sessionCompleted (2026-10-28T09:40:19Z), no new output.",
         "phase_ref": ""
       },
       {
@@ -135,7 +135,7 @@
         "severity": "MAJOR",
         "finding_ref": "F-001",
         "assignee": "critic-subagent",
-        "notes": "Verdict: CONDITIONAL @ 2026-11-09 21:44 WIB (cron re-check). Jules 3767768341149407718 stable (PR #48 open). Paritas kamus 905 leaf keys 100% zh/en/id. Vite build PASS in 6.70s. F-001 & F-002 MAJOR open (PR #48 pending review/merge). F-006 BLOCKER (namespace process.*/platform.* missing di locales main, git orphaned root). Report: .state/validation/audit-board-mirofish-i18n-cron/p01-audit.md.",
+        "notes": "Verdict: CONDITIONAL @ 2026-11-09 21:44 WIB (cron re-check). Jules 3767768341149407718 stable (PR #48 open). Paritas kamus 905 leaf keys 100% zh/en/id. Vite build PASS in 6.70s. F-001 & F-002 MAJOR open (PR #48 pending review/merge). F-006 BLOCKER (namespace process.*/platform.* missing di locales main, git orphaned root). Report: .state/validation/audit-board-mirofish-i18n-cron/p01-audit.md. | 2026-11-14 09:48 WIB: verdict CONDITIONAL; parity 905/908 100%; 221 hardcoded/12 files; new F-007 BLOCKER (vite 8 peer conflict).",
         "phase_ref": ""
       },
       {
@@ -157,11 +157,21 @@
         "assignee": "JULES",
         "notes": "RESOLVED 2026-10-28: PR #48 fully refactored Process.vue to use $t(). Scan of Process.vue on PR branch found 0 hardcoded user-facing CJK/English strings (only comments/console). Original ~95 hardcoded lines addressed. Card VALIDATED.",
         "phase_ref": ""
+      },
+      {
+        "card_id": "c-mirofish-cron-16",
+        "title": "REWORK: Fix vite 8.3.7 vs @vitejs/plugin-vue peer conflict (npm ci ERESOLVE)",
+        "status": "IN_PROGRESS",
+        "severity": "BLOCKER",
+        "finding_ref": "F-007",
+        "assignee": "HERMES",
+        "notes": "2026-11-14 09:48 WIB: PR #69 bump vite 7.3.7 -> 8.3.7 in /frontend. @vitejs/plugin-vue@6.0.2 peer vite ^5||^6||^7 => npm ci fails ERESOLVE. Clean install/CI broken; build only passes on stale node_modules (vite 7.3.7). Fix: bump @vitejs/plugin-vue to Vite 8-compatible release, or pin vite back to ^7.3.7.",
+        "phase_ref": ""
       }
     ],
     "coordination": [],
     "created_at": "2026-10-16T15:10:40.584640+00:00",
-    "updated_at": "2026-11-13T11:44:00.000000+00:00"
+    "updated_at": "2026-11-14T02:56:08.757465+00:00"
   },
-  "updated_at": "2026-11-13T11:44:00.000000+00:00"
+  "updated_at": "2026-11-14T02:56:08.757465+00:00"
 }
